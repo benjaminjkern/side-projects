@@ -1,5 +1,5 @@
 # John Conway's Game of Life
-> By Ben Kern
+*By Ben Kern*
 
 ## Info
 If you are for some reason unfamiliar with Conway's Game of Life, here's a neat link that explains it infinitely better than I ever could:
