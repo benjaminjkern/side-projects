@@ -5,8 +5,6 @@
 If you are for some reason unfamiliar with Conway's Game of Life, here's a neat link that explains it infinitely better than I ever could:
 [WIKIPEDIA](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life)
 
-Right now the 
-
 ### Usage
 - Click a pixel to change its state
 - Mouse out of screen to run simulation
