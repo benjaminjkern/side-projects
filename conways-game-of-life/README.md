@@ -1,5 +1,4 @@
 # John Conway's Game of Life
-A Proof of concept, initial git upload (well into development of project)
 
 ## Info
 If you are for some reason unfamiliar with Conway's Game of Life, here's a neat link that explains it infinitely better than I ever could:
