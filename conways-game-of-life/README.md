@@ -14,8 +14,7 @@ Right now the
 ### To do List
 - Add more user settings! (So that it's not locked and can actually accurately show how this concept works)
   - Different colors
-  - Add scalability
-    - Like zooming in and out
+  - Add scalability (Ability to zoom in and out and adjust pixels in screen)
   - Add border interaction options
     - Wrap, set to 0, set to 1, copy closest, etc.
 - *Big one that I actually will definitely do when I get time to do it*: Turn this in to a general form of cellular automata program, with user able to set the specific rules. Here's another link that will explain what these are, again better than I could:
