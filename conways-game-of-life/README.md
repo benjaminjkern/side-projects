@@ -12,8 +12,8 @@ If you are for some reason unfamiliar with Conway's Game of Life, here's a neat 
 ### To do List
 - Add more user controls!
 - Add scalability
-..- Zoom in and out
+  - Zoom in and out
 - Add border interaction options
-..- Wrap, set to 0, set to 1, copy closest, etc.
-- Big one that I actually will definitely do when I get time to do it: Turn this in to a general form of cellular automata program, with user able to set the specific rules. Here's another link that will explain what these are, again better than I could:
+  - Wrap, set to 0, set to 1, copy closest, etc.
+- *Big one that I actually will definitely do when I get time to do it*: Turn this in to a general form of cellular automata program, with user able to set the specific rules. Here's another link that will explain what these are, again better than I could:
 [ANOTHER WIKIPEDIA LINK](https://en.wikipedia.org/wiki/Cellular_automaton)
