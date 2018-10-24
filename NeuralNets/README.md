@@ -1,5 +1,5 @@
 # Neural Nets
-~By Ben Kern~
+`By Ben Kern`
 Small API for plugging NeuralNets in to games, included so far is a simple bot fighting game. They evolve and learn to fight each other better with each generation
 
 ### Usage
