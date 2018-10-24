@@ -1,4 +1,7 @@
 # ChessPlayer
+*By Ben Kern*
+
+## Info
 A Game of chess that will be able to be played against a computer or against a human opponent.
 
 I gave myself 3 hours to work on this to see how much I could do in the short timespan and this initial commit is what came out of that.
