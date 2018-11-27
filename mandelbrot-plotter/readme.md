@@ -8,12 +8,13 @@ Here's a link! [CLICK ME PLS](https://en.wikipedia.org/wiki/Mandelbrot_set)
 
 ### What's new!
 - Animation! You can edit the program to have a starting zoom, an ending zoom, and however many frames you want it to render!
+  - It will then iteratively generate the proper pictures of the mandelbrot set
 - There's a bug where the animation slows down your computer from some infinite loop that I'll figure out at some point
 
 ### Usage
-> It just sorta does its own thing, any customization you might want to do at the moment has to be done by altering the code which isn't something that bugs me too much obvious since I made it but ideally this will be something that I can give to anyone and they'll be able to check out how cool I am I mean how cool the project is.
+It just sorta does its own thing, any customization you might want to do at the moment has to be done by altering the code which isn't something that bugs me too much obvious since I made it but ideally this will be something that I can give to anyone and they'll be able to check out how cool I am I mean how cool the project is.
 
-> In the code there is a portion that goes like:
+In the code there is a portion that goes like:
 ```
     public static void main(String... args) throws InterruptedException {
         m = new Mandelbrot(600,600, 0, 0, 2);
@@ -32,7 +33,10 @@ Mandelbrot([width of JFrame],
 ```
 Just change the paramters if you wanna see a different picture! I promise I'll work on making it more user friendly but hey initial upload it works for me
 
-> You can also click to zoom in by a factor of 10 around the cursor, right click to zoom out by a factor of 10. It gets weird at zoom factors of around 10^-14 because thats as good as the default double precision can get me to, I need to implement arbitrary precision
+- **[Click]** to zoom in around the cursor, right click to zoom out. It gets weird at zoom factors of around 10^-14 because thats as good as the default double precision can get me to, I need to implement arbitrary precision. At the moment, the zoom factor is dependent on the animation parameters because I didn't bother taking out the zooming in and out using the mouse but ideally you wouldnt have to use this anyways
+
+- **[A]**: Tab back a frame, this will pause the calculation of the current frame.
+- **[D]**: Tab forward a frame, if you are at the furthest forward frame then it will continue the calculation.
 
 ### Cool things so far
 - Cool colors!
@@ -41,9 +45,13 @@ Just change the paramters if you wanna see a different picture! I promise I'll w
   - Julia sets!
 
 ### To do List
+- Flesh out Animation
+  - Add auto-play
+  - Fix that one bug that causes a slowdown of the computer
+  - Find a way to make it save as a video file or an animated gif instead of a weird java data structure
 - Add more user settings! (So that it's not locked and can actually accurately show how this concept works)
   - Different color choices
     - There's another form of coloring that is more gradient than the way it is right now and I've been meaning to figure out       how to do that
   - Add control of where the picture will be on the set
-- *Big one that I actually will definitely do when I get time to do it*: Give a start zoom and an end zoom, and it will generate images that can be put in to a zoom video. I've always wanted to do it
 - Allow for greater precision
+- Possibly make the math faster if possible (honestly I might redo this whole thing in C++ just so it goes faster but I wont give up on Java yet)
