@@ -7,22 +7,17 @@ The Mandelbrot set is a mathematical construct that illustrates complex fractals
 Here's a link! [CLICK ME PLS](https://en.wikipedia.org/wiki/Mandelbrot_set)
 
 ### What's new!
-- Cleaned up a LOT of code
-- Made it more OOP-y (Multiple class files instead of one)
-- (Kind of) made it faster by reducing redundancies
-- Added the ability to have saved keyframes of images, this will help a lot when I get to animating the whole thing
-- It was kind of implemented before but it's better now, you can zoom in and out
+- Animation! You can edit the program to have a starting zoom, an ending zoom, and however many frames you want it to render!
+- There's a bug where the animation slows down your computer from some infinite loop that I'll figure out at some point
 
 ### Usage
-It just sorta does its own thing, any customization you might want to do at the moment has to be done by altering the code which isn't something that bugs me too much obvious since I made it but ideally this will be something that I can give to anyone and they'll be able to check out how cool I am I mean how cool the project is.
+> It just sorta does its own thing, any customization you might want to do at the moment has to be done by altering the code which isn't something that bugs me too much obvious since I made it but ideally this will be something that I can give to anyone and they'll be able to check out how cool I am I mean how cool the project is.
 
-In the code there is a portion that goes like:
+> In the code there is a portion that goes like:
 ```
     public static void main(String... args) throws InterruptedException {
         m = new Mandelbrot(600,600, 0, 0, 2);
-        while (true) {
-            m.currentFrame.doCalc();
-        }
+        m.go()
     }
 ```
 The `Mandelbrot()` constructor is to be used as follows:
@@ -31,11 +26,13 @@ Mandelbrot([width of JFrame],
            [height of JFrame],
            [in-simulation x coordinate of center of JFrame],
            [in-simulation y coordinate of center of JFrame],
-           [zoom (i.e. in-simulation distance from center of screen to edge of JFrame])
+           [starting zoom (i.e. in-simulation distance from center of screen to edge of JFrame],
+           [ending zoom],
+           [# of frames you want animated])
 ```
 Just change the paramters if you wanna see a different picture! I promise I'll work on making it more user friendly but hey initial upload it works for me
 
-You can also click to zoom in by a factor of 10 around the cursor, right click to zoom out by a factor of 10. It gets weird at zoom factors of around 10^-14 because thats as good as the default double precision can get me to, I need to implement arbitrary precision
+> You can also click to zoom in by a factor of 10 around the cursor, right click to zoom out by a factor of 10. It gets weird at zoom factors of around 10^-14 because thats as good as the default double precision can get me to, I need to implement arbitrary precision
 
 ### Cool things so far
 - Cool colors!
