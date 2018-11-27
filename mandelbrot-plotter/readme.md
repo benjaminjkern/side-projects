@@ -39,6 +39,7 @@ Just change the paramters if you wanna see a different picture! I promise I'll w
 - **[D]**: Tab forward a frame, if you are at the furthest forward frame then it will continue the calculation.
 
 ### Cool things so far
+- An animation that can zoom in and out of your desired point on the mandelbrot set (or another set if chosen to do so)
 - Cool colors!
 - Imaginary Number arithmetic allows for creation of alternative mandelbrot sets (Again with some alteration of the code but not a whole lot because the groundworks are already there!)
   - *z → z^n*
