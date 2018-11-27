@@ -43,16 +43,18 @@ public class MandelbrotFrame {
     public void doCalc() throws InterruptedException
     {
         int lastSize = width*height;
-        while (lastSize == width*height || lastSize > pixelStack.size())
+        while (!stopped && (lastSize == width*height || lastSize > pixelStack.size()))
         {
             lastSize = pixelStack.size();
             for (int p=0;p<pixelStack.size();p++) {
-                if (pixelStack.get(p).value.modulo()>THROWOUT) {
-                    pixelStack.get(p).pColor = color;
+                Pixel currentPixel = pixelStack.get(p);
+                if (currentPixel.value.modulo()>THROWOUT) {
+                    currentPixel.pColor = color;
+                    Mandelbrot.bi.setRGB(currentPixel.boardX, currentPixel.boardY, color);
                     pixelStack.remove(p);
                     p--;
                 } else {
-                    pixelStack.get(p).calc();
+                    currentPixel.calc();
                 }
             }
             
@@ -60,7 +62,7 @@ public class MandelbrotFrame {
 
             Thread.sleep(1);
 
-            Mandelbrot.m.drawFrame();
+            Mandelbrot.frame.repaint();
         }
     }
 
