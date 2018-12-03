@@ -4,10 +4,10 @@ import java.util.ArrayList;
 public class Population {
     private Member[] members;
 
-    private static final int INPUTS = 4;
-    private static final int NEURONS = 10;
+    public static final int INPUTS = 4;
+    private static final int NEURONSPERLAYER = 10;
     private static final int NEURONLAYERS = 2;
-    private static final int OUTPUTS = 4;
+    public static final int OUTPUTS = 4;
 
     static final double MUTATION = 1;
 
@@ -152,7 +152,7 @@ public class Population {
         int[] daddies;
 
         public Member() {
-            brain = new NeuralNet(INPUTS, NEURONS, NEURONLAYERS, OUTPUTS);
+            brain = new NeuralNet(INPUTS, NEURONSPERLAYER, NEURONLAYERS, OUTPUTS);
             color = Color.getHSBColor((float)Math.random(),1f, 1f);
             name = count;
             score = 0;
