@@ -13,10 +13,25 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ConcurrentModificationException;
 
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 public class AIFightingGame extends Game {
+    
+    public static void main(String[] args) {
+        // Run UI in the Event Dispatcher Thread (EDT), instead of Main thread
+        javax.swing.SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                JFrame frame = new JFrame("YEUH");
+                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                AIFightingGame game = new AIFightingGame(1280,640);
+                frame.setContentPane(game);
+                frame.pack();
+                frame.setVisible(true);
+            }
+        });
+    }
 
     public static Population population;
     public static Population.Member oldest, highestScore, highestAverage;
@@ -27,10 +42,9 @@ public class AIFightingGame extends Game {
     public static int time;
     public static int generation;
 
-    private DrawCanvas canvas;
     private GUI gui;
     
-    public static final int NUM = 20;
+    public static final int NUM = 130;
     private static final int MAXTIME = 60*15;
 
     public static boolean debug = false;

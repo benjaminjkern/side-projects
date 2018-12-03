@@ -19,7 +19,8 @@ public class Character {
     private static final double ANGSPEED = 2;
     private static final double FOVSPEED = 0.5;
     private static final int TIMEBETWEENSHOTS = 60;
-
+    
+    
     double[] outputs;
 
     int id;
@@ -45,7 +46,7 @@ public class Character {
         this.brain = m.brain;
         this.name = m.name;
         this.color = m.color;
-        outputs = new double[brain.outputCount];
+        outputs = new double[Population.OUTPUTS];
     }
 
     public void draw(Graphics g) {
@@ -145,14 +146,14 @@ public class Character {
          * inputs[0]: Distance from opponent, put through a sigmoid (-1 if not in sight)
          * inputs[1]: Distance from bullet, again put through a sigmoid (closest opponent bullet, -1 if none in sight)
          */
-        double[] inputs = new double[brain.inputCount];
+        double[] inputs = new double[Population.INPUTS];
         Character opponent = AIFightingGame.getOpponent(this);
         Bullet oBullet = findBullet();
         boolean opponentInSight = checkInSight(opponent.x,opponent.y);
 
 
-        inputs[0] = opponentInSight?(NeuralNet.sigmoid(getDist(opponent.x,opponent.y)/(double)GUI.width)*2-1):-1;
-        inputs[1] = (oBullet!=null)?(NeuralNet.sigmoid(getDist(oBullet.x,oBullet.y)/(double)GUI.width)*2-1):-1;
+        inputs[0] = opponentInSight?(Game.sigmoid(getDist(opponent.x,opponent.y)/(double)GUI.width)*2-1):-1;
+        inputs[1] = (oBullet!=null)?(Game.sigmoid(getDist(oBullet.x,oBullet.y)/(double)GUI.width)*2-1):-1;
         inputs[2] = opponentInSight?getDir(opponent.x,opponent.y,opponent.angle,opponent.speed):0;
         inputs[3] = (oBullet!=null)?getDir(oBullet.x,oBullet.y,oBullet.angle,oBullet.speed):0;
 
