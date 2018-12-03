@@ -12,7 +12,7 @@ Basically nothing, hahahaha. At least not from a simulator standpoint, but behin
 - NeuralNet, Game, and Population class were made more general and more usable for plugging in to other projects
   - Speaking of, Game got a big revamp that I might turn in to a separate project
     - It now has a full implementation of linear algebra operations that is friendly with native Java double arrays, which is cool and makes the implementation of the NeuralNet itself look sooooo clean and nice
-- Got rid of the Main class cuz it was annoying
+- Got rid of the Main class cuz it was annoying, it runs through AISimulation.java now
 
 
 ### Usage
