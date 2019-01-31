@@ -1,125 +1,123 @@
+package neuralnets;
+
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.geom.Line2D;
-import java.util.LinkedList;
+import kern.Tools;
 
 public class Stats {
-    private PopulationStats[] stats;
+    
+    //this still isnt idealized but its pretty alright for now
 
     int mode;
     int size;
+    int height;
+    int width;
 
-    double oldest = 1;
-    double highestScore = 1;
-    double highestTotal = 1;
-    double lowestScore = 0;
-    double lowestTotal = 0;
+    Color[][] sortedByColor;
+    GameStat ages;
+    GameStat totalScores;
+    GameStat averageScores;
+    GameStat ancestors;
 
     private static final int KEEPAMOUNT = 500;
     private static final int EDGE = 20;
     private static final int MODES = 5;
+    private static final int SPLIT = 10;
 
-    public Stats() {
+    public Stats(Population p) {
         size = 0;
         mode = 0;
-        stats = new PopulationStats[KEEPAMOUNT];
-        stats[KEEPAMOUNT-1] = new PopulationStats(AIFightingGame.population);
-    }
 
-    public void store(Population p) {
-        for (int s=0;s<KEEPAMOUNT-1;s++) {
-            stats[s] = stats[s+1];
-        }
-        if (size<KEEPAMOUNT) {
-            size++;
-        }
-        stats[KEEPAMOUNT-1] = new PopulationStats(p);
+        sortedByColor = new Color[KEEPAMOUNT][p.size()];
+        ages = new GameStat(SPLIT, KEEPAMOUNT);
+        totalScores = new GameStat(SPLIT, KEEPAMOUNT);
+        averageScores = new GameStat(SPLIT, KEEPAMOUNT);
+        ancestors = new GameStat(SPLIT, KEEPAMOUNT);
+
+        storePop(p);
     }
 
     public void draw(Graphics g) {
         Graphics2D g2 = (Graphics2D) g;
-        int num;
-        int width = GUI.width-2*EDGE;
-        int height = GUI.height-2*EDGE-GUI.LowerStage.HEIGHT;
-        g.setColor(mode<=1?new Color(200,100,100):Color.WHITE);
+
+        width = GUI.width-2*EDGE;
+        height = GUI.height-2*EDGE-GUI.LowerStage.HEIGHT;
+
+        //draw box
+        g.setColor(mode == 0 ? new Color(200,100,100) : Color.WHITE);
         g.fillRect(EDGE,EDGE,width,height);
-        if (mode<=1) {
-            for (int s=KEEPAMOUNT-size;s<KEEPAMOUNT;s++) {
-                num = stats[s].sortedByColor.length;
-                for (int n=0;n<num;n++) {
-                    g.setColor(mode==0?stats[s].sortedByColor[n]:stats[s].sortedByScore[n]);
-                    g.fillRect(EDGE+s*width/KEEPAMOUNT,EDGE+n*height/num,(int)Math.ceil((double)width/(double)KEEPAMOUNT),(int)Math.ceil((double)height/(double)num));
+
+        //if its a color mode, draw the colors
+        if (mode==0) {
+            int num = sortedByColor[0].length;
+            for (int s = KEEPAMOUNT - size; s < KEEPAMOUNT; s++) {
+                for (int n = 0; n < num; n++) {
+                    g.setColor(sortedByColor[s][n]);
+                    g.fillRect(EDGE + s * width / KEEPAMOUNT, EDGE + n * height / num, (int) Math.ceil((double) width / (double) KEEPAMOUNT), (int) Math.ceil((double) height / (double) num));
                 }
             }
         } else {
-            double lMeasure = 0;
-            double hMeasure = 1;
-            double lastPoint = 0;
-            double nextPoint = 0;
-
-            Color midColor = Color.BLACK;
-            num = 5;
+            //otherwise, draw the charts
             switch (mode) {
+                default:
+                case 1:
+                    ages.draw(Color.RED, g2);
+                    break;
                 case 2:
-                    hMeasure = oldest;
-                    midColor = Color.RED;
+                    totalScores.draw(Color.GREEN, g2);
                     break;
                 case 3:
-                    hMeasure = highestTotal;
-                    lMeasure = lowestTotal;
-                    midColor = Color.GREEN;
+                    averageScores.draw(Color.BLUE, g2);
                     break;
                 case 4:
-                    hMeasure = highestScore;
-                    lMeasure = lowestScore;
-                    midColor = Color.BLUE;
-                    break;
-            }
-            for (int l = (int)lMeasure;l<=hMeasure;l++) {
-                g.setColor(l%(Math.ceil((hMeasure-lMeasure)/50)*5)==0?Color.BLACK:Color.LIGHT_GRAY);
-                if (l%(Math.ceil((hMeasure-lMeasure)/50))==0) g.drawLine(EDGE,(int)(EDGE+(hMeasure-l)*height/(hMeasure-lMeasure)),EDGE+width,(int)(EDGE+(hMeasure-l)*height/(hMeasure-lMeasure)));
-                g.setFont(new Font("Courier New", Font.PLAIN, 10));
-                if (l%(Math.ceil((hMeasure-lMeasure)/50)*5)==0) GUI.drawCenteredString(new String[] {""+l}, width+3*EDGE/2, (int)(EDGE+(hMeasure-l)*height/(hMeasure-lMeasure)), g);
-            }
-            for (int s=KEEPAMOUNT-size;s<KEEPAMOUNT;s++) {
-                if (s>0) {
-                    for (int n=0;n<num;n++) {
-                        switch (mode) {
-                            case 2:
-                                lastPoint = stats[s-1].ages[n];
-                                nextPoint = stats[s].ages[n];
-                                break;
-                            case 3:
-                                lastPoint = stats[s-1].totalScores[n];
-                                nextPoint = stats[s].totalScores[n];
-                                break;
-                            case 4:
-                                lastPoint = stats[s-1].scores[n];
-                                nextPoint = stats[s].scores[n];
-                                break;
-                        }
-                        if (lastPoint>=lMeasure && nextPoint>= lMeasure && lastPoint<=hMeasure && nextPoint<= hMeasure) {
-                            if (n==2) {
-                                g2.setColor(midColor);
-                            } else if (n==1||n==3) {
-                                g2.setColor(new Color(midColor.getRed()/2,midColor.getGreen()/2,midColor.getBlue()/2));
-                            } else {
-                                g2.setColor(Color.BLACK);
-                            }
-                            g2.setStroke(new BasicStroke((n==0||n==2)?3:1));
-                            g2.drawLine(EDGE+(s-1)*width/(KEEPAMOUNT-1),(int)(EDGE+(hMeasure-lastPoint)*height/(hMeasure-lMeasure)),EDGE+s*width/(KEEPAMOUNT-1),(int)(EDGE+(hMeasure-nextPoint)*height/(hMeasure-lMeasure)));
-                        }
-                    }
-                }
+                    ancestors.draw(Color.YELLOW, g2);
             }
         }
+
+        //Draw border (easy)
         g2.setColor(Color.BLACK);
         g2.setStroke(new BasicStroke(2));
-        g2.drawRect(EDGE-1,EDGE-1,width+1,height+1);
-        g2.drawRect(EDGE-2,EDGE-2,width+3,height+3);
+        g2.drawRect(EDGE - 1, EDGE - 1, width + 1, height + 1);
+        g2.drawRect(EDGE - 2, EDGE - 2, width + 3, height + 3);
+    }
+
+    public void storePop(Population p) {
+        //store population in to my wrapper class
+        ages.addStats(p.getAges());
+        totalScores.addStats(p.getTotalScores());
+        averageScores.addStats(p.getAverageScores());
+        ancestors.addStats(p.getGensIn());
+
+        //this is for the colors because its easier to store them as a transposed version
+        
+        //shift down array
+        for (int i = KEEPAMOUNT - size; i < KEEPAMOUNT-1; i++) {
+            sortedByColor[i] = makeCopy(sortedByColor[i+1]);
+        }
+
+        //store colors and info at the end of each array, the color ones have to be more complicated because I dont have calls that return an array of colors and I dont wanna bother with that
+        p.sortByColors();
+        for (int s = 0; s < p.size(); s++) {
+            sortedByColor[KEEPAMOUNT-1][s] = p.get(s).color;
+        }
+
+        //update size
+        if (size < KEEPAMOUNT) {
+            size++;
+        }
+    }
+
+    //copied from Game class, I didnt have one that would work with colors
+    private Color[] makeCopy(Color[] c) {
+        Color[] output = new Color[c.length];
+
+        for (int y=0;y<c.length;y++) {
+            output[y] = c[y];
+        }
+        return output;
     }
 
     public void nextMode() {
@@ -132,104 +130,74 @@ public class Stats {
             mode+=MODES;
         }
     }
+    
+    private class GameStat {
+        //This is a wrapper class so that I can store various types of statistics and reuse it as well as draw my different charts
+        
+        double highest;
+        double lowest;
+        double[][] scores;
+        int split;
+        int keepAmount;
+        
+        GameStat(int split, int keepAmount) {
+            this.split = split;
+            this.keepAmount = keepAmount;
+            highest = 1;
+            lowest = 0;
+            scores = new double[split + 1][keepAmount];
+        }
+        
+        void addStats(double[] values) {
+            scores = Tools.transpose(scores);
 
-    class PopulationStats {
-        Color[] sortedByColor;
-        Color[] sortedByScore;
-        double[] ages;
-        double[] scores;
-        double[] totalScores;
+            for (int i = keepAmount - size; i < keepAmount-1; i++) {
+                scores[i] = scores[i+1];
+            }
 
-        PopulationStats(Population p) {
-            sortedByColor = new Color[p.size];
-            sortedByScore = new Color[p.size];
-            ages = new double[5];
-            scores = new double[5];
-            totalScores = new double[5];
-            
-            ages[0] = Double.MIN_VALUE;
-            totalScores[0] = Double.MIN_VALUE;
-            scores[0] = Double.MIN_VALUE;
-            
-            ages[4] = Double.MAX_VALUE;
-            totalScores[4] = Double.MAX_VALUE;
-            scores[4] = Double.MAX_VALUE;
-            
-            p.sort(0);
-            for (int s=0;s<p.size;s++) {
-                sortedByScore[s] = p.get(s).color;
-                
-                ages[1] += Math.pow(p.get(s).age,2);
-                totalScores[1] += Math.pow(p.get(s).totalScore,2);
-                scores[1] += Math.pow(p.get(s).getAverageScore(),2);
-                
-                ages[2] += p.get(s).age;
-                totalScores[2] += p.get(s).totalScore;
-                scores[2] += p.get(s).getAverageScore();
-                
-                if (p.get(s).age > ages[0]) {
-                    ages[0] = p.get(s).age;
-                }
-                if (p.get(s).age < ages[4]) {
-                    ages[4] = p.get(s).age;
-                }
-                
-                if (p.get(s).totalScore > totalScores[0]) {
-                    totalScores[0] = p.get(s).totalScore;
-                }
-                if (p.get(s).totalScore < totalScores[4]) {
-                    totalScores[4] = p.get(s).totalScore;
-                }
-                
-                if (p.get(s).getAverageScore() > scores[0]) {
-                    scores[0] = p.get(s).getAverageScore();
-                }
-                if (p.get(s).getAverageScore() < scores[4]) {
-                    scores[4] = p.get(s).getAverageScore();
-                }
-            }
-            
-            ages[2] /= p.size;
-            totalScores[2] /= p.size;
-            scores[2] /= p.size;
-            
-            ages[1] /= p.size;
-            totalScores[1] /= p.size;
-            scores[1] /= p.size;
-            
-            ages[3] = Math.sqrt(ages[1]-ages[2]*ages[2]);
-            totalScores[3] = Math.sqrt(totalScores[1]-totalScores[2]*totalScores[2]);
-            scores[3] = Math.sqrt(scores[1]-scores[2]*scores[2]);
-            
-            ages[1] = ages[2]-ages[3];
-            ages[3] = ages[2]+ages[3];
-            
-            totalScores[1] = totalScores[2]-totalScores[3];
-            totalScores[3] = totalScores[2]+totalScores[3];
-            
-            scores[1] = scores[2]-scores[3];
-            scores[3] = scores[2]+scores[3];
-            
-            if (scores[0] > highestScore) {
-                highestScore = scores[0];
-            }
-            if (totalScores[0] > highestTotal) {
-                highestTotal = totalScores[0];
-            }
-            if (ages[0] > oldest) {
-                oldest = ages[0];
-            }
-            if (scores[4] < lowestScore) {
-                lowestScore = scores[4];
-            }
-            if (totalScores[4] < lowestTotal) {
-                lowestTotal = totalScores[4];
-            }
-            
+            double[] sortedArray = Tools.sort(values);
+            double[] createdStats = new double[SPLIT + 1];
 
-            p.sort(4);
-            for (int s=0;s<p.size;s++) {
-                sortedByColor[s] = p.get(s).color;
+            //pick the percentile ranking and store those
+            for (int i = 0; i < SPLIT + 1; i++) {
+                double s = (double) (values.length-1) * (double) i / (double) SPLIT;
+                double w = s % 1;
+                createdStats[i] = sortedArray[(int) s]*(1-w) + (s < values.length-1 ? sortedArray[(int) (s+1)]*w : 0);
+            }
+            
+            scores[keepAmount-1] = createdStats;
+            
+            scores = Tools.transpose(scores);
+
+            if (scores[0][keepAmount - 1] > highest) {
+                highest = scores[0][keepAmount - 1];
+            }
+            if (scores[split][keepAmount - 1] < lowest) {
+                lowest = scores[split][keepAmount - 1];
+            }
+        }
+
+        void draw(Color color, Graphics2D g2) {
+            //Draw GRID
+            for (int l = (int) lowest; l <= highest; l++) {
+                g2.setColor(l % (Math.ceil((highest - lowest) / 50) * 5) == 0 ? Color.BLACK : Color.LIGHT_GRAY);
+                if (l % (Math.ceil((highest - lowest) / 50)) == 0) g2.drawLine(EDGE, (int) (EDGE + (highest - l) * height / (highest - lowest)), EDGE + width, (int) (EDGE + (highest - l) * height / (highest - lowest)));
+                g2.setFont(new Font("Courier New", Font.PLAIN, 10));
+                if (l % (Math.ceil((highest - lowest) / 50)*5) == 0) Tools.drawCenteredString(new String[] {"" + l}, width + 3 * EDGE / 2, (int) (EDGE + (highest - l) * height / (highest - lowest)), g2);
+            }
+
+            //Draw CHARTS
+            for (int n = 0; n < split + 1; n++) {
+                double w = 1 - (double) Math.abs(2*n - split) / (double) split;
+                g2.setColor(new Color((int)(color.getRed()*w), (int)(color.getGreen()*w), (int)(color.getBlue()*w)));
+                if (w == 0) w = 1;
+                g2.setStroke(new BasicStroke((int) (2*w + 1)));
+
+                for (int s = keepAmount - size + 1; s < keepAmount; s++) {
+                    double lastPoint = scores[n][s-1];
+                    double nextPoint = scores[n][s];
+                    g2.drawLine(EDGE+(s-1)*width/(keepAmount-1),(int)(EDGE+(highest-lastPoint)*height/(highest-lowest)),EDGE+s*width/(keepAmount-1),(int)(EDGE+(highest-nextPoint)*height/(highest-lowest)));
+                }
             }
         }
     }

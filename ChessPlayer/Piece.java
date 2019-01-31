@@ -1,9 +1,11 @@
-import java.awt.Color;
+package chessplayer;
 
+import java.awt.Color;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import kern.Tools;
 
 public class Piece extends JPanel {
 
@@ -136,19 +138,19 @@ public class Piece extends JPanel {
                 break;
             case King:
                 for (int i=0;i<8;i++) {
-                    currentMoves = addNewMove(currentMoves, x+Game.sgn(Math.cos(i * 2*Math.PI/8.)), y+Game.sgn(Math.sin(i * 2*Math.PI/8.)));
+                    currentMoves = addNewMove(currentMoves, x+Tools.sgn(Math.cos(i * 2*Math.PI/8.)), y+Tools.sgn(Math.sin(i * 2*Math.PI/8.)));
                 }
                 
                 //to implement: castling and not moving for checkmate, also make it in 1 for loop maybe
                 break;
             case Queen:
                 for (int i=0;i<8;i++) {
-                    currentMoves = addRowOfMoves(currentMoves, Game.sgn(Math.cos(i * 2*Math.PI/8.)),Game.sgn(Math.sin(i * 2*Math.PI/8.)));
+                    currentMoves = addRowOfMoves(currentMoves, Tools.sgn(Math.cos(i * 2*Math.PI/8.)),Tools.sgn(Math.sin(i * 2*Math.PI/8.)));
                 }
                 break;
             case Bishop:
                 for (int i=0;i<4;i++) {
-                    currentMoves = addRowOfMoves(currentMoves, Game.sgn(Math.cos((i+0.5) * 2*Math.PI/4.)),Game.sgn(Math.sin((i+0.5) * 2*Math.PI/4.)));
+                    currentMoves = addRowOfMoves(currentMoves, Tools.sgn(Math.cos((i+0.5) * 2*Math.PI/4.)),Tools.sgn(Math.sin((i+0.5) * 2*Math.PI/4.)));
                 }
                 break;
             case Knight:
@@ -165,7 +167,7 @@ public class Piece extends JPanel {
                 break;
             case Rook:
                 for (int i=0;i<4;i++) {
-                    currentMoves = addRowOfMoves(currentMoves, Game.sgn(Math.cos(i * 2*Math.PI/4.)), Game.sgn(Math.sin(i * 2*Math.PI/4.)));
+                    currentMoves = addRowOfMoves(currentMoves, Tools.sgn(Math.cos(i * 2*Math.PI/4.)), Tools.sgn(Math.sin(i * 2*Math.PI/4.)));
                 }
                 break;
             default:

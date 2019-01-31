@@ -1,6 +1,9 @@
+package chessplayer;
+
 import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 import javax.swing.JFrame;
+import kern.Game;
 
 /*
  * Chess game by Ben Kern

@@ -1,120 +1,110 @@
-import java.awt.Color;
-import java.util.ArrayList;
+package neuralnets;
+
+import java.util.Random;
+import kern.Tools;
 
 public class Population {
     private Member[] members;
 
-    public static final int INPUTS = 4;
-    private static final int NEURONSPERLAYER = 10;
-    private static final int NEURONLAYERS = 2;
-    public static final int OUTPUTS = 4;
-
-    static final double MUTATION = 1;
-
     private int count;
 
-    int size;
+    private int size;
+    
+    public int size() {return size;}
 
     public Population(int size) {
+        count = 0;
+
         members = new Member[size];
         for (int p=0;p<size;p++) {
-            members[p] = new Member();
+            members[p] = new Member(count);
+            count++;
         }
 
         this.size = size;
     }
 
     public void killAndRepopulate() {
-        int numToKill = AIFightingGame.NUM/2;
-        
-        sort(0); // sort by average score
-        Member[] oldMembers = members;
-        members = new Member[(size-numToKill)*2];
 
-        for (int p=0;p<size-numToKill;p++) {
-            members[p] = oldMembers[p];
-            members[p].score = 0;
-            members[p].age++;
-            members[p+size-numToKill] = new Member(members[p]);
-        }
-        
-        int newMembers = 1;
-        
-        size = (size-numToKill)*2;
-        for (int i=1;i<=newMembers;i++) {
-            members[size-i] = new Member();
-        }
-    }
-    
-    public int findDead() {
-        sort(0); // sort by average score
-        for (int i=0;i<size;i++) {
-            if (members[i].getAverageScore()<0) {
-                return size-i;
-            }
-        }
-        return 0;
-    }
-
-    public void sort(int sortMode) {
+        // sort by average score
         scramble();
-        for (int m=0;m<size;m++) {
-            for (int n=m+1;n<size;n++) {
-                switch (sortMode) {
-                    case 0: //averageScore
-                        if (members[n].getAverageScore()>members[m].getAverageScore()) {
-                            switchPlaces(m,n);
-                        }
-                        break;
-                    case 1: //totalScore
-                        if (members[n].totalScore>members[m].totalScore) {
-                            switchPlaces(m,n);
-                        }
-                        break;
-                    case 2: //age
-                        if (members[n].name<members[m].name) {
-                            switchPlaces(m,n);
-                        }
-                        break;
-                    case 3: //most recent score
-                        if (members[n].score>members[m].score) {
-                            switchPlaces(m,n);
-                        }
-                        break;
-                    case 4: //color 
-                        int maxD = Math.min(members[n].daddies.length, members[m].daddies.length);
-                        int d = 0;
-                        while (d<maxD && members[n].daddies[d]==members[m].daddies[d]) {
-                            d++;
-                        }
-                        if (d==maxD) {
-                            if (members[n].daddies.length<members[m].daddies.length) {
-                                switchPlaces(m,n);
-                            }
-                        } else {
-                            if (members[n].daddies[d]<members[m].daddies[d]) {
-                                switchPlaces(m,n);
-                            }
-                        }
-                        break;
+        sort(getAverageScores());
+        Member[] oldMembers = members;
+        members = new Member[size];
+
+        //the better half of the population goes on and makes a slightly mutated copy of itself, while the other half is overwritten
+        for (int p=0;p<size/2;p++) {
+            members[p] = oldMembers[p];
+            members[p].age++;
+            members[p+size/2] = new Member(members[p], count);
+            count++;
+        }
+
+        //a brand new member is added just to keep diversity
+        members[size - 1] = new Member(count);
+        count++;
+    }
+
+    public void resetScores() {
+        for (int p=0;p<size;p++) {
+            members[p].averageScore = ((members[p].age - 1) * members[p].averageScore + 2 * members[p].score) / (members[p].age + 1);
+            members[p].score = 0;
+        }
+    }
+
+    public void sort(double[] values) {
+        double[] sortedValues = Tools.makeCopy(values);
+        for (int m = 0; m < size; m++) {
+            for (int n = m + 1; n < size; n++) {
+                if (sortedValues[n] > sortedValues[m]) {
+                    switchPlaces(m,n);
+
+                    double value = sortedValues[m];
+                    sortedValues[m] = sortedValues[n];
+                    sortedValues[n] = value;
                 }
             }
         }
     }
 
-    public void scramble() {
-        for (int m=0;m<size;m++) {
-            int n = (int) (Math.random()*size);
-            switchPlaces(m,n);
+    public void sortByColors() {
+        for (int m=0; m < size; m++) {
+            for (int n = m + 1; n < size; n++) {
+                //sort by colors!
+                int maxD = Math.min(members[n].daddies.length, members[m].daddies.length);
+                int d = 0;
+
+                while (d < maxD && members[n].daddies[d] == members[m].daddies[d]) {
+                    d++;
+                }
+
+                if (d == maxD) {
+                    if (members[n].daddies.length < members[m].daddies.length) {
+                        switchPlaces(m,n);
+                    }
+                } else {
+                    if (members[n].daddies[d] < members[m].daddies[d]) {
+                        switchPlaces(m,n);
+                    }
+                }
+            }
         }
     }
 
-    public void printScores() {
-        System.out.print("\n"+members[0].getAverageScore());
-        for (int m=1;m<size;m++) {
-            System.out.print(", "+members[m].getAverageScore());
+    public void print() {
+        double[] output = new double[size];
+
+        for (int m=0;m<size;m++) {
+            output[m] = members[m].name;
         }
-        System.out.println("\n");
+        System.out.println(Tools.print(output));
+    }
+
+    public void scramble() {
+        for (int m=0;m<size;m++) {
+            int n = new Random().nextInt(size);
+            switchPlaces(m,n);
+        }
     }
 
     public void switchPlaces(int id1, int id2) {
@@ -127,78 +117,72 @@ public class Population {
         return members[i];
     }
 
+    public double[] getAges() {
+        double[] output = new double[size];
+
+        for (int m=0;m<size;m++) {
+            output[m] = members[m].age;
+        }
+        return output;
+    }
+
+    public double[] getTotalScores() {
+        double[] output = new double[size];
+
+        for (int m=0;m<size;m++) {
+            output[m] = members[m].totalScore;
+        }
+        return output;
+    }
+
+    public double[] getAverageScores() {
+        double[] output = new double[size];
+
+        for (int m=0;m<size;m++) {
+            output[m] = members[m].averageScore;
+        }
+        return output;
+    }
+    
+    public double[] getGensIn() {
+        double[] output = new double[size];
+
+        for (int m=0;m<size;m++) {
+            output[m] = members[m].daddies.length;
+        }
+        return output;
+    }
+
     public Member getHighestAverage() {
-        sort(0); //sort by average score
-        return members[0];
+        int idx = 0;
+
+        for (int m=0;m<size;m++) {
+            if (members[m].averageScore > members[idx].averageScore) {
+                idx = m;
+            }
+        }
+        return members[idx];
     }
 
     public Member getHighestTotal() {
-        sort(1); //sort by total score
-        return members[0];
+        int idx = 0;
+
+        for (int m=0;m<size;m++) {
+            if (members[m].totalScore > members[idx].totalScore) {
+                idx = m;
+            }
+        }
+        return members[idx];
     }
 
     public Member getOldest() {
-        sort(2); //sort by age
-        return members[0];
-    }
+        int idx = 0;
 
-    class Member {
-        NeuralNet brain;
-        Color color;
-        int name;
-        double totalScore;
-        double score;
-        int age;
-        int[] daddies;
-
-        public Member() {
-            brain = new NeuralNet(INPUTS, NEURONSPERLAYER, NEURONLAYERS, OUTPUTS);
-            color = Color.getHSBColor((float)Math.random(),1f, 1f);
-            name = count;
-            score = 0;
-            totalScore = 0;
-            age = 0;
-            count++;
-            daddies = new int[] {name};
-        }
-
-        public Member(Member m) {
-            brain = new NeuralNet(m.brain, MUTATION);
-            color = Population.getNewColor(m.color, 5);
-            name = count;
-            score = 0;
-            totalScore = 0;
-            age = 0;
-            count++;
-            daddies = new int[m.daddies.length+1];
-            for (int d=0;d<m.daddies.length;d++) {
-                daddies[d] = m.daddies[d];
+        for (int m=0;m<size;m++) {
+            if (members[m].age > members[idx].age) {
+                idx = m;
             }
-            daddies[m.daddies.length] = name;
         }
-
-        public double getAverageScore() {
-            return ((double)totalScore)/((double)age==0?1:age);
-        }
-
-        public void addSome() {
-            double amount = 1;
-            score += amount;
-            totalScore += amount;
-        }
-
-        public void takeSome() {
-            double amount = -100;
-            score += amount;
-            totalScore += amount;
-        }
-    }
-
-    public static Color getNewColor(Color color, double mutation) {
-        int red = (int)Math.round((Math.max(0,Math.min(255,(color.getRed()+(Math.random()*2-1)*mutation)))));
-        int green = (int)Math.round((Math.max(0,Math.min(255,(color.getGreen()+(Math.random()*2-1)*mutation)))));
-        int blue = (int)Math.round((Math.max(0,Math.min(255,(color.getBlue()+(Math.random()*2-1)*mutation)))));
-        Color newColor = new Color(red,green,blue);
-        return newColor;
+        return members[idx];
     }
 }

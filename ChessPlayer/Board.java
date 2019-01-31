@@ -1,6 +1,9 @@
+package chessplayer;
+
 import java.awt.Color;
 import java.awt.Graphics;
 import java.util.ArrayList;
+import kern.Tools;
 
 public class Board {
 
@@ -82,8 +85,8 @@ public class Board {
 
     public void draw(Graphics g) {
 
-        double boardWidth = (double) Game.width / (double) width;
-        double boardHeight = (double) Game.height / (double) height;
+        double boardWidth = (double) ChessGame.width / (double) width;
+        double boardHeight = (double) ChessGame.height / (double) height;
 
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
@@ -97,7 +100,7 @@ public class Board {
                 }
                 if (pieceBoard[i][j] != null) {
                     g.setColor(pieceBoard[i][j].isWhite ? Color.WHITE : Color.BLACK);
-                    Game.drawCenteredString(new String[] {pieceBoard[i][j].toString()}, (int) ((j + 0.5) * boardWidth), (int) ((i + 0.5) * boardHeight), g);
+                    Tools.drawCenteredString(new String[] {pieceBoard[i][j].toString()}, (int) ((j + 0.5) * boardWidth), (int) ((i + 0.5) * boardHeight), g);
                 }
             }
         }
@@ -115,9 +118,9 @@ public class Board {
         public String toString() {
             String returnString = "( \"" + p.toString() + "\" , [" + p.x + ", "+p.y+"] , [";
             if (moves.length>0) {
-                returnString += Game.printArray(moves[0]);
+                returnString += Tools.print(moves[0]);
                 for (int i=1;i<moves.length;i++) {
-                    returnString += ", "+Game.printArray(moves[i]);
+                    returnString += ", "+Tools.print(moves[i]);
                 }
             }
             return returnString + "] )";

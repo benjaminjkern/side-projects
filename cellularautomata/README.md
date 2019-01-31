@@ -10,7 +10,6 @@ If you are for some reason unfamiliar with Conway's Game of Life, here's a neat 
 - Mouse out of screen to run simulation
 
 ### To do List
-- Biggest one: Turn this in to a cellular automata simulator in general with variable rules and variable colors/# of colors
 - Add more user settings! (So that it's not locked and can actually accurately show how this concept works)
   - Different colors
   - Add scalability (Ability to zoom in and out and adjust pixels in screen)
