@@ -1,6 +1,7 @@
-package Mandelbrot;
+package mandelbrot;
 
 import java.util.ArrayList;
+import kern.ComplexNum;
 
 public class MandelbrotFrame {
     private int width, height;
@@ -28,7 +29,7 @@ public class MandelbrotFrame {
 
         color = 0xff0000;
 
-        pixelStack = new ArrayList<Pixel>();
+        pixelStack = new ArrayList<>();
         grid = new Pixel[height][];
         for (int y=0;y<height;y++) {
             grid[y] = new Pixel[width];
@@ -40,29 +41,23 @@ public class MandelbrotFrame {
         }
     }
 
-    public void doCalc() throws InterruptedException
+    public void doCalc()
     {
         int lastSize = width*height;
         while (!stopped && (lastSize == width*height || lastSize > pixelStack.size()))
         {
             lastSize = pixelStack.size();
-            for (int p=0;p<pixelStack.size();p++) {
+            for (int p=pixelStack.size()-1;p>=0;p--) {
                 Pixel currentPixel = pixelStack.get(p);
                 if (currentPixel.value.modulo()>THROWOUT) {
                     currentPixel.pColor = color;
-                    Mandelbrot.bi.setRGB(currentPixel.boardX, currentPixel.boardY, color);
                     pixelStack.remove(p);
-                    p--;
                 } else {
                     currentPixel.calc();
                 }
             }
             
             nextColor();
-
-            Thread.sleep(1);
-
-            Mandelbrot.frame.repaint();
         }
     }
 
@@ -72,6 +67,7 @@ public class MandelbrotFrame {
             colorModulo = (colorModulo+1)%6;
         }
         switch (colorModulo) {
+            default:
             case 0:
                 color -= 0x000011;
                 break;

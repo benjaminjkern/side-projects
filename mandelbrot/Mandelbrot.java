@@ -7,7 +7,7 @@
  */
 
 
-package Mandelbrot;
+package mandelbrot;
 import java.awt.BorderLayout;
 import java.awt.Graphics;
 import java.awt.event.KeyAdapter;
@@ -22,13 +22,15 @@ import javax.swing.SwingUtilities;
 
 public class Mandelbrot
 {
+    boolean aDown, dDown;
+
     public static JFrame frame;
 
     public static BufferedImage bi;
-    
+
     private int frames;
     public int frameCount;
-    
+
     boolean paused;
     boolean animating;
 
@@ -41,7 +43,7 @@ public class Mandelbrot
     ArrayList<MandelbrotFrame> frameList;
 
     public static void main(String... args) throws InterruptedException {
-        m = new Mandelbrot(100,100, -0.15920209459934798, 1.0225993850457615, 2, 1.7763568394002505E-15, 500);
+        m = new Mandelbrot(500,500, -0.15920209459934798, 1.0225993850457615, 2, 1.7763568394002505E-15, 1000);
         m.go();
     }
 
@@ -58,9 +60,28 @@ public class Mandelbrot
 
     public void go() throws InterruptedException {
         while (!animating) {
+            if (aDown || dDown) {
+                if (aDown && frameCount > 0) frameCount--;
+                if (dDown) {
+                    if (frameCount < frameList.size()-1) frameCount++;
+                    else paused = false;
+                }
+
+                currentFrame = frameList.get(frameCount);
+                currentFrame.stopped = true;
+                Thread.sleep(1000/30);
+            } else {
+                currentFrame.stopped = false;
+            }
+            
+            drawFrame();
+
             currentFrame.doCalc();
 
             if (!paused && frameList.size()<frames) newMFrame(currentFrame.centerX, currentFrame.centerY, currentFrame.zoom*zoomFactor);
+            else if (frameList.size()>=frames) System.out.println("done");
+            
+            System.out.println(frameCount);
         }
     }
 
@@ -83,10 +104,10 @@ public class Mandelbrot
         frame.setVisible(true);
 
         newMFrame(centerX, centerY, startZoom);
-        
+
         paused = false;
         animating = false;
-        
+
         this.frames = frames;
         zoomFactor = Math.pow(endZoom/startZoom, 1./(frames-1));
 
@@ -110,28 +131,22 @@ public class Mandelbrot
 
         frame.addKeyListener(new KeyAdapter() {
             public void keyPressed(KeyEvent e) {
+                currentFrame.stopped = true;
+                paused = true;
                 if (e.getKeyCode() == KeyEvent.VK_A) {
-                    paused = true;
-                    if (frameCount > 0) {
-                        currentFrame.stopped = true;
-                        frameCount--;
-                    }
-
-                    currentFrame = frameList.get(frameCount);
-                    currentFrame.stopped = false;
-                    drawFrame();
+                    aDown = true;
+                    dDown = false;
                 } else if (e.getKeyCode() == KeyEvent.VK_D) {
-                    paused = true;
-                    if (frameCount < frameList.size()-1) {
-                        currentFrame.stopped = true;
-                        frameCount++;
-                    } else {
-                        paused = false;
-                    }
-
-                    currentFrame = frameList.get(frameCount);
-                    currentFrame.stopped = false;
-                    drawFrame();
+                    dDown = true;
+                    aDown = false;
+                }
+            }
+            
+            public void keyReleased(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_A) {
+                    aDown = false;
+                } else if (e.getKeyCode() == KeyEvent.VK_D) {
+                    dDown = false;
                 }
             }
         });
@@ -141,7 +156,6 @@ public class Mandelbrot
         currentFrame = new MandelbrotFrame(newCenterX, newCenterY, newZoom);
         frameList.add(currentFrame);
         frameCount = frameList.size()-1;
-        drawFrame();
     }
 
     //this really should only be used to go back to a frame
