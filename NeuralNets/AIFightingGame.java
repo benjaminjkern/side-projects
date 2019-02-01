@@ -33,7 +33,7 @@ public class AIFightingGame extends Game {
 
     private GUI gui;
 
-    public static final int NUM = 20;
+    public static final int NUM = 120;
     private static final int MAXTIME = 60*15;
 
     private boolean animate = true;
