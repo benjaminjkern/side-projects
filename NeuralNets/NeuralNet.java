@@ -2,7 +2,7 @@ package neuralnets;
 
 import kern.Tools;
 
-//Simple Single-layer neural network made for simple games
+//Simple feed-forward neural network made for simple games
 
 public class NeuralNet {
     

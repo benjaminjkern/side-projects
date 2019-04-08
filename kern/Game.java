@@ -4,13 +4,10 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ConcurrentModificationException;
 import javax.swing.JPanel;
@@ -34,11 +31,11 @@ import javax.swing.JPanel;
  * 
  */
 
-public class Game extends JPanel implements MouseListener, KeyListener {
+public abstract class Game extends JPanel implements MouseListener, KeyListener {
 
     private static final long serialVersionUID = 1L;
-
-    public static int width, height;
+    
+    protected int width, height;
     
     protected static final Color BACKGROUNDCOLOR = Color.WHITE;
     protected boolean paused = false;
@@ -47,17 +44,17 @@ public class Game extends JPanel implements MouseListener, KeyListener {
     protected static final int MAXSTEP = 10000;
     protected int step = 1;
 
-    public Game() {}
-
     public Game(int width, int height) {
+        super();
+        
+        this.width = width;
+        this.height = height;
+        
         addMouseListener(this);
         addKeyListener(this);
         setFocusable(true);
         requestFocus();
-
-        Game.width = width;
-        Game.height = height;
-
+        
         checkForResize();
     }
 
@@ -117,53 +114,7 @@ public class Game extends JPanel implements MouseListener, KeyListener {
     }
 
 
-    //THE FOLLOWING ARE MORE JUST TO BE OVERWRITTEN
+    protected abstract void draw(Graphics g);
 
-    protected void draw(Graphics g) {
-        //to be overwritten
-    }
-
-    protected void gameUpdate() {
-        //to be overwritten
-    }
-
-    @Override
-    public void mouseClicked(MouseEvent e) {
-        //to be overwritten
-    }
-
-    @Override
-    public void mousePressed(MouseEvent e) {
-        //to be overwritten
-    }
-
-    @Override
-    public void mouseReleased(MouseEvent e) {
-        //to be overwritten
-    }
-
-    @Override
-    public void mouseEntered(MouseEvent e) {
-        //to be overwritten
-    }
-
-    @Override
-    public void mouseExited(MouseEvent e) {
-        //to be overwritten
-    }
-
-    @Override
-    public void keyTyped(KeyEvent e) {
-        //to be overwritten
-    }
-
-    @Override
-    public void keyPressed(KeyEvent e) {
-        //to be overwritten
-    }
-
-    @Override
-    public void keyReleased(KeyEvent e) {
-        //to be overwritten
-    }
+    protected abstract void gameUpdate();
 }

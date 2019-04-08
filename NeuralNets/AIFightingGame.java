@@ -1,11 +1,12 @@
 package neuralnets;
 
-import kern.Game;
 import java.awt.Graphics;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+
 import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JRootPane;
+import kern.Game;
+import kern.physics.RectObstacle;
 
 public class AIFightingGame extends Game {
 
@@ -33,18 +34,18 @@ public class AIFightingGame extends Game {
 
     private GUI gui;
 
-    public static final int NUM = 120;
+    public static final int NUM = 2;
     private static final int MAXTIME = 60*15;
 
     private boolean animate = true;
 
     public AIFightingGame(int width, int height) {
         super(width, height);
-        
+
         population = new Population(NUM);
-        stats = new Stats(population);
         gui = new GUI(width, height);
-        
+        stats = new Stats(population, width, height-gui.lowerStage.height-gui.colorBar.height);
+
         newGeneration();
         gameStart();
     }
@@ -57,19 +58,19 @@ public class AIFightingGame extends Game {
 
         stats.storePop(population);
         population.scramble();
-        
+
         generation++;
 
         id1 = 0;
         id2 = 1;
-        
+
         Member oldest = population.getOldest();
         Member highestScore = population.getHighestTotal();
         Member highestAverage = population.getHighestAverage();
-        
+
         gui.gen.display("Oldest: "+oldest.name+", Age: " + oldest.age, "Highest Total Score: " + highestScore.name + ", Total Score: " + highestScore.totalScore, "Highest Average Score: " + highestAverage.name+", Average Score: " + highestAverage.averageScore);
-        gui.l.b.display(population);
-        
+        gui.colorBar.display(population);
+
         initCharacters();
     }
 
@@ -77,15 +78,20 @@ public class AIFightingGame extends Game {
         if (id1<population.size() && id2<population.size()) {
             time = MAXTIME;
             
-            character1 = new Character(1, population.get(id1));
-            character2 = new Character(2, population.get(id2));
-            
+            double newHeight = height - gui.lowerStage.height - gui.colorBar.height;
+            RectObstacle stage = new RectObstacle(width/2., newHeight/2., width, newHeight, 0);
+            RectObstacle border1 = new RectObstacle(width*3/4., newHeight/2., width/2., newHeight, 0);
+            RectObstacle border2 = new RectObstacle(width/4., newHeight/2., width/2., newHeight, 0);
+
+            character1 = new Character(population.get(id1), 180, stage, border1);
+            character2 = new Character(population.get(id2), 0, stage, border2);
+
             character1.setOpponent(character2);
             character2.setOpponent(character1);
-            
+
             gui.c1.display(character1.member().infoText());
             gui.c2.display(character2.member().infoText());
-            
+
             int matchNum = id1 / 2 + 1;
             int totalMatches = population.size() / 2;
             gui.game.display("Generation: "+generation, "Match: " + matchNum + "/" + totalMatches);
@@ -100,11 +106,11 @@ public class AIFightingGame extends Game {
 
         if (character1.isHit()) {
             character2.member().changeScore(1);
-            character1.member().changeScore(-100);
+            character1.member().changeScore(-10);
         }
         if (character2.isHit()) {
             character1.member().changeScore(1);
-            character2.member().changeScore(-100);
+            character2.member().changeScore(-10);
         }
     }
 
@@ -117,10 +123,10 @@ public class AIFightingGame extends Game {
     @Override
     public void gameUpdate() {
         doCharacterStuff();
-        
+
         time--;
         gui.time.display(time);
-        
+
         if (time<=0) {
             endGame();
         }
@@ -163,5 +169,47 @@ public class AIFightingGame extends Game {
             default:
                 //literally just here so that the linter likes me
         }
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void keyTyped(KeyEvent e) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+        // TODO Auto-generated method stub
+
     }
 }

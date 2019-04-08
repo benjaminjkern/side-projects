@@ -1,5 +1,7 @@
 package chessplayer;
 
+// THIS IS THE STATE / NODE
+
 import java.awt.Color;
 import java.awt.Graphics;
 import java.util.ArrayList;
@@ -8,97 +10,94 @@ import kern.Tools;
 public class Board {
 
     //width of selected square boundary box for animation
-    private static final int SELWIDTH = 10;
+    public static final int SELWIDTH = 10;
 
     private Piece[][] pieceBoard;
-    private Piece selectedPos;
 
     private ArrayList<Piece> whitePieces;
     private ArrayList<Piece> blackPieces;
 
-    public int width, height;
+    private Board parent;
+
+    private int width, height;
+    public int width() {return width;}
+    public int height() {return height;}
 
     public Board(String[][] stringBoard) {
-        whitePieces = new ArrayList<Piece>();
-        blackPieces = new ArrayList<Piece>();
+        whitePieces = new ArrayList<>();
+        blackPieces = new ArrayList<>();
 
         height = stringBoard.length;
         width = stringBoard[0].length;
         pieceBoard = new Piece[height][width];
+        parent = null;
+
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
-                pieceBoard[i][j] = Piece.parse(stringBoard[i][j]);
-                if (pieceBoard[i][j] != null) {
+                try {
+                    pieceBoard[i][j] = new Piece(stringBoard[i][j]);
+
                     if (pieceBoard[i][j].isWhite) whitePieces.add(pieceBoard[i][j]);
                     else blackPieces.add(pieceBoard[i][j]);
                     pieceBoard[i][j].place(j, i);
-                }
+                } catch (IllegalArgumentException e) {}
             }
         }
     }
 
-    public Moves[] getMoves(boolean white) {
-        ArrayList<Piece> pieces = white?whitePieces:blackPieces;
-        Moves[] possibleMoves = new Moves[pieces.size()];
-        for (int p = 0; p < pieces.size(); p++) {
-            possibleMoves[p] = new Moves(pieces.get(p));
-        }
-        for (Moves mi:possibleMoves) {
-            System.out.println(mi.toString());
-        }
-        return possibleMoves;
-    }
+    public Board(Board board) {
+        parent = board;
 
-    public Piece checkPiece(int[] pos) {
-        return inBoard(pos) ? pieceBoard[pos[1]][pos[0]] : null;
-    }
+        height = board.height;
+        width = board.width;
 
-    public boolean inBoard(int[] pos) {
-        return pos == null ? false : pos[0] >= 0 && pos[0] < width && pos[1] >= 0 && pos[1] < height;
-    }
-
-    public void selectPosition(int x, int y, boolean whiteMove) {
-        Piece selectedP = checkPiece(new int[] {x,y});
-        if (selectedPos == null) {
-            if (selectedP != null && selectedP.isWhite == whiteMove) selectedPos = selectedP;
-        } else {
-            if (selectedP == null || selectedP.isWhite != whiteMove) {
-                if (selectedPos.isAMove(new int[] {x,y})) {
-                    movePiece(selectedPos, new int[] {x,y});
-                    selectedPos = null;
-                    ChessGame.whiteMove = !ChessGame.whiteMove;
-                }
-            } else if (selectedPos.samePos(selectedP)) {
-                selectedPos = null;
-            } else if (selectedP.isWhite == whiteMove) {
-                selectedPos = selectedP;
-            }
-        }
-    }
-
-    public void movePiece(Piece pieceToMove, int[] newPos) {
-        pieceBoard[newPos[1]][newPos[0]] = pieceToMove;
-        pieceBoard[pieceToMove.y][pieceToMove.x] = null;
-        pieceToMove.place(newPos[0], newPos[1]);
-        pieceToMove.hasMoved = true;
-    }
-
-    public void draw(Graphics g) {
-
-        double boardWidth = (double) ChessGame.width / (double) width;
-        double boardHeight = (double) ChessGame.height / (double) height;
+        pieceBoard = new Piece[height][width];
+        whitePieces = new ArrayList<>();
+        blackPieces = new ArrayList<>();
 
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
-                boolean isSelected = selectedPos != null && j == selectedPos.x && i == selectedPos.y;
-                g.setColor(isSelected ? Color.YELLOW : ((i - j) % 2 == 0 ? new Color(0xEDC6A6) : new Color(0xA05B23)));
+                try {
+                    pieceBoard[i][j] = new Piece(board.pieceBoard[i][j]);
+
+                    if (pieceBoard[i][j].isWhite) whitePieces.add(pieceBoard[i][j]);
+                    else blackPieces.add(pieceBoard[i][j]);
+                    pieceBoard[i][j].place(j, i);
+                } catch (IllegalArgumentException e) {}
+            }
+        }
+
+    }
+
+    // check if this position is valid, if so return the piece if not return null
+    public Piece checkPiece(int x, int y) {
+        return (x >= 0 && x < width && y >= 0 && y < height) ? pieceBoard[y][x] : null;
+    }
+
+    public void draw(Graphics g, double chessWidth, double chessHeight, ChessPlayer player) {
+
+        double boardWidth = chessWidth / (double) width;
+        double boardHeight = chessHeight / (double) height;
+
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+                Color bColor = (i - j) % 2 == 0 ? new Color(0xEDC6A6) : new Color(0xA05B23);
+                Color sColor = bColor;
+                if (pieceBoard[i][j] != null) {
+                    if (pieceBoard[i][j].inCheck) sColor = Color.RED;
+                    if (pieceBoard[i][j].equals(player.selectedPiece)) sColor = Color.YELLOW;
+                }
+                g.setColor(sColor);
                 g.fillRect((int) (j * boardWidth), (int) (i * boardHeight), (int) (boardWidth) + 1, (int) (boardHeight) + 1);
 
-                if (isSelected) {
-                    g.setColor((i - j) % 2 == 0 ? new Color(0xEDC6A6) : new Color(0xA05B23));
-                    g.fillRect((int) (j * boardWidth) + SELWIDTH, (int) (i * boardHeight) + SELWIDTH, (int) (boardWidth) + 1 - 2*SELWIDTH, (int) (boardHeight) + 1 - 2*SELWIDTH);
-                }
                 if (pieceBoard[i][j] != null) {
+                    // draw inside area if its in check or selected
+                    if (pieceBoard[i][j].inCheck || pieceBoard[i][j].equals(player.selectedPiece)) {
+                        g.setColor(bColor);
+                        g.fillRect((int) (j * boardWidth) + SELWIDTH, (int) (i * boardHeight) + SELWIDTH, (int) (boardWidth) + 1 - 2*SELWIDTH, (int) (boardHeight) + 1 - 2*SELWIDTH);
+                    }
+
+                    //draw piece
                     g.setColor(pieceBoard[i][j].isWhite ? Color.WHITE : Color.BLACK);
                     Tools.drawCenteredString(new String[] {pieceBoard[i][j].toString()}, (int) ((j + 0.5) * boardWidth), (int) ((i + 0.5) * boardHeight), g);
                 }
@@ -106,24 +105,64 @@ public class Board {
         }
     }
 
-    class Moves {
-        Piece p;
-        int[][] moves;
+    // force-move a piece to a location and updates lists if it kills another piece
+    public void movePiece(Piece piece, int x, int y) {
+        parent = new Board(this);
 
-        Moves(Piece p) {
-            this.p = p;
-            this.moves = p.getMoves();
-        }
-
-        public String toString() {
-            String returnString = "( \"" + p.toString() + "\" , [" + p.x + ", "+p.y+"] , [";
-            if (moves.length>0) {
-                returnString += Tools.print(moves[0]);
-                for (int i=1;i<moves.length;i++) {
-                    returnString += ", "+Tools.print(moves[i]);
+        // remove from LIST
+        if (pieceBoard[y][x] != null) {
+            ArrayList<Piece> pieceList = piece.isWhite ? blackPieces : whitePieces;
+            for (int p = 0; p<pieceList.size(); p++) {
+                if (pieceList.get(p).equals(pieceBoard[y][x])) {
+                    pieceList.remove(p);
+                    break;
                 }
             }
-            return returnString + "] )";
         }
+
+        //move piece
+        pieceBoard[piece.y][piece.x] = null; 
+        pieceBoard[y][x] = piece;
+        piece.place(x, y);
+        piece.hasMoved = true;
+    }
+
+    public void moveBack() {
+        if (parent != null) {
+            pieceBoard = new Piece[height][width];
+            whitePieces = new ArrayList<>();
+            blackPieces = new ArrayList<>();
+
+            for (int i = 0; i < height; i++) {
+                for (int j = 0; j < width; j++) {
+                    try {
+                        pieceBoard[i][j] = new Piece(parent.pieceBoard[i][j]);
+
+                        if (pieceBoard[i][j].isWhite) whitePieces.add(pieceBoard[i][j]);
+                        else blackPieces.add(pieceBoard[i][j]);
+                        pieceBoard[i][j].place(j, i);
+                    } catch (IllegalArgumentException e) {}
+                }
+            }
+        }
+    }
+
+    // check if in Check! (Decently fast I'm happy with this)
+    // this works for multiple kings!
+    public boolean check(boolean isWhite) {
+        ArrayList<Piece> pieceList = isWhite ? whitePieces : blackPieces;
+        ArrayList<Piece> oPieceList = !isWhite ? whitePieces : blackPieces;
+        for (Piece bp : pieceList) {
+            if (bp.pieceType == Piece.Type.KING) {
+                bp.inCheck = false;
+                for (Piece wp : oPieceList) {
+                    if (wp.validMove(bp.x, bp.y, this)) {
+                        bp.inCheck = true;
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 }
