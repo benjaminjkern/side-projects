@@ -4,15 +4,11 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.util.ArrayList;
 import kern.Tools;
+import kern.physics.CircObstacle;
+import kern.physics.RectObstacle;
 
-public class Character {
-    private double x,y,speed,angle,FOV,memory,waitTime = 0;
-    private boolean shield;
-    
-    public double x() {return x;}
-    public double y() {return y;}
-    public double angle() {return angle;}
-
+public class Character extends CircObstacle {
+    private double FOV,memory,waitTime = 0;
     private ArrayList<Bullet> bullets;
 
     private static final int FOVDIST = 150;
@@ -24,25 +20,20 @@ public class Character {
     private static final double ANGSPEED = 2;
     
     private static final int TIMEBETWEENSHOTS = 60;
-    
-    public static final double RADIUS = 25;
+    private static final double CHARACTER_RADIUS = 25;
 
     private Member myMember;
     private Character opponent;
+    private RectObstacle stage, border;
 
-    public Character(int whichSide, Member m) {
-        if (whichSide == 1) {
-            x = AIFightingGame.width/4.;
-            y = AIFightingGame.height/2.-GUI.LowerStage.HEIGHT/2.;
-            angle = 180;
-        } else {
-            x = AIFightingGame.width*3/4.;
-            y = AIFightingGame.height/2.-GUI.LowerStage.HEIGHT/2.;
-            angle = 0;
-        }
+    public Character(Member m, double angle, RectObstacle stage, RectObstacle border) {
+        super(border.x, border.y, CHARACTER_RADIUS);
         
-        this.speed = 0;
+        this.stage = stage;
+        this.border = border;
+        this.angle = angle;
         this.FOV = 45;
+        
         this.bullets = new ArrayList<>();
         myMember = m;
     }
@@ -51,17 +42,11 @@ public class Character {
         opponent = o;
     }
 
+    @Override
     public void draw(Graphics g) {
-
         //draw bullets
         for (int b=0;b<bullets.size();b++) {
             bullets.get(b).draw(g);
-        }
-
-        //draw shield!
-        if (shield) {
-            g.setColor(new Color(255, 0, 0, 50));
-            g.fillArc((int) (x - FOVDIST), (int) (y - FOVDIST), 2*FOVDIST, 2*FOVDIST, (int)(-FOV/2.-angle), (int)(FOV));
         }
 
         //FOV lines
@@ -71,66 +56,37 @@ public class Character {
 
         //draw ball
         g.setColor(myMember.color);
-        g.fillOval((int)(x - RADIUS), (int)(y - RADIUS), (int)(2 * RADIUS), (int)(2 * RADIUS));
-        g.setColor(Color.BLACK);
-        g.drawOval((int)(x - RADIUS), (int)(y - RADIUS), (int)(2 * RADIUS), (int)(2 * RADIUS));
+        g.fillOval((int)(x - radius), (int)(y - radius), (int)(2 * radius), (int)(2 * radius));
+        super.draw(g);
     }
 
     public void moveCharacter() {
-        handleOutputs();
+        
+        // this is how I want everything to be handled moving forward, I like it this way
+        handleOutputs(getInputs(stage));
 
-        //handle speed and wall collisions
-        double speedX = speed*Math.cos(angle*Math.PI/180);
-        double speedY = speed*Math.sin(angle*Math.PI/180);
-
-        if (x+speedX<RADIUS) {
-            speedX = 0;
-            x = RADIUS;
-        }
-        if (x+speedX>AIFightingGame.width-RADIUS) {
-            speedX = 0;
-            x = AIFightingGame.width-RADIUS;
-        }
-        if (y+speedY<RADIUS) {
-            speedY = 0;
-            y = RADIUS;
-        }
-        if (y+speedY>AIFightingGame.height-GUI.LowerStage.HEIGHT-RADIUS) {
-            speedY = 0;
-            y = AIFightingGame.height-GUI.LowerStage.HEIGHT-RADIUS;
-        }
-
-        //check if hitting center divider
-        if (x>AIFightingGame.width/2 && x+speedX<AIFightingGame.width/2.+RADIUS) {
-            speedX = 0;
-            x = AIFightingGame.width/2.+RADIUS;
-        }
-        if (x<AIFightingGame.width/2 && x+speedX>AIFightingGame.width/2.-RADIUS) {
-            speedX = 0;
-            x = AIFightingGame.width/2.-RADIUS;
-        }
-
-        if (!shield) {
-            x += speedX;
-            y += speedY;
-        }
+        //test if colliding with other stuff
+        
+        speed = border.hitTest(this, 1);
+        
+        //after the collision is handled, move!
+        move();
 
         //handle bullet waiting time
         waitTime--;
         for (int b=bullets.size()-1; b>=0; b--) {
             Bullet bull = bullets.get(b);
-            bull.moveBullet();
+            bull.move();
             
-            // Just in case I want the bullets to be destroyed by the shield: if (bull.outOfFrame() || (getDist(bull)<FOVDIST && checkInSight(bull) && shield)) {
-            if (bull.outOfFrame()) {
+            if (!stage.insideRect(bull)) {
                 bullets.remove(b);
             }
         }
     }
     
-    private void handleOutputs() {
+    private void handleOutputs(double[] inputs) {
         //get outputs
-        double[] outputs = Tools.sigmoid(myMember.brain.propagate(getInputs()));
+        double[] outputs = Tools.sigmoid(myMember.brain.propagate(inputs));
         
         /*
          * outputs[0]: Speed
@@ -142,11 +98,10 @@ public class Character {
          */
 
         //put them to work!
-        speed = (outputs[0]*2-1)*MAXSPEED;
+        speed = Tools.mult((outputs[0]*2-1)*MAXSPEED, unitVecDir());
         angle += (outputs[1]*2-1)*ANGSPEED;
         FOV += (outputs[2]*2-1)*FOVSPEED;
-        shield = outputs[3]>0.5;
-        if (outputs[4]>0.5 && !shield) shoot();
+        if (outputs[4]>0.5) shoot();
         memory = outputs[5];
 
         //handle maxs and angle fixing
@@ -165,7 +120,7 @@ public class Character {
         }
     }
 
-    private double[] getInputs() {
+    private double[] getInputs(RectObstacle stage) {
         double[] inputs = new double[myMember.brain.inputs()];
         
         /*
@@ -181,16 +136,16 @@ public class Character {
 
         inputs[0] = opponentInSight?1:-1;
         if (opponentInSight) {
-            inputs[1] = getDist(opponent) / (double) AIFightingGame.width * 2 - 1;
+            inputs[1] = getDist(opponent) / stage.width * 2 - 1;
             inputs[2] = Tools.dotProduct(Tools.unitVector(getDiff(opponent)), opponent.unitVecDir());
-            inputs[3] = opponent.shield?1:-1;
+            inputs[3] = 0;
         }
         inputs[4] = (oBullet != null)?1:-1;
         if (oBullet != null) {
-            inputs[5] = getDist(oBullet) / (double) AIFightingGame.width * 2 - 1;
+            inputs[5] = getDist(oBullet) / stage.width * 2 - 1;
             inputs[6] = Tools.dotProduct(Tools.unitVector(getDiff(oBullet)), oBullet.unitVecDir());
         }
-        inputs[7] = shield?1:-1;
+        inputs[7] = 0;
         inputs[8] = FOV/45 - 1;
         inputs[9] = memory;
         inputs[10] = Tools.rand(-1,1);
@@ -225,10 +180,6 @@ public class Character {
 
         return diff == 0 ? 0 : ((diffX * dy - dx * diffY) / diff * Tools.sgn(speed));
     }
-
-    public boolean checkInSight(double x, double y, double Fangle) {
-        return angleInRange(Math.toDegrees(Math.atan2(y - this.y, x - this.x)), angle - Fangle, angle + Fangle);
-    }
     
     public static boolean angleInRange(double testAngle, double beginRange, double endRange) {
         double editedB = (beginRange + 180) % 360 - 180;
@@ -240,54 +191,34 @@ public class Character {
         return editedB <= editedT && editedT <= editedE;
     }
 
+    public boolean checkInSight(double x, double y, double Fangle) {
+        return angleInRange(Math.toDegrees(Math.atan2(y - this.y, x - this.x)), angle - Fangle, angle + Fangle);
+    }
+
     public boolean checkInSight(double x,double y) {
         return checkInSight(x,y,FOV/2.);
     }
 
-    public boolean checkInSight(Character c) {
-        return checkInSight(c.x(),c.y(),FOV/2. + Math.toDegrees(Math.asin(RADIUS / getDist(c))));
-    }
-
-    public boolean checkInSight(Bullet b) {
-        return checkInSight(b.x(),b.y(),FOV/2. + Math.toDegrees(Math.asin(Bullet.RADIUS / getDist(b))));
+    public boolean checkInSight(CircObstacle c) {
+        return checkInSight(c.x,c.y,FOV/2. + Math.toDegrees(Math.asin(c.radius / getDist(c))));
     }
     
-    public double[] getDiff(double x, double y) {
-        return new double[] {x - this.x, y - this.y};
-    }
-
-    public double getDist(double x,double y) {
-        return Math.sqrt(Tools.sum(Tools.cPow(getDiff(x,y), 2)));
+    public double[] getDiff(CircObstacle c) {
+        return new double[] {c.x - x, c.y - y};
     }
     
-    public double[] getDiff(Bullet b) {
-        return getDiff(b.x(), b.y());
-    }
-    public double[] getDiff(Character c) {
-        return getDiff(c.x(), c.y());
-    }
-    
-    public double getDist(Bullet b) {
-        return getDist(b.x(), b.y());
-    }
-    public double getDist(Character c) {
-        return getDist(c.x(), c.y());
+    public double getDist(CircObstacle c) {
+        return Math.sqrt(Tools.sum(Tools.cPow(getDiff(c), 2)));
     }
 
     public boolean isHit() {
-
         for (int b=0;b<opponent.bullets.size();b++) {
             Bullet theBullet = opponent.bullets.get(b);
 
             //bullet kills character
-            if (getDist(theBullet)<RADIUS+Bullet.RADIUS) {
+            if (collide(this,theBullet)) {
                 opponent.bullets.remove(b);
                 return true;
-            }
-
-            //shield destroys bullet
-            if (getDist(theBullet)<FOVDIST && checkInSight(theBullet) && shield) {
-                opponent.bullets.remove(b);
             }
         }
         return false;

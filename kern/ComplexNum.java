@@ -43,8 +43,7 @@ public class ComplexNum {
 
     public ComplexNum pow(ComplexNum c) {
         double theta = c.r*angle()+c.i*Math.log(modulo());
-        ComplexNum a = new ComplexNum(Math.cos(theta),Math.sin(theta)).mult(new ComplexNum(Math.exp(c.r*Math.log(modulo())-c.i*angle()),0));
-        return a;
+        return new ComplexNum(Math.cos(theta),Math.sin(theta)).mult(new ComplexNum(Math.exp(c.r*Math.log(modulo())-c.i*angle()),0));
     }
 
     public ComplexNum pow(double d) {

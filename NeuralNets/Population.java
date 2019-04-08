@@ -41,7 +41,7 @@ public class Population {
         }
 
         //a brand new member is added just to keep diversity
-        members[size - 1] = new Member(count);
+        //members[size - 1] = new Member(count);
         count++;
     }
 

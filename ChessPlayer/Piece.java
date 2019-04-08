@@ -1,202 +1,249 @@
 package chessplayer;
 
-import java.awt.Color;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import kern.Tools;
+class Piece {
 
-public class Piece extends JPanel {
-
+    boolean inCheck;
     boolean hasMoved;
     boolean isWhite;
     Type pieceType;
-    int x,y;
-    
+    public int x,y;
+
     enum Type {
-        Pawn, King, Queen, Bishop, Knight, Rook;
+        PAWN, KING, QUEEN, BISHOP, KNIGHT, ROOK;
     }
     
-    public Piece(boolean isWhite, Type pieceType) {
-        this.isWhite = isWhite;
-        this.pieceType = pieceType;
-        hasMoved = false;
+    public Piece(Piece piece) {
+        if (piece == null) throw new IllegalArgumentException();
+        isWhite = piece.isWhite;
+        x = piece.x;
+        y = piece.y;
+        pieceType = piece.pieceType;
+        hasMoved = piece.hasMoved;
+        inCheck = piece.inCheck;
     }
-    
-    public static Piece parse(String piece) {
-        //I feel like I can do this better but its FINE for now
-        
-        if (piece == null) return null;
-        
-        boolean isWhite;
-        Type pieceType;
-        
+
+    public Piece(String piece) {
+        if (piece == null) throw new IllegalArgumentException();
+
         String parsedString = piece.trim().toLowerCase();
-        if (parsedString.length() != 2) return null;
-        
+
+        if (parsedString.length() != 2) throw new IllegalArgumentException();
+
         switch (parsedString.charAt(0)) {
+            default:
             case 'w':
                 isWhite = true;
                 break;
             case 'b':
                 isWhite = false;
                 break;
-            default:
-                return null;
         }
 
         switch (parsedString.charAt(1)) {
+            default:
             case 'p':
-                pieceType = Type.Pawn;
+                pieceType = Type.PAWN;
                 break;
             case 'k':
-                pieceType = Type.King;
+                pieceType = Type.KING;
                 break;
             case 'q':
-                pieceType = Type.Queen;
+                pieceType = Type.QUEEN;
                 break;
             case 'b':
-                pieceType = Type.Bishop;
+                pieceType = Type.BISHOP;
                 break;
             case 'n':
-                pieceType = Type.Knight;
+                pieceType = Type.KNIGHT;
                 break;
             case 'r':
-                pieceType = Type.Rook;
+                pieceType = Type.ROOK;
                 break;
-            default:
-                return null;
         }
-        
-        return new Piece(isWhite, pieceType);
+
+        hasMoved = false;
     }
-    
+
     public void place(int x, int y) {
         this.x = x;
         this.y = y;
     }
-    
+
+    @Override
     public String toString() {
         String returnString = isWhite?"White ":"Black ";
 
         switch (pieceType) {
-            case Pawn:
+            case PAWN:
                 returnString += "Pawn";
                 break;
-            case King:
+            case KING:
                 returnString += "King";
                 break;
-            case Queen:
+            case QUEEN:
                 returnString += "Queen";
                 break;
-            case Bishop:
+            case BISHOP:
                 returnString += "Bishop";
                 break;
-            case Knight:
+            case KNIGHT:
                 returnString += "Knight";
                 break;
-            case Rook:
+            case ROOK:
                 returnString += "Rook";
                 break;
             default:
-                return null;
+                return "";
         }
-        
+
         return returnString;
     }
-    
-    public int[][] getMoves() {
-        //POSSIBLE MAKER-FASTER: have a fixed length of the currentMoves array and then truncate the end that would be null
-        
-        int[][] currentMoves = new int[0][2];
-        int[] newPos = {};
-        Piece newPiece = null;
-        
+
+    // THIS IS THE SPAGHETTI CODE FOR THE RULES OF CHESS I'm kinda happy with how this turned out honestly
+    public boolean validMove(int x, int y, Board board) {
+        Piece newPiece = board.checkPiece(x, y);
+        if (newPiece != null && newPiece.isWhite == isWhite) return false;
+
         switch (pieceType) {
-            case Pawn:
+            case PAWN:
+                if (newPiece == null) return (y == this.y+(isWhite ? -1 : 1) || (!hasMoved && y == this.y+(isWhite ? -2 : 2))) &&  x == this.x;
+                else return y == this.y+(isWhite ? -1 : 1) && Math.abs(x-this.x) == 1;
+            case KING:
+                return Math.abs(x-this.x) + Math.abs(y-this.y) == 1 || (Math.abs(x-this.x) == 1 && Math.abs(y-this.y) == 1);
+            case KNIGHT:
+                return (Math.abs(x-this.x) == 1 && Math.abs(y-this.y) == 2) || (Math.abs(x-this.x) == 2 && Math.abs(y-this.y) == 1);
+            case ROOK:
+                if (x == this.x) {
+                    int dir = this.y>y ? 1 : -1;
+                    for (int i=1;i != Math.abs(this.y-y);i++) if (board.checkPiece(x,y+dir*i) != null) return false;
+                    return true;
+                } else if (y == this.y) {
+                    int dir = this.x>x ? 1 : -1;
+                    for (int i=1;i != Math.abs(this.x-x);i++) if (board.checkPiece(x+dir*i,y) != null) return false;
+                    return true;
+                }
+                return false;
+            case BISHOP:
+                if (Math.abs(this.y-y) == Math.abs(this.x-x)) {
+                    int dirx = this.x>x ? 1 : -1;
+                    int diry = this.y>y ? 1 : -1;
+                    for (int i=1;i != Math.abs(this.x-x);i++) if (board.checkPiece(x+dirx*i,y+diry*i) != null) return false;
+                    return true;
+                }
+                return false;
+            case QUEEN:
+                if (Math.abs(this.y-y) == Math.abs(this.x-x)) {
+                    int dirx = this.x>x ? 1 : -1;
+                    int diry = this.y>y ? 1 : -1;
+                    for (int i=1;i != Math.abs(this.x-x);i++) if (board.checkPiece(x+dirx*i,y+diry*i) != null) return false;
+                    return true;
+                } else if (x == this.x) {
+                    int dir = this.y>y ? 1 : -1;
+                    for (int i=1;i != Math.abs(this.y-y);i++) if (board.checkPiece(x,y+dir*i) != null) return false;
+                    return true;
+                } else if (y == this.y) {
+                    int dir = this.x>x ? 1 : -1;
+                    for (int i=1;i != Math.abs(this.x-x);i++) if (board.checkPiece(x+dir*i,y) != null) return false;
+                    return true;
+                }
+                return false;
+            default:
+                return false;
+
+        }
+    }
+
+    /*public int[][] getMoves() {
+        //POSSIBLE MAKER-FASTER: have a fixed length of the currentMoves array and then truncate the end that would be null
+
+        int[][] currentMoves = new int[0][2];
+        int[] newPos;
+        Piece newPiece = null;
+
+        switch (pieceType) {
+            case PAWN:
                 if (!hasMoved) {
                     newPos = new int[] {x, y + 2*(isWhite?-1:1)};
-                    newPiece = ChessGame.board.checkPiece(newPos);
-                    if (ChessGame.board.inBoard(newPos) && newPiece == null) currentMoves = addMove(currentMoves, newPos);
+                    newPiece = checkPiece(newPos);
+                    if (onBoard(newPos) && newPiece == null) currentMoves = addMove(currentMoves, newPos);
                 }
-                
+
                 newPos = new int[] {x, y + (isWhite?-1:1)};
-                newPiece = ChessGame.board.checkPiece(newPos);
-                if (ChessGame.board.inBoard(newPos) && newPiece == null) currentMoves = addMove(currentMoves, newPos);
-       
-                
+                newPiece = checkPiece(newPos);
+                if (onBoard(newPos) && newPiece == null) currentMoves = addMove(currentMoves, newPos);
+
+
                 newPos = new int[] {x+1, y + (isWhite?-1:1)};
-                newPiece = ChessGame.board.checkPiece(newPos);
+                newPiece = checkPiece(newPos);
                 if (newPiece != null && newPiece.isWhite == !isWhite) currentMoves = addMove(currentMoves, newPos);
-                
+
                 newPos = new int[] {x-1, y + (isWhite?-1:1)};
-                newPiece = ChessGame.board.checkPiece(newPos);
+                newPiece = checkPiece(newPos);
                 if (newPiece != null && newPiece.isWhite == !isWhite) currentMoves = addMove(currentMoves, newPos);
                 //to implement: en passant move
                 //Could also be shortened down to fix reusing code
                 break;
-            case King:
+            case KING:
                 for (int i=0;i<8;i++) {
                     currentMoves = addNewMove(currentMoves, x+Tools.sgn(Math.cos(i * 2*Math.PI/8.)), y+Tools.sgn(Math.sin(i * 2*Math.PI/8.)));
                 }
-                
+
                 //to implement: castling and not moving for checkmate, also make it in 1 for loop maybe
                 break;
-            case Queen:
+            case QUEEN:
                 for (int i=0;i<8;i++) {
                     currentMoves = addRowOfMoves(currentMoves, Tools.sgn(Math.cos(i * 2*Math.PI/8.)),Tools.sgn(Math.sin(i * 2*Math.PI/8.)));
                 }
                 break;
-            case Bishop:
+            case BISHOP:
                 for (int i=0;i<4;i++) {
-                    currentMoves = addRowOfMoves(currentMoves, Tools.sgn(Math.cos((i+0.5) * 2*Math.PI/4.)),Tools.sgn(Math.sin((i+0.5) * 2*Math.PI/4.)));
+                    currentMoves = addRowOfMoves(currentMoves, Tools.sgn(Math.cos((i+0.5) * 2*Math.PI/4.)),Tools.sgn(Math.sin((i+0.5) * 2*Math.PI/4.)), board);
                 }
                 break;
-            case Knight:
-                currentMoves = addNewMove(currentMoves, x+1, y+2);
-                currentMoves = addNewMove(currentMoves, x+2, y+1);
-                currentMoves = addNewMove(currentMoves, x+1, y-2);
-                currentMoves = addNewMove(currentMoves, x+2, y-1);
-                currentMoves = addNewMove(currentMoves, x-1, y-2);
-                currentMoves = addNewMove(currentMoves, x-2, y-1);
-                currentMoves = addNewMove(currentMoves, x-1, y+2);
-                currentMoves = addNewMove(currentMoves, x-2, y+1);
-                
+            case KNIGHT:
+                currentMoves = addNewMove(currentMoves, x+1, y+2, board);
+                currentMoves = addNewMove(currentMoves, x+2, y+1, board);
+                currentMoves = addNewMove(currentMoves, x+1, y-2, board);
+                currentMoves = addNewMove(currentMoves, x+2, y-1, board);
+                currentMoves = addNewMove(currentMoves, x-1, y-2, board);
+                currentMoves = addNewMove(currentMoves, x-2, y-1, board);
+                currentMoves = addNewMove(currentMoves, x-1, y+2, board);
+                currentMoves = addNewMove(currentMoves, x-2, y+1, board);
+
                 //this could be done in one loop
                 break;
-            case Rook:
+            case ROOK:
                 for (int i=0;i<4;i++) {
-                    currentMoves = addRowOfMoves(currentMoves, Tools.sgn(Math.cos(i * 2*Math.PI/4.)), Tools.sgn(Math.sin(i * 2*Math.PI/4.)));
+                    currentMoves = addRowOfMoves(currentMoves, Tools.sgn(Math.cos(i * 2*Math.PI/4.)), Tools.sgn(Math.sin(i * 2*Math.PI/4.)), board);
                 }
                 break;
             default:
                 break;
-                
+
         }
         return currentMoves;
     }
-    
-    public int[][] addRowOfMoves(int[][] currentMoves, int xStep, int yStep) {
+
+    public int[][] addRowOfMoves(int[][] currentMoves, int xStep, int yStep, Board board) {
         int[] newPos = new int[]{x + xStep, y + yStep};
-        Piece newPiece = ChessGame.board.checkPiece(newPos);
+        Piece newPiece = board.checkPiece(newPos);
         int[][] movesToReturn = currentMoves;
-        
-        while (ChessGame.board.inBoard(newPos) && newPiece == null) {
+
+        while (board.inBoard(newPos) && newPiece == null) {
             movesToReturn = addMove(movesToReturn, newPos);
             newPos = new int[] {newPos[0] + xStep, newPos[1] + yStep};
-            newPiece = ChessGame.board.checkPiece(newPos);
+            newPiece = board.checkPiece(newPos);
         }
-        if (ChessGame.board.inBoard(newPos) && newPiece.isWhite == !isWhite) movesToReturn = addMove(movesToReturn, newPos);
+        if (board.inBoard(newPos) && newPiece.isWhite == !isWhite) movesToReturn = addMove(movesToReturn, newPos);
         return movesToReturn;
     }
-    
-    public int[][] addNewMove(int[][] currentMoves, int x, int y) {
+
+    public int[][] addNewMove(int[][] currentMoves, int x, int y, Board board) {
         int[] newPos = new int[] {x, y};
-        Piece newPiece = ChessGame.board.checkPiece(newPos);
-        return (ChessGame.board.inBoard(newPos) && (newPiece == null || newPiece.isWhite == !isWhite)) ? addMove(currentMoves, newPos) : currentMoves;
+        Piece newPiece = board.checkPiece(newPos);
+        return (board.inBoard(newPos) && (newPiece == null || newPiece.isWhite == !isWhite)) ? addMove(currentMoves, newPos) : currentMoves;
     }
-    
+
     public static int[][] addMove(int[][] currentMoves, int[] newPos) {
         int[][] newMoves = new int[currentMoves.length+1][2];
         for (int i=0;i<currentMoves.length;i++) {
@@ -207,24 +254,16 @@ public class Piece extends JPanel {
         newMoves[currentMoves.length][1] = newPos[1];
         return newMoves;
     }
-    
+
     public static int[][] addMoves(int[][] currentMoves, int[][] toAddMoves) {
         int[][] newMoves = currentMoves;
         for (int[] m:toAddMoves) {
             newMoves = addMove(newMoves, m);
         }
         return newMoves;
-    }
-    
-    public boolean samePos(Piece other) {
-        return other.x == x && other.y == y;
-    }
-    
-    public boolean isAMove(int[] pos) {
-        int[][] moves = getMoves();
-        for (int[] i:moves) {
-            if (pos[0]==i[0] && pos[1]==i[1]) return true;
-        }
-        return false;
+    }*/
+
+    public boolean equals(Piece other) {
+        return other != null && other.x == x && other.y == y;
     }
 }

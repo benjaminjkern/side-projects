@@ -34,6 +34,18 @@ public class Tools {
 
         return print.toString();
     }
+    
+    public static String print(Object[] array) {
+        StringBuilder print = new StringBuilder("["+array[0].toString());
+
+        for (int a=1;a<array.length;a++) {
+            print.append(", "+array[a].toString());
+        }
+
+        print.append("]");
+
+        return print.toString();
+    }
 
     public static String print(double[][] array) {
         StringBuilder print = new StringBuilder("["+print(array[0]));
@@ -45,6 +57,48 @@ public class Tools {
         print.append("]");
 
         return print.toString();
+    }
+
+    public static String print(int[][] array) {
+        StringBuilder print = new StringBuilder("["+print(array[0]));
+
+        for (int a=1;a<array.length;a++) {
+            print.append(", "+print(array[a]));
+        }
+
+        print.append("]");
+
+        return print.toString();
+    }
+    
+    public static void println(double[] a) {
+        System.out.println(print(a));
+    }
+    
+    public static void println(double[][] a) {
+        System.out.println(print(a));
+    }
+    
+    public static void println(int[][] a) {
+        System.out.println(print(a));
+    }
+    
+    public static void println(int[] a) {
+        System.out.println(print(a));
+    }
+    
+    //these are super redundant but I hate having to type System.out.println
+    
+    public static void println(double a) {
+        System.out.println(a);
+    }
+    
+    public static void println(int a) {
+        System.out.println(a);
+    }
+    
+    public static void println(String a) {
+        System.out.println(a);
     }
 
     //THIS IS IMMENSELY USEFUL CUZ THE DEFAULT JAVA LIBRARY SUCKS
@@ -151,6 +205,55 @@ public class Tools {
             output[y] = rand(low, high, width);
         }
         return output;
+    }
+    
+    
+    public static double min(double[] a) {
+        double currentMin = Double.MAX_VALUE;
+        
+        for (int i = 0; i < a.length; i++) {
+            if (a[i] < currentMin) {
+                currentMin = a[i];
+            }
+        }
+        return currentMin;
+    }
+    
+    public static int minPos(double[] a) {
+        double currentMin = Double.MAX_VALUE;
+        int currentPos = 0;
+        
+        for (int i = 0; i < a.length; i++) {
+            if (a[i] < currentMin) {
+                currentMin = a[i];
+                currentPos = i;
+            }
+        }
+        return currentPos;
+    }
+    
+    public static double max(double[] a) {
+        double currentMax = Double.MIN_VALUE;
+        
+        for (int i = 0; i < a.length; i++) {
+            if (a[i] < currentMax) {
+                currentMax = a[i];
+            }
+        }
+        return currentMax;
+    }
+    
+    public static int maxPos(double[] a) {
+        double currentMax = Double.MIN_VALUE;
+        int currentPos = 0;
+        
+        for (int i = 0; i < a.length; i++) {
+            if (a[i] < currentMax) {
+                currentMax = a[i];
+                currentPos = i;
+            }
+        }
+        return currentPos;
     }
 
 
@@ -338,7 +441,7 @@ public class Tools {
     }
 
     public static double[] unitVector(double[] a) {
-        double s = sum(cPow(a,2));
+        double s = Math.sqrt(sum(cPow(a,2)));
         if (s == 0) throw new IllegalArgumentException();
         return mult(a, 1/s);
     }
@@ -618,7 +721,7 @@ public class Tools {
         if (x1 == -1) x1 = 0;
         if (x2 == -1) x2 = a[0].length;
 
-        double[][] output = new double[y2-y1][x2-x1];
+        double[][] output = new double[y2-y1+1][x2-x1+1];
 
         for (int y = y1; y<y2; y++) {
             for (int x = x1; x<x2; x++) {
@@ -751,7 +854,38 @@ public class Tools {
 
     public static double[] concat(double a, double b) {return new double[] {a, b};} // redundant but hey thats what I'm going for
 
-
+    public static double magnitude(double a) {
+        return Math.abs(a);
+    }
+   
+    public static double magnitude(double[] a) {
+        double output = 0;
+        for (int i = 0; i < a.length; i++) {
+            output += a[i]*a[i];
+        }
+            
+        return Math.sqrt(output);
+    }
+    
+    public static double[] magnitude(double[][] a ) 
+    {
+        double output[] = new double[a.length];
+        
+        for (int i = 0; i < a.length; i++) {
+            output[i] = magnitude(a[i]);
+        }
+        return output;
+    }
+    
+    public static double[] project(double[] a, double[] b) {
+        return mult(dotProduct(a, b) / dotProduct(b,b), b);
+    }
+    
+    public static double[][] rotateMat(double angle) {
+        return new double[][] {new double[] {Math.cos(angle), -Math.sin(angle)}, new double[] {Math.sin(angle), Math.cos(angle)}};
+    }
+    
+    
     /*
      * flip(a, [dim])
      * 
@@ -818,6 +952,18 @@ public class Tools {
         }
 
         return output;
+    }
+    
+    public static boolean in(double a, double[] b) {
+        for (int i = 0; i < b.length; i++) {
+            if (a==b[i]) return true;
+        }
+        return false;
+    }public static boolean in(int a, int[] b) {
+        for (int i = 0; i < b.length; i++) {
+            if (a==b[i]) return true;
+        }
+        return false;
     }
 }
 class ImproperDimensionException extends RuntimeException

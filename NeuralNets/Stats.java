@@ -27,9 +27,12 @@ public class Stats {
     private static final int MODES = 5;
     private static final int SPLIT = 10;
 
-    public Stats(Population p) {
+    public Stats(Population p, int width, int height) {
         size = 0;
         mode = 0;
+
+        this.width = width-2*EDGE;
+        this.height = height-2*EDGE;
 
         sortedByColor = new Color[KEEPAMOUNT][p.size()];
         ages = new GameStat(SPLIT, KEEPAMOUNT);
@@ -42,9 +45,6 @@ public class Stats {
 
     public void draw(Graphics g) {
         Graphics2D g2 = (Graphics2D) g;
-
-        width = GUI.width-2*EDGE;
-        height = GUI.height-2*EDGE-GUI.LowerStage.HEIGHT;
 
         //draw box
         g.setColor(mode == 0 ? new Color(200,100,100) : Color.WHITE);

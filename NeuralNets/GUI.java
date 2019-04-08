@@ -1,109 +1,117 @@
 package neuralnets;
 
+/*
+ * This is privately only for the AIFightingGame
+ */
+
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import kern.Tools;
 
 public class GUI {
-    static int width,height;
-
-    LowerStage l;
-    TextField time, c1, c2, gen, game;
+    public Component stage, lowerStage, textBox, colorBar;
+    public TextField c1, c2, time, game, gen;
+    
 
     public GUI(int width, int height) {
-        GUI.width = width;
-        GUI.height = height;
         
-        l = new LowerStage();
-        
-        time = new TextField(width/2, height - LowerStage.HEIGHT/2 + LowerStage.ColorBar.HEIGHT/2);
-        c1 = new TextField(width / 4, LowerStage.HEIGHT / 2);
-        c2 = new TextField(3 * width / 4, LowerStage.HEIGHT / 2);
-        game = new TextField(3 * width / 4, height - LowerStage.HEIGHT / 2 + LowerStage.ColorBar.HEIGHT/2);
-        gen = new TextField(width / 4, height - LowerStage.HEIGHT / 2 + LowerStage.ColorBar.HEIGHT / 2);
-    }
-
-    public void draw(Graphics g) {
-        g.setColor(Color.BLACK);
-        g.drawLine(width/2, 0, width/2, height);
-        
-        
-        l.draw(g);
-        time.draw(g);
-        c1.draw(g);
-        c2.draw(g);
-        game.draw(g);
-        gen.draw(g);
-    }
-
-    public static void set(int width, int height) {
-        GUI.width = width;
-        GUI.height = height;
-    }
-
-    class LowerStage {
-        public static final int HEIGHT = 100;
-        
-        TextBox t;
-        ColorBar b;
-
-        public LowerStage() {
-            t = new TextBox();
-            b = new ColorBar();
-        }
-
-        public void draw(Graphics g) {
-            g.setColor(Color.PINK);
-            g.fillRect(0, height-HEIGHT, width, height);
-            t.draw(g);
-            b.draw(g);
-
-            g.setColor(Color.BLACK);
-            g.drawLine(0, height-HEIGHT, width, height-HEIGHT);
-        }
-
-        class TextBox {
-            public static final int HEIGHT = 20;
-            public static final int WIDTH = 150;
-
-            public TextBox() {
-                //yeuh
-            }
-
-            public void draw(Graphics g) {
-                g.setColor(Color.WHITE);
-                g.fillRect(width/2-WIDTH/2, height-LowerStage.HEIGHT/2+ColorBar.HEIGHT/2-HEIGHT/2, WIDTH, HEIGHT);
+        stage = new Component(0, 0, width, height) {
+            @Override
+            void draw(Graphics g) {
+                super.draw(g);
                 g.setColor(Color.BLACK);
-                g.drawRect(width/2-WIDTH/2, height-LowerStage.HEIGHT/2+ColorBar.HEIGHT/2-HEIGHT/2, WIDTH, HEIGHT);
+                g.drawLine(width/2, 0, width/2, height);
             }
-        }
+        };
 
-        class ColorBar {
-            public static final int HEIGHT = 15;
-            public static final int TEXTHEIGHT = 30;
+        lowerStage = new Component(0, stage.height - 85, width, 85, Color.PINK, Color.BLACK) {};
+        
+        textBox = new Component(stage.width/2-150/2, stage.height-lowerStage.height/2, 150, 20) {};
+        
+        colorBar = new Component(0, stage.height - 100, width, 15) {
 
             Population myPop;
-
-            public ColorBar() {
-                //yeuh
-            }
             
-            public void display(Population p) {
+            @Override
+            void display(Population p) {
                 myPop = p;
             }
 
-            public void draw(Graphics g) {
+            @Override
+            void draw(Graphics g) {
                 double widthPer = (double) width / (double) myPop.size();
 
                 for (int p = 0 ; p < myPop.size(); p++) {
                     g.setColor(myPop.get(p).color);
-                    g.fillRect((int) (widthPer*p), height-LowerStage.HEIGHT, (int) Math.ceil(widthPer), HEIGHT);
+                    g.fillRect((int) (x+widthPer*p), y, (int) Math.ceil(widthPer), height);
                 }
 
                 g.setColor(Color.BLACK);
-                g.drawLine(0, height-LowerStage.HEIGHT+HEIGHT, width, height-LowerStage.HEIGHT+HEIGHT);
+                g.drawLine(x, y, x+width, y);
             }
+            
+        };
+        
+
+        c1 = new TextField(stage.width/4, lowerStage.height/2);
+        c2 = new TextField(stage.width*3/4, lowerStage.height/2);
+        time = new TextField(stage.width/2, stage.height - lowerStage.height/2 + colorBar.height/2);
+        game = new TextField(3 * stage.width / 4, stage.height - lowerStage.height / 2 + colorBar.height/2);
+        gen = new TextField(stage.width / 4, stage.height - lowerStage.height / 2 + colorBar.height / 2);
+    }
+
+    public void draw(Graphics g) {
+        stage.draw(g);
+        lowerStage.draw(g);
+        textBox.draw(g);
+        colorBar.draw(g);
+        
+        c1.draw(g);
+        c2.draw(g);
+        time.draw(g);
+        game.draw(g);
+        gen.draw(g);
+    }
+    
+    public void set(Component c, int x, int y, int w, int h) {
+        c.set(x, y, w, h);
+    }
+    
+    public void display(Population p) {
+        colorBar.display(p);
+    }
+    
+    public abstract class Component {
+        int width, height, x, y;
+        Color fColor, bColor;
+        
+        Component(int x, int y, int w, int h, Color fc, Color bc) {
+            set(x,y,w,h);
+            fColor = fc;
+            bColor = bc;
+        }
+        
+        Component(int x, int y, int w, int h) {
+            set(x,y,w,h);
+            fColor = Color.WHITE;
+            bColor = Color.BLACK;
+        }
+        
+        void display(Population p) {}
+        
+        void set(int x, int y, int w, int h) {
+            this.x = x;
+            this.y = y;
+            width = w;
+            height = h;
+        }
+        
+        void draw(Graphics g) {
+            g.setColor(fColor);
+            g.fillRect(x, y, width, height);
+            g.setColor(bColor);
+            g.drawRect(x, y, width, height);
         }
     }
     
