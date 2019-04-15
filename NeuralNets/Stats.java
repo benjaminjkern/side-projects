@@ -8,8 +8,6 @@ import java.awt.Graphics2D;
 import kern.Tools;
 
 public class Stats {
-    
-    //this still isnt idealized but its pretty alright for now
 
     int mode;
     int size;

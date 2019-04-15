@@ -20,7 +20,9 @@ import kern.Game;
 public class ChessGame extends Game {
 
     private static final long serialVersionUID = 1L;
-    
+
+    private ChessPlayer whitePlayer;
+    private ChessPlayer blackPlayer;
     private ChessPlayer currentPlayer;
 
     public static void main(String[] args) {
@@ -46,60 +48,41 @@ public class ChessGame extends Game {
             "wp wp wp wp wp wp wp wp",
             "wr wn wb wq wk wb wn wr"
     };
-
-    private String[][] makeBoardString(String[] startingBoard) {
-        int width = 0;
-
-        String[][] newBoardString = new String[startingBoard.length][];
-        for (int i=0;i<startingBoard.length;i++) {
-            String[] row = startingBoard[i].split(" ");
-            if (row.length < width) {
-                newBoardString[i] = new String[width];
-                for (int r=0;r<row.length;r++) {
-                    newBoardString[i][r] = row[r];
-                }
-            } else {
-                newBoardString[i] = row;
-            }
-            if (newBoardString[i].length > width) {
-                width = newBoardString[i].length;
-            }
-        }
-
-        return newBoardString;
-    }
-
-    private boolean whiteMove;
+    
     private Board board;
 
     public ChessGame(int width, int height) {
         super(width, height);
 
-        whiteMove = true;
-
-        board = new Board(makeBoardString(startingBoard));
-        currentPlayer = new ChessPlayer(whiteMove);
+        board = new Board(startingBoard, true);
+        board.getChildren();
+        whitePlayer = new ChessPlayer(true, 0);
+        blackPlayer = new ChessPlayer(false, 0);
         
-        board.check(whiteMove);
+        //white moves first (racist)
+        currentPlayer = whitePlayer;
 
         gameStart();
     }
 
 
     public void draw(Graphics g) {
-        board.draw(g, width, height, currentPlayer);
+        board.draw(g, width, height);
+        currentPlayer.draw(g, board, width, height);
     }
-
-
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        int mx = e.getX()/(width/board.width());
-        int my = e.getY()/(height/board.height());
-        if (currentPlayer.selectPosition(mx,my, board)) {
-            whiteMove = !whiteMove;
-            currentPlayer = new ChessPlayer(whiteMove);
-            board.check(whiteMove);
+        int mx = e.getX()/(width/board.width);
+        int my = e.getY()/(height/board.height);
+
+        Board newBoard = currentPlayer.selectPosition(mx, my, board);
+        if (newBoard != null) {
+            currentPlayer.selectedPiece = null;
+            board = newBoard;
+            board.getChildren();
+            board.checkmate();
+            currentPlayer = currentPlayer == whitePlayer ? blackPlayer : whitePlayer;
         }
     }
 
@@ -130,7 +113,10 @@ public class ChessGame extends Game {
 
     @Override
     public void keyTyped(KeyEvent e) {
-        //yeuh
+        if (board.parent != null) {
+            board = board.parent;
+            currentPlayer = currentPlayer == whitePlayer ? blackPlayer : whitePlayer;
+        }
     }
 
 
