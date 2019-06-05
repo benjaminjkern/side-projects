@@ -1,12 +1,14 @@
-# John Conway's Game of Life
+# Cellular Automata
 *By Ben Kern*
 
 ## Info
-If you are for some reason unfamiliar with Conway's Game of Life, here's a neat link that explains it infinitely better than I ever could:
+This used to be just John Conway's Game of Life, but instead I turned it into a general cellular automat program. Each time you run the simulation, it creates a random ruleset for the cellular automata and lets it run. It's pretty cool.
 [WIKIPEDIA](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life)
+[ANOTHER WIKIPEDIA LINK](https://en.wikipedia.org/wiki/Cellular_automaton)
 
 ### Usage
 - Click a pixel to change its state
+- Drag with mouse down to draw
 - Mouse out of screen to run simulation
 
 ### To do List
@@ -15,5 +17,4 @@ If you are for some reason unfamiliar with Conway's Game of Life, here's a neat 
   - Add scalability (Ability to zoom in and out and adjust pixels in screen)
   - Add border interaction options
     - Wrap, set to 0, set to 1, copy closest, etc.
-- *Big one that I actually will definitely do when I get time to do it*: Turn this in to a general form of cellular automata program, with user able to set the specific rules. Here's another link that will explain what these are, again better than I could: [ANOTHER WIKIPEDIA LINK](https://en.wikipedia.org/wiki/Cellular_automaton)
 - Clean up code
