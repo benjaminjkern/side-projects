@@ -6,6 +6,10 @@ This used to be just John Conway's Game of Life, but instead I turned it into a 
 [WIKIPEDIA](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life)
 [ANOTHER WIKIPEDIA LINK](https://en.wikipedia.org/wiki/Cellular_automaton)
 
+## What's new
+- General 2-dimensional Cellular Automata simulator as opposed to just the Game of Life
+- It uses an animation API That I made, which from the outside doesnt really do much but it's easier on the coding aspect. I've been doing a lot of this recently.
+
 ### Usage
 - Click a pixel to change its state
 - Drag with mouse down to draw
