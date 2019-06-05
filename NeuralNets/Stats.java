@@ -32,7 +32,7 @@ public class Stats {
         this.width = width-2*EDGE;
         this.height = height-2*EDGE;
 
-        sortedByColor = new Color[KEEPAMOUNT][p.size()];
+        sortedByColor = new Color[KEEPAMOUNT][p.size];
         ages = new GameStat(SPLIT, KEEPAMOUNT);
         totalScores = new GameStat(SPLIT, KEEPAMOUNT);
         averageScores = new GameStat(SPLIT, KEEPAMOUNT);
@@ -98,7 +98,7 @@ public class Stats {
 
         //store colors and info at the end of each array, the color ones have to be more complicated because I dont have calls that return an array of colors and I dont wanna bother with that
         p.sortByColors();
-        for (int s = 0; s < p.size(); s++) {
+        for (int s = 0; s < p.size; s++) {
             sortedByColor[KEEPAMOUNT-1][s] = p.get(s).color;
         }
 

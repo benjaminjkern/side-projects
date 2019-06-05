@@ -1,4 +1,4 @@
-package neuralnets;
+package neuralnets.fightinggame;
 
 /*
  * This is privately only for the AIFightingGame
@@ -8,9 +8,10 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import kern.Tools;
+import neuralnets.Population;
 
 public class GUI {
-    public Component stage, lowerStage, textBox, colorBar;
+    public Component stage, lowerStage, textBox, colorBar, r1, r2;
     public TextField c1, c2, time, game, gen;
     
 
@@ -40,9 +41,9 @@ public class GUI {
 
             @Override
             void draw(Graphics g) {
-                double widthPer = (double) width / (double) myPop.size();
+                double widthPer = (double) width / (double) myPop.size;
 
-                for (int p = 0 ; p < myPop.size(); p++) {
+                for (int p = 0 ; p < myPop.size; p++) {
                     g.setColor(myPop.get(p).color);
                     g.fillRect((int) (x+widthPer*p), y, (int) Math.ceil(widthPer), height);
                 }
@@ -52,6 +53,10 @@ public class GUI {
             }
             
         };
+        
+        r1 = new Component(-50, -50, 20, 10, Color.RED, Color.BLACK) {};
+        r2 = new Component(-50, -50, 20, 10, Color.GREEN, Color.BLACK) {};
+        
         
 
         c1 = new TextField(stage.width/4, lowerStage.height/2);
@@ -72,6 +77,9 @@ public class GUI {
         time.draw(g);
         game.draw(g);
         gen.draw(g);
+        
+        r1.draw(g);
+        r2.draw(g);
     }
     
     public void set(Component c, int x, int y, int w, int h) {

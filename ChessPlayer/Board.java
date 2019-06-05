@@ -26,13 +26,15 @@ public class Board {
 
     // size of board in squares
     public int width, height;
-    private boolean whiteCheck, blackCheck, whiteMove;
+    private boolean whiteCheck, blackCheck;
+    private boolean whiteMove;
 
     private Board(Board parentBoard) {
         parent = parentBoard;
         height = parentBoard.height;
         width = parentBoard.width;
         whiteMove = !parentBoard.whiteMove;
+        whiteCheck = blackCheck = false;
         pieceMap = new HashMap<>(parentBoard.pieceMap);
         children = new ArrayList<>();
     }
@@ -43,6 +45,7 @@ public class Board {
         pieceMap = new HashMap<>();
         height = boardString.length;
         width = 0;
+
         this.whiteMove = whiteMove;
         children = new ArrayList<>();
 
@@ -94,7 +97,7 @@ public class Board {
     // this also works for multiple kings!
     private boolean inCheck(boolean isWhite) {
         if ((isWhite && whiteCheck) || (!isWhite && blackCheck)) return true;
-        
+
         ArrayList<Piece> kingList = new ArrayList<>();
         ArrayList<Piece> opPieceList = new ArrayList<>();
 
@@ -110,7 +113,7 @@ public class Board {
         for (Piece king : kingList) {
             king.inCheck = false;
             for (Piece opPiece : opPieceList) {
-                if (validMove(opPiece, king.x, king.y, true)) {
+                if (validMove(opPiece, king.x, king.y, true) != null) {
                     king.inCheck = true;
                     return true;
                 }
@@ -120,68 +123,84 @@ public class Board {
     }
 
     public boolean checkmate() {
-        whiteCheck = blackCheck = false;
         whiteCheck = inCheck(true);
         blackCheck = inCheck(false);
-        
-        if (!inCheck(whiteMove)) return false;
 
+        if (!inCheck(whiteMove)) return false;
+        
+        getChildren();
         for (Board child:children) if (!child.inCheck(whiteMove)) return false;
 
-        System.out.println("YOU IN CHECK MATE");
         return true;
     }
 
-    public boolean validMove(Piece myPiece, int x, int y, boolean breakCheck) {
+    public Board validMove(Piece myPiece, int x, int y, boolean breakCheck) {
         int hashKey = hashCode(x,y);
         boolean filledSpace = pieceMap.containsKey(hashKey);
 
         // it is not valid if the selected space is not on the board, or
         // if it is not deemed by the piece to be valid, or
         // if there is a piece at the space of the same color
-        if (!inBoard(x,y) || !myPiece.validMove(x, y, filledSpace) || (filledSpace && pieceMap.get(hashKey).isWhite == myPiece.isWhite)) return false;
+        if (myPiece == null || !inBoard(x,y) || !myPiece.validMove(x, y, filledSpace) || (filledSpace && pieceMap.get(hashKey).isWhite == myPiece.isWhite)) return null;
 
         // this iterates from myPiece to the point in question and says its not valid if there are filled spaces between the piece and the space
         if (myPiece.pieceType == Type.BISHOP || myPiece.pieceType == Type.ROOK || myPiece.pieceType == Type.QUEEN) {
             int dirX = Tools.sgn(myPiece.x - x);
             int dirY = Tools.sgn(myPiece.y - y);
             for (int d = 1; d < Math.max(Math.abs(myPiece.x - x),  Math.abs(myPiece.y - y)); d++) 
-                if (pieceMap.containsKey(hashCode(x + d*dirX,y + d*dirY))) return false;
+                if (pieceMap.containsKey(hashCode(x + d*dirX,y + d*dirY))) return null;
         }
 
         // creates a new state and checks if that state is in check, if it is then its not valid!
-        return breakCheck || !childBoard(myPiece, x, y).inCheck(myPiece.isWhite); // breakCheck is so that it doesnt recurse on the inCheck() method
+        Board childBoard = childBoard(myPiece, x, y);
+        return breakCheck || !childBoard.inCheck(myPiece.isWhite) ? childBoard : null; // breakCheck is so that it doesnt recurse on the inCheck() method
     }
-    
+
     public Piece pieceAt(int x, int y) {
         int hash = hashCode(x,y);
         return pieceMap.containsKey(hash) ? pieceMap.get(hash) : null;
     }
 
-    public static int hashCode(int x, int y) {
+    private static int hashCode(int x, int y) {
         return 1000*x + y;
     }
-    
+
     public Board childBoard(Piece myPiece, int x, int y) {
         Board newBoard = new Board(this);
         newBoard.pieceMap.remove(hashCode(myPiece.x,myPiece.y));
-        newBoard.pieceMap.put(hashCode(x,y), new Piece(myPiece, x, y));
+        
+        Piece newPiece = new Piece(myPiece, x, y);
+        // handle pawn promotion
+        if (newPiece.pieceType == Type.PAWN && (newPiece.y == 0 || newPiece.y == height-1)) newPiece.pieceType = Type.QUEEN;
+        newBoard.pieceMap.put(hashCode(x,y), newPiece);
         return newBoard;
     }
+    
+    public int score() {
+        return 0; // TODO: Figure this out
+    }
 
-    // this is done horribly naively right now, its okay
-    public void getChildren() {
-        children = new ArrayList<>();
-        ArrayList<Piece> myPieceList = new ArrayList<>();
+    // this is done horribly naively right now, its okay cuz it still works but this is gonna slow down a shit ton when I let it recurse
+    public ArrayList<Board> getChildren() {
+        if (pieceMap.size() <= 2) return new ArrayList<>();
+        
+        // if it has not been generated already, then DO IT
+        if (children.isEmpty()) {
+            children = new ArrayList<>();
+            ArrayList<Piece> myPieceList = new ArrayList<>();
 
-        for (Piece piece : pieceMap.values()) if (piece.isWhite == whiteMove) myPieceList.add(piece);
+            for (Piece piece : pieceMap.values()) if (piece.isWhite == whiteMove) myPieceList.add(piece);
 
-        for (Piece myPiece : myPieceList) {
-            for (int i = 0;i<width;i++) {
-                for (int j = 0;j<height;j++) {
-                    if (validMove(myPiece, i, j, false)) children.add(childBoard(myPiece, i, j));
+            for (Piece myPiece : myPieceList) {
+                for (int i = 0;i<width;i++) {
+                    for (int j = 0;j<height;j++) {
+                        Board validBoard = validMove(myPiece, i, j, false);
+                        if (validBoard != null) children.add(validBoard);
+                    }
                 }
             }
         }
+        
+        return children;
     }
 }

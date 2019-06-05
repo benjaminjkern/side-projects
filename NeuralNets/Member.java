@@ -3,45 +3,43 @@ package neuralnets;
 import java.awt.Color;
 import kern.Tools;
 
-class Member {
+public class Member {
 
-    private static final int INPUTS = 11;
-    private static final int NEURONSPERLAYER = 9;
-    private static final int NEURONLAYERS = 0;
-    private static final int OUTPUTS = 6;
-
-    private static final double MUTATION = 1;
-
-    NeuralNet brain;
-    Color color;
+    public NeuralNet brain;
+    public Color color;
     
-    int name, age;
-    double totalScore, score, averageScore;
+    public int name, age, games;
+    public double totalScore, score, averageScore, mutation;
     
     int[] daddies;
 
-    public Member(int name) {
-        brain = new NeuralNet(INPUTS, NEURONSPERLAYER, NEURONLAYERS, OUTPUTS);
+    public Member(int name, int inputs, int neuronsPerPlayer, int neuronLayers, int outputs) {
+        brain = new NeuralNet(inputs, neuronsPerPlayer, neuronLayers, outputs);
         color = Color.getHSBColor((float)Math.random(),1f, 1f);
         this.name = name;
+        mutation = 1;
         score = 0;
         totalScore = 0;
         age = 0;
         daddies = new int[] {name};
+        games = 0;
     }
 
     public Member(Member m, int name) {
-        brain = new NeuralNet(m.brain, MUTATION);
+        brain = new NeuralNet(m.brain, m.mutation);
         color = getNewColor(m.color, 5);
         this.name = name;
         score = 0;
         totalScore = 0;
         age = 0;
+        mutation = m.mutation;
+        
         daddies = new int[m.daddies.length+1];
         for (int d=0;d<m.daddies.length;d++) {
             daddies[d] = m.daddies[d];
         }
         daddies[m.daddies.length] = name;
+        games = 0;
     }
     
     public String infoText() {
@@ -51,6 +49,7 @@ class Member {
     public void changeScore(double amount) {
         score += amount;
         totalScore += amount;
+        averageScore = totalScore/(double) games;
     }
     
     private static Color getNewColor(Color color, double mutation) {

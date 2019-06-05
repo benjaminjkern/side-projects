@@ -37,7 +37,7 @@ public abstract class Game extends JPanel implements MouseListener, KeyListener 
     
     protected int width, height;
     
-    protected static final Color BACKGROUNDCOLOR = Color.WHITE;
+    protected static Color BACKGROUNDCOLOR = Color.WHITE;
     protected boolean paused = false;
 
     protected static final int UPDATERATE = 120;

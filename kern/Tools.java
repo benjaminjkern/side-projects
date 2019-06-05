@@ -3,6 +3,8 @@ package kern;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 
+import threed.Object3D;
+
 public class Tools {
 
     //THE FOLLOWING ARE JUST THINGS THAT ARE USEFUL
@@ -134,6 +136,16 @@ public class Tools {
             output[y] = sgn(a[y]);
         }
         return output;
+    }
+    
+    public static int sgn(int a) {
+        return sgn((double) a);
+    }
+    public static int[] sgn(int[] a) {
+        return sgn(a);
+    }
+    public static int[][] sgn(int[][] a) {
+        return sgn(a);
     }
 
 
@@ -653,7 +665,7 @@ public class Tools {
     public static double[][] mult(double[][] a, double[][] b) {
         //defaults to outerproduct multiplication (slightly faster if using parallellized computation)
 
-        return mult(a,b,false);
+        return mult(a,b,true);
     }
 
     public static double[][] mult(double[][] a, double[][] b, boolean innerOuter) {
@@ -885,7 +897,6 @@ public class Tools {
         return new double[][] {new double[] {Math.cos(angle), -Math.sin(angle)}, new double[] {Math.sin(angle), Math.cos(angle)}};
     }
     
-    
     /*
      * flip(a, [dim])
      * 
@@ -959,11 +970,28 @@ public class Tools {
             if (a==b[i]) return true;
         }
         return false;
-    }public static boolean in(int a, int[] b) {
+    }
+    
+    public static boolean in(int a, int[] b) {
         for (int i = 0; i < b.length; i++) {
             if (a==b[i]) return true;
         }
         return false;
+    }
+    
+    public static double[] concatenate(double...ds) {
+        return ds;
+    }
+    
+    public static double[][] concatenate(double[]...ds) {
+        return ds;
+    }
+    
+    
+    
+    public static double[] crossProduct(double[] a, double[] b) {
+        if (a.length != 3 || b.length != 3) throw new IllegalArgumentException();
+        return new double[] {a[1]*b[2] - a[2]*b[1], a[2]*b[0] - a[0]*b[2], a[0]*b[1] - a[1]*b[0]};
     }
 }
 class ImproperDimensionException extends RuntimeException
