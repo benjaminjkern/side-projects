@@ -1,27 +1,39 @@
 package neuralnets;
 
+import java.util.List;
 import java.util.Random;
 import kern.Tools;
 
 public class Population {
     private Member[] members;
 
-    private int count;
+    private int count; // for keeping track of members with names as the count
+    public int size;
+    private int inputs, neuronsPerLayer, neuronLayers, outputs;
 
-    private int size;
-    
-    public int size() {return size;}
-
-    public Population(int size) {
+    public Population(int size, int inputs, int neuronsPerLayer, int neuronLayers, int outputs) {
         count = 0;
+        this.size = size;
 
         members = new Member[size];
-        for (int p=0;p<size;p++) {
-            members[p] = new Member(count);
+        for (int p=0; p<size; p++) {
+            members[p] = new Member(count, inputs, neuronsPerLayer, neuronLayers, outputs);
             count++;
         }
-
-        this.size = size;
+        this.inputs = inputs; this.neuronsPerLayer = neuronsPerLayer; this.neuronLayers = neuronLayers; this.outputs = outputs;
+    }
+    
+    public void killAndRepopulate(List<Integer> sortedIds) {
+        Member[] oldMembers = members;
+        members = new Member[size];
+        
+        for (int p = 0; p < size / 2; p++) {
+            int id = sortedIds.get(p);
+            members[p] = oldMembers[id];
+            members[p].age++;
+            members[p+size/2] = new Member(members[p], count);
+            count++;
+        }
     }
 
     public void killAndRepopulate() {
@@ -33,7 +45,7 @@ public class Population {
         members = new Member[size];
 
         //the better half of the population goes on and makes a slightly mutated copy of itself, while the other half is overwritten
-        for (int p=0;p<size/2;p++) {
+        for (int p=0; p<size/2; p++) {
             members[p] = oldMembers[p];
             members[p].age++;
             members[p+size/2] = new Member(members[p], count);
@@ -41,15 +53,8 @@ public class Population {
         }
 
         //a brand new member is added just to keep diversity
-        //members[size - 1] = new Member(count);
+        members[size - 1] = new Member(count, inputs, neuronsPerLayer, neuronLayers, outputs);
         count++;
-    }
-
-    public void resetScores() {
-        for (int p=0;p<size;p++) {
-            members[p].averageScore = ((members[p].age - 1) * members[p].averageScore + 2 * members[p].score) / (members[p].age + 1);
-            members[p].score = 0;
-        }
     }
 
     public void sort(double[] values) {

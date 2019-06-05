@@ -1,4 +1,4 @@
-package neuralnets;
+package neuralnets.fightinggame;
 
 import java.awt.Color;
 import java.awt.Graphics;

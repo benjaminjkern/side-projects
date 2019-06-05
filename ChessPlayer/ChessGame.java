@@ -20,10 +20,10 @@ import kern.Game;
 public class ChessGame extends Game {
 
     private static final long serialVersionUID = 1L;
-
-    private ChessPlayer whitePlayer;
-    private ChessPlayer blackPlayer;
-    private ChessPlayer currentPlayer;
+    
+    private ChessPlayer currentPlayer, whitePlayer, blackPlayer;
+    private Board board;
+    private boolean whiteMove;
 
     public static void main(String[] args) {
         // Run UI in the Event Dispatcher Thread (EDT), instead of Main thread
@@ -38,7 +38,7 @@ public class ChessGame extends Game {
     }
 
     //This is here so I can set the board to be whatever I want
-    private String[] startingBoard = {
+    private static String[] startingBoard = {
             "br bn bb bq bk bb bn br",
             "bp bp bp bp bp bp bp bp",
             "",
@@ -48,23 +48,32 @@ public class ChessGame extends Game {
             "wp wp wp wp wp wp wp wp",
             "wr wn wb wq wk wb wn wr"
     };
-    
-    private Board board;
 
     public ChessGame(int width, int height) {
         super(width, height);
 
         board = new Board(startingBoard, true);
         board.getChildren();
-        whitePlayer = new ChessPlayer(true, 0);
-        blackPlayer = new ChessPlayer(false, 0);
-        
+
         //white moves first (racist)
+        whiteMove = true;
+        whitePlayer = new ChessPlayer(true, 0);
+        blackPlayer = new ChessPlayer(false, 2);
+        
         currentPlayer = whitePlayer;
+        paused = false;
 
         gameStart();
     }
-
+    
+    private void pickNewBoard(Board newBoard) {
+        if (newBoard != null) {
+            board = newBoard;
+            board.checkmate();
+            whiteMove = !whiteMove;
+            currentPlayer = whiteMove ? whitePlayer : blackPlayer;
+        }
+    }
 
     public void draw(Graphics g) {
         board.draw(g, width, height);
@@ -76,14 +85,7 @@ public class ChessGame extends Game {
         int mx = e.getX()/(width/board.width);
         int my = e.getY()/(height/board.height);
 
-        Board newBoard = currentPlayer.selectPosition(mx, my, board);
-        if (newBoard != null) {
-            currentPlayer.selectedPiece = null;
-            board = newBoard;
-            board.getChildren();
-            board.checkmate();
-            currentPlayer = currentPlayer == whitePlayer ? blackPlayer : whitePlayer;
-        }
+        pickNewBoard(currentPlayer.selectPosition(mx, my, board));
     }
 
 
@@ -113,10 +115,13 @@ public class ChessGame extends Game {
 
     @Override
     public void keyTyped(KeyEvent e) {
-        if (board.parent != null) {
-            board = board.parent;
-            currentPlayer = currentPlayer == whitePlayer ? blackPlayer : whitePlayer;
+        if (e.getKeyChar() == 'a') {
+            board = new Board(startingBoard, true);
+            board.getChildren();
+            currentPlayer = new ChessPlayer(true, 0);
+            paused = false;
         }
+        if (e.getKeyChar() == ' ') pickNewBoard(currentPlayer.AISelect(board, 1));
     }
 
 
@@ -134,6 +139,6 @@ public class ChessGame extends Game {
 
     @Override
     protected void gameUpdate() {
-        //yeuh
+        pickNewBoard(currentPlayer.AISelect(board));
     }
 }

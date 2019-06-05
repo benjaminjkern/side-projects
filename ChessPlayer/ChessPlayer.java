@@ -3,23 +3,45 @@ package chessplayer;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Random;
 
 import kern.Tools;
 
 public class ChessPlayer {
-    Piece selectedPiece;
-    boolean isWhite;
+    private Piece selectedPiece;
+    private boolean isWhite;
+    private int AILevel;
 
     ArrayList<Piece> pieces;
 
     public ChessPlayer(boolean isWhite, int AILevel) {
         this.isWhite = isWhite;
         selectedPiece = null;
+        this.AILevel = AILevel;
     }
 
-    // this is a lot cleaner and I like it
+    //I hate how this is implemented rn but I havent had time to sit down and focus on it
+    public Board AISelect(Board board) {
+        return board.getChildren().isEmpty() || AILevel == 0 ? null : AISelect(board, AILevel);
+    }
+    
+    public Board AISelect(Board board, int level) {
+        if (level == 0) return board;
+        
+        ArrayList<Board> children = board.getChildren();
+        if (children.isEmpty()) return null;
+        
+        ArrayList<Board> bestBoards = new ArrayList<>();
+        for (Board child : children) {
+            int score = AISelect(child, level - 1).score();
+            
+            if (!bestBoards.isEmpty() && score > bestBoards.get(0).score()) bestBoards = new ArrayList<>();
+            if (bestBoards.isEmpty() || score >= bestBoards.get(0).score()) bestBoards.add(child);
+        }
+        return bestBoards.get(new Random().nextInt(bestBoards.size()));
+    }
+
+    // manual selection
     public Board selectPosition(int x, int y, Board board) {
         if (!board.inBoard(x, y)) return null;
 
@@ -30,7 +52,9 @@ public class ChessPlayer {
             return null;
         }
 
-        return selectedPiece != null && board.validMove(selectedPiece, x, y, false) ? board.childBoard(selectedPiece, x, y) : null;
+        Board newBoard = board.validMove(selectedPiece, x, y, false);
+        selectedPiece = null;
+        return newBoard;
     }
 
     public void draw(Graphics g, Board board, double chessWidth, double chessHeight) {
@@ -47,7 +71,6 @@ public class ChessPlayer {
             //draw piece
             g.setColor(selectedPiece.isWhite ? Color.WHITE : Color.BLACK);
             Tools.drawCenteredString(new String[] {selectedPiece.toString()}, (int) ((selectedPiece.x + 0.5) * boardWidth), (int) ((selectedPiece.y + 0.5) * boardHeight), g);
-
         }
     }
 }

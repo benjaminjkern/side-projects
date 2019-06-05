@@ -1,4 +1,4 @@
-package neuralnets;
+package neuralnets.fightinggame;
 
 import java.awt.Color;
 import java.awt.Graphics;
@@ -6,13 +6,17 @@ import java.util.ArrayList;
 import kern.Tools;
 import kern.physics.CircObstacle;
 import kern.physics.RectObstacle;
+import neuralnets.Member;
 
 public class Character extends CircObstacle {
     private double FOV,memory,waitTime = 0;
     private ArrayList<Bullet> bullets;
 
+    public static final int INPUTS = 8;
+    public static final int OUTPUTS = 6;
+
     private static final int FOVDIST = 150;
-    private static final double MINFOV = 1;
+    private static final double MINFOV = 2;
     private static final double MAXFOV = 90;
     
     private static final double FOVSPEED = 0.5;
@@ -22,7 +26,7 @@ public class Character extends CircObstacle {
     private static final int TIMEBETWEENSHOTS = 60;
     private static final double CHARACTER_RADIUS = 25;
 
-    private Member myMember;
+    public Member myMember;
     private Character opponent;
     private RectObstacle stage, border;
 
@@ -36,6 +40,7 @@ public class Character extends CircObstacle {
         
         this.bullets = new ArrayList<>();
         myMember = m;
+        myMember.games++;
     }
     
     public void setOpponent(Character o) {
@@ -138,17 +143,16 @@ public class Character extends CircObstacle {
         if (opponentInSight) {
             inputs[1] = getDist(opponent) / stage.width * 2 - 1;
             inputs[2] = Tools.dotProduct(Tools.unitVector(getDiff(opponent)), opponent.unitVecDir());
-            inputs[3] = 0;
         }
-        inputs[4] = (oBullet != null)?1:-1;
+        inputs[3] = (oBullet != null)?1:-1;
         if (oBullet != null) {
-            inputs[5] = getDist(oBullet) / stage.width * 2 - 1;
-            inputs[6] = Tools.dotProduct(Tools.unitVector(getDiff(oBullet)), oBullet.unitVecDir());
+            inputs[4] = getDist(oBullet) / stage.width * 2 - 1;
+            inputs[5] = Tools.dotProduct(Tools.unitVector(getDiff(oBullet)), oBullet.unitVecDir());
         }
-        inputs[7] = 0;
-        inputs[8] = FOV/45 - 1;
-        inputs[9] = memory;
-        inputs[10] = Tools.rand(-1,1);
+        inputs[6] = memory;
+        inputs[7] = Tools.rand(-1,1);
+        
+        //if (x > stage.width/2) Tools.println(inputs);
 
         return inputs;
     }
@@ -230,9 +234,5 @@ public class Character extends CircObstacle {
             bullets.add(newBullet);
             waitTime = TIMEBETWEENSHOTS;
         }
-    }
-
-    public Member member() {
-        return myMember;
     }
 }
