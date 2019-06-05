@@ -63,7 +63,6 @@ public class AIFightingGame extends Game {
         stage = new RectObstacle(width/2., newHeight/2., width, newHeight, 0);
         border1 = new RectObstacle(width/4., newHeight/2., width/2., newHeight, 0);
         border2 = new RectObstacle(width*3/4., newHeight/2., width/2., newHeight, 0);
-        obstacle1 = new RectObstacle
 
         gui.r1.y = gui.r2.y = gui.colorBar.y - gui.r1.height;
         gui.r1.width = gui.r2.width = (int) (stage.width/NUM);
