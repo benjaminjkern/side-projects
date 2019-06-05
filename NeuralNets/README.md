@@ -7,16 +7,11 @@ A Small custom-built library for plugging NeuralNets in to games, included so fa
 Included is a custom-built library for Linear Algebra within Java that acts upon native Java arrays rather than create a new wrapper class for matrices and whatnot. It's kinda cool.
 
 ### What's new!
-Basically nothing, hahahaha. At least not from a simulator standpoint, but behind the scenes I did quite a bit
-- Cleaned up lots-o-code
-- NeuralNet, Game, and Population class were made more general and more usable for plugging in to other projects
-  - Speaking of, Game got a big revamp that I might turn in to a separate project
-    - It now has a full implementation of linear algebra operations that is friendly with native Java double arrays, which is cool and makes the implementation of the NeuralNet itself look sooooo clean and nice
-- Got rid of the Main class cuz it was annoying, it runs through AISimulation.java now
-
+- I hated the way that it was figuring out who is best, so I implemented a tournament sort instead of a points based system, though I still have the points based system implemented if I end up making more games this will be easier to work with.
+- I added a bit of Rigid body physics that is used in the game, I'm gonna make obstacles eventually but I'm getting sick of using this thought experiment and I wanna do other things soon
 
 ### Usage
-Run "AIFightingGame" file to run program
+Run "FightingGame.jar" file to run program
 - [SPACE] : Toggle sped up simulation
 - [A] : Toggle stats screen
 - [W/S] : Switch what is showing on stats screen
