@@ -113,6 +113,50 @@ public class Tools {
             g.drawString(s[n], (int) newX, (int) newY);
         }
     }
+    
+    
+    
+    
+    
+    
+    
+    public static int round(double a) {
+    	return (int) Math.round(a);
+    }
+    
+    public static int[] round(double[] a) {
+    	int[] output = new int[a.length];
+    	for (int o=0;o<a.length;o++) {
+    		output[o] = round(a[o]);
+    	}
+    	return output;
+    }
+    public static int[][] round(double[][] a) {
+    	int[][] output = new int[a.length][];
+    	for (int o=0;o<a.length;o++) {
+    		output[o] = round(a[o]);
+    	}
+    	return output;
+    }
+    
+    public static int floor(double a) {
+    	return (int) a;
+    }
+    
+    public static int[] floor(double[] a) {
+    	int[] output = new int[a.length];
+    	for (int o=0;o<a.length;o++) {
+    		output[o] = floor(a[o]);
+    	}
+    	return output;
+    }
+    public static int[][] floor(double[][] a) {
+    	int[][] output = new int[a.length][];
+    	for (int o=0;o<a.length;o++) {
+    		output[o] = floor(a[o]);
+    	}
+    	return output;
+    }
 
     //return sign of a number (overloaded for vectors and matrices)
     //this can probably be reduced using lambda calculus or something hahaha
