@@ -2,122 +2,206 @@ package kern;
 
 import java.awt.BorderLayout;
 import java.awt.Graphics;
+import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.imageio.ImageIO;
+import javax.imageio.stream.FileImageOutputStream;
+import javax.imageio.stream.ImageOutputStream;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import cellularautomata.CellularAutomataFrame;
+public class Animator implements MouseListener, KeyListener {
 
-public abstract class Animator implements MouseListener, KeyListener {
+	public static final int DEFAULT_COLOR = 0x000000;
+	protected static final int DEFAULT_KEEP = 100000;
 
-    public static final int DEFAULT_COLOR = 0xff0000;
-    protected static final int DEFAULT_KEEP = 100000;
+	protected static final double FPS = 60;
 
-    public final int KEEP_AMOUNT;
+	protected boolean loop;
 
-    protected Keyframe[] keyframes;
-    protected boolean running;
-    protected boolean animating;
-    protected int currentFrame, frontier;
-    protected int width, height, pixelSize;
-    protected Keyframe frontierFrame;
-    protected boolean resetFrame;
+	protected boolean writeToGif;
 
-    protected JFrame frame;
+	protected int keepFrameAmount;
+	protected Keyframe[] keyframes;
+	private boolean sDown, spDown;
+	protected boolean running, forward, backward, animating;
+	protected int currentFrame, frontier;
+	protected int width, height, pixelSize;
+	protected Keyframe frontierFrame;
+	protected boolean reset;
 
-    BufferedImage bi;
+	protected final Map<Integer, Integer> colorMap;
 
-    public Animator(int width, int height, int pixelSize, String title, int keep) {
-        KEEP_AMOUNT = keep;
-        running = true;
-        animating = true;
-        bi = new BufferedImage(width*pixelSize, height*pixelSize, BufferedImage.TYPE_INT_RGB);
+	protected JFrame frame;
 
-        // setup JFrame stufferoo
-        frame = new JFrame(title);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.getContentPane().add(BorderLayout.CENTER, new DrawPanel());
-        frame.setResizable(false);
-        frame.setSize(width*pixelSize, height*pixelSize + 22);
-        frame.setLocationByPlatform(true);
-        frame.setVisible(true);
+	BufferedImage bi;
 
-        frame.addMouseListener(this);
-        frame.addKeyListener(this);
-        frame.setFocusable(true);
-        frame.requestFocus();
+	public Animator(int width, int height, int pixelSize, String title, int keep) {
+		loop = false;
+		keepFrameAmount = keep;
+		running = true;
+		animating = true;
+		forward = false;
+		backward = false;
+		sDown = spDown = false;
+		bi = new BufferedImage(width*pixelSize, height*pixelSize, BufferedImage.TYPE_INT_RGB);
 
-        currentFrame = 0;
-        frontier = 0;
+		colorMap = new HashMap<>();
 
-        this.pixelSize = pixelSize;
-        this.width = width;
-        this.height = height;
+		// setup JFrame stufferoo
+		frame = new JFrame(title);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.getContentPane().add(BorderLayout.CENTER, new DrawPanel());
+		frame.setResizable(false);
+		frame.setSize(width*pixelSize, height*pixelSize + 22);
+		frame.setLocationByPlatform(true);
+		frame.setVisible(true);
 
-        keyframes = new Keyframe[KEEP_AMOUNT < 0 ? DEFAULT_KEEP:KEEP_AMOUNT];
-    }
+		frame.addMouseListener(this);
+		frame.addKeyListener(this);
+		frame.setFocusable(true);
+		frame.requestFocus();
 
-    public void gotoFrame(int toFrame) {
-        currentFrame = toFrame;
-        drawFrame(keyframes[currentFrame]);
-    }
+		currentFrame = 0;
+		frontier = 0;
 
-    public void go() throws InterruptedException {
-        while (frame.isEnabled()) {
-            if (animating) {
-                keyframes[frontier] = frontierFrame;
-                frontierFrame = keyframes[frontier].next();
-                frontier = (frontier+1)%KEEP_AMOUNT;
-            }
+		this.pixelSize = pixelSize;
+		this.width = width;
+		this.height = height;
 
-            if (running) {
-                drawFrame(keyframes[currentFrame]);
-                currentFrame = (currentFrame+1)%KEEP_AMOUNT;
-            }
-            
-            if (resetFrame) {
-                resetFrame = false;
-                keyframes = new Keyframe[KEEP_AMOUNT < 0 ? DEFAULT_KEEP:KEEP_AMOUNT];
-                currentFrame = 0;
-                frontier = 0;
-            }
-            
-            changeFrame();
+		keyframes = new Keyframe[keepFrameAmount < 0 ? DEFAULT_KEEP:keepFrameAmount];
+	}
 
-            //System.out.println("Frontier: "+frontier+", Current Frame: "+currentFrame);
+	public void gotoFrame(int toFrame) {
+		currentFrame = toFrame;
+		drawFrame(keyframes[currentFrame]);
+	}
 
-            Thread.sleep(1);
-        }
-    }
-    
-    public abstract void changeFrame();
+	public void go() throws InterruptedException, FileNotFoundException, IOException {
 
-    public void addFrame(Keyframe k) {
-        keyframes[frontier] = k;
-    }
+		ImageOutputStream output = new FileImageOutputStream(new File("/Users/benkern/mandelbrot.gif"));
+		GifSequenceWriter writer = new GifSequenceWriter(output, bi.getType(), 1, true);
+		while (frame.isEnabled()) {
+			if (running) {
+				int oldFrame = currentFrame;
+				currentFrame = (currentFrame+1)%keepFrameAmount;
+				if (keyframes[currentFrame] == null || loop) {
+					keyframes[currentFrame] = keyframes[oldFrame].nextFrame();
+					if (!animating) System.out.println("Created Frame "+currentFrame);
+				}
+			}
 
-    public void drawFrame(Keyframe k) {
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                for (int px = 0; px<pixelSize;px++) {
-                    for (int py = 0; py<pixelSize;py++) {
-                        bi.setRGB(x*pixelSize+px,y*pixelSize+py,k.colorMap.get(k.grid[y][x]));
-                    }
-                }
-            }
-        }
-        frame.repaint();
-    }
+			if (forward && !backward) {
+				int newFrame = (currentFrame+1)%keepFrameAmount;
+				if (keyframes[newFrame] != null) currentFrame = newFrame;
+			}
 
-    // may or may not actually be necessary tbh
-    class DrawPanel extends JPanel {
-        private static final long serialVersionUID = 1L;
+			if (backward && !forward) {
+				int newFrame = (currentFrame+keepFrameAmount-1)%keepFrameAmount;
+				if (keyframes[newFrame] != null) currentFrame = newFrame;
+			}
 
-        @Override
-        public void paintComponent(Graphics g) {
-            g.drawImage(bi, 0, 0, null);
-        }
-    }
+			changeFrame();
+
+			if (animating || writeToGif) {
+				drawFrame(keyframes[currentFrame]);
+				if (writeToGif) {
+					keyframes[currentFrame-1] = null;
+					writer.writeToSequence(bi);
+				}
+			}
+			Thread.sleep(1);
+		}
+
+		writer.close();
+		output.close();
+	}
+
+	public void changeFrame() {}
+
+	public void drawFrame(Keyframe k) {
+		for (int y = 0; y < height; y++) {
+			for (int x = 0; x < width; x++) {
+				for (int px = 0; px<pixelSize;px++) {
+					for (int py = 0; py<pixelSize;py++) {
+						bi.setRGB(x*pixelSize+px,y*pixelSize+py,colorMap.containsKey(k.grid[y][x]) ? colorMap.get(k.grid[y][x]) : DEFAULT_COLOR);
+					}
+				}
+			}
+		}
+		frame.repaint();
+	}
+
+	// may or may not actually be necessary tbh
+	class DrawPanel extends JPanel {
+		private static final long serialVersionUID = 1L;
+
+		@Override
+		public void paintComponent(Graphics g) {
+			g.drawImage(bi, 0, 0, null);
+		}
+	}
+
+	@Override
+	public void keyPressed(KeyEvent e) {
+		if (e.getKeyCode() == KeyEvent.VK_A) {
+			running = false;
+			backward = true;
+		} else if (e.getKeyCode() == KeyEvent.VK_D) {
+			running = false;
+			forward = true;
+		} else if (e.getKeyCode() == KeyEvent.VK_R) {
+			currentFrame = 0;
+			running = true;
+			animating = true;
+		} else if (e.getKeyCode() == KeyEvent.VK_S) {
+			if (!sDown) animating = !animating;
+			sDown = true;
+		} else if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+			if (!spDown) running = !running;
+			spDown = true;
+		}
+		System.out.println((animating?"":"Not ")+"Animating");
+		System.out.println((running?"":"Not ")+"Running");
+	}
+
+	@Override
+	public void keyReleased(KeyEvent e) {
+		if (e.getKeyCode() == KeyEvent.VK_A) {
+			backward = false;
+		} else if (e.getKeyCode() == KeyEvent.VK_D) {
+			forward = false;
+		} else if (e.getKeyCode() == KeyEvent.VK_S) {
+			sDown = false;
+		} else if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+			spDown = false;
+		}
+	}
+
+	@Override
+	public void keyTyped(KeyEvent e) {}
+
+	@Override
+	public void mouseClicked(MouseEvent e) {}
+
+	@Override
+	public void mousePressed(MouseEvent e) {}
+
+	@Override
+	public void mouseReleased(MouseEvent e) {}
+
+	@Override
+	public void mouseEntered(MouseEvent e) {}
+
+	@Override
+	public void mouseExited(MouseEvent e) {}
 }
