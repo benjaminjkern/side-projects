@@ -10,6 +10,8 @@ import java.util.Queue;
 import java.util.Set;
 
 import javax.swing.JFrame;
+import javax.swing.WindowConstants;
+
 import kern.Game;
 import kern.physics.RectObstacle;
 import neuralnets.Member;
@@ -24,7 +26,7 @@ public class AIFightingGame extends Game {
         // Run UI in the Event Dispatcher Thread (EDT), instead of Main thread
         javax.swing.SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("YEUH");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
             AIFightingGame game = new AIFightingGame(1280, 640);
             frame.setContentPane(game);
             frame.pack();
@@ -175,7 +177,8 @@ public class AIFightingGame extends Game {
             betterThan = new HashSet<>();
         }
         
-        public String toString() {
+        @Override
+		public String toString() {
             return ""+id;
         }
     }

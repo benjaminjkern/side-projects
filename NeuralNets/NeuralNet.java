@@ -55,7 +55,8 @@ public class NeuralNet {
         //ugh
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
         //NEED TO IMPLEMENT
         return "";
     }

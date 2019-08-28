@@ -21,7 +21,8 @@ public class Bullet extends CircObstacle {
         
     }
     
-    public void draw(Graphics g) {
+    @Override
+	public void draw(Graphics g) {
         g.setColor(Color.PINK);
         g.fillOval((int)(x-RADIUS),(int)(y-RADIUS),(int)(RADIUS*2),(int)(RADIUS*2));
         g.setColor(Color.BLACK);
