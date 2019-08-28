@@ -158,7 +158,7 @@ public class Stats {
 
             //pick the percentile ranking and store those
             for (int i = 0; i < SPLIT + 1; i++) {
-                double s = (double) (values.length-1) * (double) i / (double) SPLIT;
+                double s = (double) (values.length-1) * (double) i / SPLIT;
                 double w = s % 1;
                 createdStats[i] = sortedArray[(int) s]*(1-w) + (s < values.length-1 ? sortedArray[(int) (s+1)]*w : 0);
             }

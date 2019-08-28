@@ -49,7 +49,7 @@ public class Member {
     public void changeScore(double amount) {
         score += amount;
         totalScore += amount;
-        averageScore = totalScore/(double) games;
+        averageScore = totalScore/games;
     }
     
     private static Color getNewColor(Color color, double mutation) {
