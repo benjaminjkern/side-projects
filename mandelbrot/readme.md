@@ -33,8 +33,6 @@ Mandelbrot([width of JFrame],
 ```
 Just change the paramters if you wanna see a different picture! I promise I'll work on making it more user friendly but hey initial upload it works for me
 
-- **[Click]** to zoom in around the cursor, right click to zoom out. It gets weird at zoom factors of around 10^-14 because thats as good as the default double precision can get me to, I need to implement arbitrary precision. At the moment, the zoom factor is dependent on the animation parameters because I didn't bother taking out the zooming in and out using the mouse but ideally you wouldnt have to use this anyways
-
 - **[A]**: Tab back a frame, this will pause the calculation of the current frame.
 - **[D]**: Tab forward a frame, if you are at the furthest forward frame then it will continue the calculation.
 
@@ -46,13 +44,8 @@ Just change the paramters if you wanna see a different picture! I promise I'll w
   - Julia sets!
 
 ### To do List
-- Flesh out Animation
-  - Add auto-play
-  - Fix that one bug that causes a slowdown of the computer
-  - Find a way to make it save as a video file or an animated gif instead of a weird java data structure
 - Add more user settings! (So that it's not locked and can actually accurately show how this concept works)
   - Different color choices
     - There's another form of coloring that is more gradient than the way it is right now and I've been meaning to figure out       how to do that
   - Add control of where the picture will be on the set
 - Allow for greater precision
-- Possibly make the math faster if possible (honestly I might redo this whole thing in C++ just so it goes faster but I wont give up on Java yet)
