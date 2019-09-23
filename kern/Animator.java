@@ -28,7 +28,7 @@ public class Animator implements MouseListener, KeyListener {
 
 	protected boolean loop;
 
-	protected boolean writeToGif;
+	protected String writeToGif;
 
 	protected int keepFrameAmount;
 	protected Keyframe[] keyframes;
@@ -73,6 +73,8 @@ public class Animator implements MouseListener, KeyListener {
 
 		currentFrame = 0;
 		frontier = 0;
+		
+		writeToGif = "";
 
 		this.pixelSize = pixelSize;
 		this.width = width;
@@ -86,17 +88,18 @@ public class Animator implements MouseListener, KeyListener {
 		drawFrame(keyframes[currentFrame]);
 	}
 
-	public void go() throws InterruptedException, FileNotFoundException, IOException {
+	public void go() throws InterruptedException, IOException {
 
-		ImageOutputStream output = new FileImageOutputStream(new File("/Users/benkern/mandelbrot.gif"));
+		ImageOutputStream output = new FileImageOutputStream(new File(writeToGif));
 		GifSequenceWriter writer = new GifSequenceWriter(output, bi.getType(), 1, true);
+		
 		while (frame.isEnabled()) {
 			if (running) {
 				int oldFrame = currentFrame;
 				currentFrame = (currentFrame+1)%keepFrameAmount;
 				if (keyframes[currentFrame] == null || loop) {
 					keyframes[currentFrame] = keyframes[oldFrame].nextFrame();
-					if (!animating) System.out.println("Created Frame "+currentFrame);
+					System.out.println("Created Frame "+currentFrame);
 				}
 			}
 
@@ -112,9 +115,9 @@ public class Animator implements MouseListener, KeyListener {
 
 			changeFrame();
 
-			if (animating || writeToGif) {
+			if (animating || !writeToGif.isBlank()) {
 				drawFrame(keyframes[currentFrame]);
-				if (writeToGif) {
+				if (!writeToGif.isBlank()) {
 					keyframes[currentFrame-1] = null;
 					writer.writeToSequence(bi);
 				}
@@ -133,7 +136,7 @@ public class Animator implements MouseListener, KeyListener {
 			for (int x = 0; x < width; x++) {
 				for (int px = 0; px<pixelSize;px++) {
 					for (int py = 0; py<pixelSize;py++) {
-						bi.setRGB(x*pixelSize+px,y*pixelSize+py,colorMap.containsKey(k.grid[y][x]) ? colorMap.get(k.grid[y][x]) : DEFAULT_COLOR);
+						bi.setRGB(x*pixelSize+px,y*pixelSize+py,colorMap.containsKey(k.grid[y][x]) ? colorMap.get(k.grid[y][x]) : k.grid[y][x]);
 					}
 				}
 			}

@@ -1,87 +1,60 @@
 package threed;
 
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
+//High key this might be the best thing I've made its so precise
 
-import javax.swing.JFrame;
-import kern.Game;
+import java.awt.Color;
+import java.io.IOException;
+import kern.Animator;
 import kern.Tools;
 
-public class Demo3D extends Game {
+public class Demo3D extends Animator {
 
-    private static final long serialVersionUID = 1L;
-    
+	public static void main(String[] args) throws InterruptedException, IOException {
+		Demo3D d = new Demo3D(640, 640, 1000);
+		d.go();
+	}
 
-    public static void main(String[] args) {
-        // Run UI in the Event Dispatcher Thread (EDT), instead of Main thread
-        javax.swing.SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("YEUH");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            Demo3D game = new Demo3D(640,640);
-            frame.setContentPane(game);
-            frame.pack();
-            frame.setVisible(true);
-        });
-    }
-    
-    private Object3D game;
-    private LineObject camera;
-    private double FOV;
+	public Object3D game;
+	public LineObject camera;
+	public LineObject light;
+	public double fov;
 
-    public Demo3D(int width, int height) {
-        super(width, height);
+	public Demo3D(int width, int height, int frames) {
+		super(width, height, 1, "Ray Marcher", frames);
 
-        BACKGROUNDCOLOR = Color.BLACK;
-        FOV = Math.PI/4;
-        
-        game = new Object3D();
-        camera = new LineObject(null, new double[] {10, 0, 10}, new double[] {-1, 0, -1}, 1);
+		fov = Math.PI/4;
 
-        game.add(Object3D.sphereObject(Color.PINK, 5, 64, 128));
-        
-        gameStart();
-    }
+		game = new Object3D();
+		camera = new LineObject(null, new double[] {20, 0, 5}, new double[] {-20, 0, -5}, 1);
+		light = new LineObject(null, new double[] {0, 0, 100}, new double[] {0, 0, -1});
 
+		game.add("greenball", new SphereObject(Color.GREEN, new double[] {0, 0, 10}, 2, 8,8));
+		game.add("pinkball", new SphereObject(Color.PINK, new double[] {0, 10, 3}, 3, 8,8));
 
-    @Override
-    protected void gameUpdate() {
-        game.rotate(Tools.unitVector(new double[] {0,0,1}), -0.01);
-        //game.translate(new double[] {-0.1, 0, 0});
-        camera.translate(new double[] {-0.05,0,-0.05});
-    }
-    
+		game.add("redball", new SphereObject(Color.RED, new double[] {8, -2, 0.5}, 0.5, 8,8));
+		game.add("ground", new PlaneObject(Color.WHITE, new double[] {0,0,0}, new double[][] {new double[] {1,0,0}, new double[] {0,1,0}}, 50, 50));
+		game.add("ceiling", new PlaneObject(Color.WHITE, new double[] {0,0,50}, new double[][] {new double[] {1,0,0}, new double[] {0,1,0}}, 50, 50));
 
+		
+		game.add("backwall", new PlaneObject(Color.BLACK, new double[] {-25, 0, 25}, new double[][] {new double[] {0,0,1}, new double[] {0,1,0}}, 50, 50));
+    	game.add("leftwall", new PlaneObject(Color.BLACK, new double[] {0,25,25}, new double[][] {new double[] {0,0,1}, new double[] {1,0,0}}, 50, 50));
+    	game.add("righwall", new PlaneObject(Color.BLACK, new double[] {0, -25, 25}, new double[][] {new double[] {0,0,1}, new double[] {1,0,0}}, 50, 50));
+    	game.add("behindwall", new PlaneObject(Color.BLACK, new double[] {25, 0, 25}, new double[][] {new double[] {0,0,1}, new double[] {0,1,0}}, 50, 50));
 
-    @Override
-    protected void draw(Graphics g) {
-        game.draw(g, camera, FOV, width, height);
-    }
-    
-    
+		writeToGif = "/Users/benkern/3Danimation.gif";
 
-    @Override
-    public void mouseClicked(MouseEvent e) {/**/}
+		keyframes[currentFrame] = new ThreeDFrame(width, height, this, null);
+	}
 
-    @Override
-    public void mousePressed(MouseEvent e) {/**/}
-
-    @Override
-    public void mouseReleased(MouseEvent e) {/**/}
-
-    @Override
-    public void mouseEntered(MouseEvent e) {/**/}
-
-    @Override
-    public void mouseExited(MouseEvent e) {/**/}
-
-    @Override
-    public void keyTyped(KeyEvent e) {/**/}
-
-    @Override
-    public void keyPressed(KeyEvent e) {/**/}
-
-    @Override
-    public void keyReleased(KeyEvent e) {/**/}
+	public void update() {
+		// bounce greenball
+		SphereObject myBall = (SphereObject) game.objectsToDraw.get("greenball");
+		myBall.speed = Tools.add(myBall.speed, new double[] {0, 0, -0.01});
+		myBall.translate(myBall.speed);
+		camera.rotate(new double[] {0,0,1}, new double[] {0,0,0}, 0.01);
+		if (myBall.pos[2] < myBall.radius) {
+			myBall.speed[2] = -myBall.speed[2];
+			myBall.moveTo(new double[] {myBall.pos[0], myBall.pos[1], myBall.radius});
+		}
+	}
 }
