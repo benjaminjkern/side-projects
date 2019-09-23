@@ -498,7 +498,7 @@ public class Tools {
 
     public static double[] unitVector(double[] a) {
         double s = Math.sqrt(sum(cPow(a,2)));
-        if (s == 0) throw new IllegalArgumentException();
+        if (s == 0) return a;
         return mult(a, 1/s);
     }
 

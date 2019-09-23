@@ -1,7 +1,4 @@
 //THIS SHOULD BE A CELLULAR AUTOMATA IN GENERAL
-
-
-
 package cellularautomata;
 
 import kern.Animator;
@@ -10,7 +7,6 @@ import java.util.AbstractMap.SimpleEntry;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,14 +21,14 @@ public class CellularAutomata extends Animator implements MouseMotionListener
     int mouseX, mouseY, oldMX, oldMY;
     int colorChange;
     
-    public static final int COLORS = 2;
+    public static final int COLORS = 4;
 
     private Map<Entry<Integer, Integer>, Integer> ruleSet;
     private List<Integer> numList;
     //[-1, -1, -1, -1, 4, 5, -1, 7, 8]
     //        [0, -1, 2, 3, 4, 5, 6, 7, 8]
 
-    public static void main(String... args) throws InterruptedException, FileNotFoundException, IOException {
+    public static void main(String... args) throws InterruptedException, IOException {
         // Run UI in the Event Dispatcher Thread (EDT), instead of Main thread
         CellularAutomata c = new CellularAutomata(600,600,1);
         c.go();
@@ -100,23 +96,8 @@ public class CellularAutomata extends Animator implements MouseMotionListener
     }
 
     @Override
-    public void mouseClicked(MouseEvent e) {
-
-    }
-
-    @Override
     public void mouseReleased(MouseEvent e) {
         mouseDown = false;
-    }
-
-    @Override
-    public void keyTyped(KeyEvent e) {
-
-    }
-
-    @Override
-    public void keyPressed(KeyEvent e) {
-
     }
 
     @Override
@@ -164,7 +145,6 @@ public class CellularAutomata extends Animator implements MouseMotionListener
         }
     }
 
-    @Override
-    public void mouseMoved(MouseEvent e) {
-    }
+	@Override
+	public void mouseMoved(MouseEvent e) {}
 }

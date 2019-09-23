@@ -7,7 +7,9 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ConcurrentModificationException;
 import javax.swing.JPanel;
@@ -117,4 +119,28 @@ public abstract class Game extends JPanel implements MouseListener, KeyListener 
     protected abstract void draw(Graphics g);
 
     protected abstract void gameUpdate();
+    
+    @Override
+    public void mouseClicked(MouseEvent e) {/**/}
+
+    @Override
+    public void mousePressed(MouseEvent e) {/**/}
+
+    @Override
+    public void mouseReleased(MouseEvent e) {/**/}
+
+    @Override
+    public void mouseEntered(MouseEvent e) {/**/}
+
+    @Override
+    public void mouseExited(MouseEvent e) {/**/}
+
+    @Override
+    public void keyTyped(KeyEvent e) {/**/}
+
+    @Override
+    public void keyPressed(KeyEvent e) {/**/}
+
+    @Override
+    public void keyReleased(KeyEvent e) {/**/}
 }

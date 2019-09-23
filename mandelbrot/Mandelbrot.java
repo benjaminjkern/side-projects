@@ -10,7 +10,6 @@
 package mandelbrot;
 import java.awt.Color;
 import java.awt.event.MouseEvent;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import kern.Animator;
@@ -23,7 +22,7 @@ public class Mandelbrot extends Animator
 
     private double zoomFactor;
 
-    public static void main(String... args) throws InterruptedException, FileNotFoundException, IOException {
+    public static void main(String... args) throws InterruptedException, IOException {
         Mandelbrot m = new Mandelbrot(720, 720, 0.35099216726246363, 0.0940300970626181, 2, 1e-14, 1000);
         m.go();
     }
@@ -49,7 +48,7 @@ public class Mandelbrot extends Animator
     	
     	keyframes[currentFrame] = new MandelbrotFrame(width, height, centerX, centerY, startZoom, zoomFactor, null);
     	
-    	writeToGif = true;
+    	writeToGif = "/Users/benkern/mandelbrot.gif";
     	
     	for (int i=0;i<Mandelbrot.COLORS;i++) colorMap.put(i, Color.HSBtoRGB(i/(float)Mandelbrot.COLORS, 1, 1));
     }
