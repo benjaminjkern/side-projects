@@ -9,8 +9,13 @@ public class SphereObject extends Object3D {
     public double radius;
     Color color;
 
+    public SphereObject(Color color, double[] pos, double radius) {
+        super(pos);
+        this.color = color;
+        this.radius = radius;
+    }
+
     public SphereObject(Color color, double[] pos, double radius, int iMax, int jMax) {
-        this.pos = pos;
         this.color = color;
         this.radius = radius;
 
@@ -50,7 +55,5 @@ public class SphereObject extends Object3D {
     }
 
     @Override
-    public double[] normal(double[] pos) {
-        return Tools.unitVector(Tools.subtract(pos, this.pos));
-    }
+    public double[] normal(double[] pos) { return Tools.unitVector(Tools.subtract(pos, this.pos)); }
 }

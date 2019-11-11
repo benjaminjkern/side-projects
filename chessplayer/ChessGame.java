@@ -20,7 +20,7 @@ import kern.Game;
 public class ChessGame extends Game {
 
     private static final long serialVersionUID = 1L;
-    
+
     private ChessPlayer currentPlayer, whitePlayer, blackPlayer;
     private Board board;
     private boolean whiteMove;
@@ -30,24 +30,16 @@ public class ChessGame extends Game {
         javax.swing.SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Chess Game");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            ChessGame game = new ChessGame(640,640);
+            ChessGame game = new ChessGame(640, 640);
             frame.setContentPane(game);
             frame.pack();
             frame.setVisible(true);
         });
     }
 
-    //This is here so I can set the board to be whatever I want
-    private static String[] startingBoard = {
-            "br bn bb bq bk bb bn br",
-            "bp bp bp bp bp bp bp bp",
-            "",
-            "",
-            "",
-            "",
-            "wp wp wp wp wp wp wp wp",
-            "wr wn wb wq wk wb wn wr"
-    };
+    // This is here so I can set the board to be whatever I want
+    private static String[] startingBoard = { "br bn bb bq bk bb bn br", "bp bp bp bp bp bp bp bp", "", "", "", "",
+            "wp wp wp wp wp wp wp wp", "wr wn wb wq wk wb wn wr" };
 
     public ChessGame(int width, int height) {
         super(width, height);
@@ -55,17 +47,17 @@ public class ChessGame extends Game {
         board = new Board(startingBoard, true);
         board.getChildren();
 
-        //white moves first (racist)
+        // white moves first (racist)
         whiteMove = true;
         whitePlayer = new ChessPlayer(true, 0);
         blackPlayer = new ChessPlayer(false, 2);
-        
+
         currentPlayer = whitePlayer;
         paused = false;
 
         gameStart();
     }
-    
+
     private void pickNewBoard(Board newBoard) {
         if (newBoard != null) {
             board = newBoard;
@@ -82,36 +74,31 @@ public class ChessGame extends Game {
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        int mx = e.getX()/(width/board.width);
-        int my = e.getY()/(height/board.height);
+        int mx = e.getX() / (width / board.width);
+        int my = e.getY() / (height / board.height);
 
         pickNewBoard(currentPlayer.selectPosition(mx, my, board));
     }
 
-
     @Override
     public void mousePressed(MouseEvent e) {
-        //yeuh
+        // yeuh
     }
-
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        //yeuh
+        // yeuh
     }
-
 
     @Override
     public void mouseEntered(MouseEvent e) {
-        //yeuh
+        // yeuh
     }
-
 
     @Override
     public void mouseExited(MouseEvent e) {
-        //yeuh
+        // yeuh
     }
-
 
     @Override
     public void keyTyped(KeyEvent e) {
@@ -121,21 +108,19 @@ public class ChessGame extends Game {
             currentPlayer = new ChessPlayer(true, 0);
             paused = false;
         }
-        if (e.getKeyChar() == ' ') pickNewBoard(currentPlayer.AISelect(board, 1));
+        if (e.getKeyChar() == ' ')
+            pickNewBoard(currentPlayer.AISelect(board, 1));
     }
-
 
     @Override
     public void keyPressed(KeyEvent e) {
-        //yeuh
+        // yeuh
     }
-
 
     @Override
     public void keyReleased(KeyEvent e) {
-        //yeuh
+        // yeuh
     }
-
 
     @Override
     protected void gameUpdate() {

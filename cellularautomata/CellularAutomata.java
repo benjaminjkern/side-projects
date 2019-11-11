@@ -1,13 +1,11 @@
 //THIS SHOULD BE A CELLULAR AUTOMATA IN GENERAL
 package cellularautomata;
 
-import kern.Animator;
-import java.util.AbstractMap.SimpleEntry;
-
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.io.IOException;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,64 +13,60 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 
-public class CellularAutomata extends Animator implements MouseMotionListener
-{
+import kern.Animator;
+
+public class CellularAutomata extends Animator implements MouseMotionListener {
     boolean mouseDown;
     int mouseX, mouseY, oldMX, oldMY;
     int colorChange;
-    
-    public static final int COLORS = 4;
+
+    public static final int COLORS = 2;
 
     private Map<Entry<Integer, Integer>, Integer> ruleSet;
     private List<Integer> numList;
-    //[-1, -1, -1, -1, 4, 5, -1, 7, 8]
-    //        [0, -1, 2, 3, 4, 5, 6, 7, 8]
+    // [-1, -1, -1, -1, 4, 5, -1, 7, 8]
+    // [0, -1, 2, 3, 4, 5, 6, 7, 8]
 
     public static void main(String... args) throws InterruptedException, IOException {
         // Run UI in the Event Dispatcher Thread (EDT), instead of Main thread
-        CellularAutomata c = new CellularAutomata(600,600,1);
+        CellularAutomata c = new CellularAutomata(600, 600, 1);
         c.go();
     }
 
     CellularAutomata(int width, int height, int pixelSize) {
         super(width, height, pixelSize, "Cellular Automata", 1);
-        
+
         loop = true;
-        
+
         numList = genNumList(9);
         System.out.println(numList);
-        
-        
+
         ruleSet = new HashMap<>();
-        for (int c=0;c<COLORS;c++) {
-        	for (int n:numList) {
-        		ruleSet.put(new SimpleEntry<>(c, n), new Random().nextInt(COLORS));
-        	}
+        for (int c = 0; c < COLORS; c++) {
+            for (int n : numList) { ruleSet.put(new SimpleEntry<>(c, n), new Random().nextInt(COLORS)); }
             colorMap.put(c, new Random().nextInt(0xffffff));
         }
         System.out.println(ruleSet);
-        
+
         keyframes[currentFrame] = new CellularAutomataFrame(width, height, null, ruleSet);
         mouseDown = false;
 
         frame.addMouseMotionListener(this);
     }
-    
+
     public List<Integer> genNumList(int base) {
-    	List<Integer> output = new ArrayList<>();
-    	int n = base-1;
-    	output.add(n);
-    	int m;
-    	while (n < Math.pow(base, COLORS-1)*(base-1)) {
-    		m = 0;
-    		while (n%Math.pow(base, m+1) == 0) {
-    			m++;
-    		}
-    		int a = (int) Math.ceil(n/Math.pow(base, m+1))%base;
-    		n += a*Math.pow(base, m) + base - a - 1;
-    		output.add(n);
-    	}
-    	return output;
+        List<Integer> output = new ArrayList<>();
+        int n = base - 1;
+        output.add(n);
+        int m;
+        while (n < Math.pow(base, COLORS - 1) * (base - 1)) {
+            m = 0;
+            while (n % Math.pow(base, m + 1) == 0) { m++; }
+            int a = (int) Math.ceil(n / Math.pow(base, m + 1)) % base;
+            n += a * Math.pow(base, m) + base - a - 1;
+            output.add(n);
+        }
+        return output;
     }
 
     @Override
@@ -84,10 +78,9 @@ public class CellularAutomata extends Animator implements MouseMotionListener
         oldMY = mouseY;
         colorChange = new Random().nextInt(COLORS);
     }
+
     @Override
-    public void mouseEntered(MouseEvent e) {
-        running = false;
-    }
+    public void mouseEntered(MouseEvent e) { running = false; }
 
     @Override
     public void mouseExited(MouseEvent e) {
@@ -96,30 +89,26 @@ public class CellularAutomata extends Animator implements MouseMotionListener
     }
 
     @Override
-    public void mouseReleased(MouseEvent e) {
-        mouseDown = false;
-    }
+    public void mouseReleased(MouseEvent e) { mouseDown = false; }
 
     @Override
     public void keyReleased(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_A) {
-            
-            for (int c=0;c<COLORS;c++) {
-            	for (int n:numList) {
-            		ruleSet.put(new SimpleEntry<>(c, n), new Random().nextInt(COLORS));
-            	}
+
+            for (int c = 0; c < COLORS; c++) {
+                for (int n : numList) { ruleSet.put(new SimpleEntry<>(c, n), new Random().nextInt(COLORS)); }
                 colorMap.put(c, new Random().nextInt(0xffffff));
             }
-            
+
             System.out.println(ruleSet);
-            
+
             currentFrame = 0;
             keyframes[currentFrame] = new CellularAutomataFrame(width, height, null, ruleSet);
             mouseDown = false;
         }
         if (e.getKeyCode() == KeyEvent.VK_SPACE) {
             currentFrame = 0;
-        	keyframes[currentFrame] = new CellularAutomataFrame(width, height, null, ruleSet);
+            keyframes[currentFrame] = new CellularAutomataFrame(width, height, null, ruleSet);
             mouseDown = false;
         }
 
@@ -132,19 +121,19 @@ public class CellularAutomata extends Animator implements MouseMotionListener
             oldMY = mouseY;
             mouseX = e.getX();
             mouseY = e.getY();
-            
-            int x1 = mouseX/pixelSize;
-            int y1 = (mouseY-28)/pixelSize;
-            int x2 = oldMX/pixelSize;
-            int y2 = (oldMY-28)/pixelSize;
-            for (int t = 0;t<=100;t++) {
-            	int x = (int) (x1 + t*(x2-x1)/100.);
-            	int y = (int) (y1 + t*(y2-y1)/100.);
+
+            int x1 = mouseX / pixelSize;
+            int y1 = (mouseY - 28) / pixelSize;
+            int x2 = oldMX / pixelSize;
+            int y2 = (oldMY - 28) / pixelSize;
+            for (int t = 0; t <= 100; t++) {
+                int x = (int) (x1 + t * (x2 - x1) / 100.);
+                int y = (int) (y1 + t * (y2 - y1) / 100.);
                 keyframes[currentFrame].set(x, y, colorChange);
             }
         }
     }
 
-	@Override
-	public void mouseMoved(MouseEvent e) {}
+    @Override
+    public void mouseMoved(MouseEvent e) {}
 }

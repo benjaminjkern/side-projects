@@ -97,7 +97,7 @@ public class Animator implements MouseListener, KeyListener {
                 currentFrame = (currentFrame + 1) % keepFrameAmount;
                 if (keyframes[currentFrame] == null || loop) {
                     keyframes[currentFrame] = keyframes[oldFrame].nextFrame();
-                    System.out.println("Created Frame " + currentFrame);
+                    // System.out.println("Created Frame " + currentFrame);
                 }
             }
 
@@ -113,7 +113,7 @@ public class Animator implements MouseListener, KeyListener {
 
             changeFrame();
 
-            if (animating || !writeToGif.isBlank()) {
+            if (animating || !writeToGif.isEmpty()) {
                 drawFrame(keyframes[currentFrame]);
                 if (!writeToGif.isBlank()) {
                     keyframes[currentFrame - 1] = null;
@@ -127,8 +127,7 @@ public class Animator implements MouseListener, KeyListener {
         output.close();
     }
 
-    public void changeFrame() {
-    }
+    public void changeFrame() {}
 
     public void drawFrame(Keyframe k) {
         for (int y = 0; y < height; y++) {
@@ -149,9 +148,7 @@ public class Animator implements MouseListener, KeyListener {
         private static final long serialVersionUID = 1L;
 
         @Override
-        public void paintComponent(Graphics g) {
-            g.drawImage(bi, 0, 0, null);
-        }
+        public void paintComponent(Graphics g) { g.drawImage(bi, 0, 0, null); }
     }
 
     @Override
@@ -185,32 +182,24 @@ public class Animator implements MouseListener, KeyListener {
             forward = false;
         } else if (e.getKeyCode() == KeyEvent.VK_S) {
             sDown = false;
-        } else if (e.getKeyCode() == KeyEvent.VK_SPACE) {
-            spDown = false;
-        }
+        } else if (e.getKeyCode() == KeyEvent.VK_SPACE) { spDown = false; }
     }
 
     @Override
-    public void keyTyped(KeyEvent e) {
-    }
+    public void keyTyped(KeyEvent e) {}
 
     @Override
-    public void mouseClicked(MouseEvent e) {
-    }
+    public void mouseClicked(MouseEvent e) {}
 
     @Override
-    public void mousePressed(MouseEvent e) {
-    }
+    public void mousePressed(MouseEvent e) {}
 
     @Override
-    public void mouseReleased(MouseEvent e) {
-    }
+    public void mouseReleased(MouseEvent e) {}
 
     @Override
-    public void mouseEntered(MouseEvent e) {
-    }
+    public void mouseEntered(MouseEvent e) {}
 
     @Override
-    public void mouseExited(MouseEvent e) {
-    }
+    public void mouseExited(MouseEvent e) {}
 }
