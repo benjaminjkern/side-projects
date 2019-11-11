@@ -15,7 +15,7 @@ public class ThreeDFrame extends Keyframe {
 
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                grid[y][x] = wrapper.game.rayMarchDraw(0xffffff, 10,
+                grid[y][x] = wrapper.game.rayMarchDraw(0, 10, wrapper.light,
                         inputRay(wrapper.camera, wrapper.fov, x, y, width, height), null, 100, 0.001, 1000);
             }
         }

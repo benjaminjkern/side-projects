@@ -27,25 +27,28 @@ public class Demo3D extends Animator {
 
         game = new Object3D();
         camera = new LineObject(null, new double[] { 20, 0, 5 }, new double[] { -20, 0, -5 }, 1);
+        light = new LineObject(Color.WHITE, new double[] { 0, 0, 100 }, new double[] { 0, 0, -1 }, 1);
 
-        game.add("greenball", new SphereObject(Color.GREEN, new double[] { 0, 0, 10 }, 2, 8, 8));
-        game.add("pinkball", new SphereObject(Color.PINK, new double[] { 0, 10, 3 }, 3, 8, 8));
-        game.add("redball", new SphereObject(Color.RED, new double[] { 8, -2, 0.5 }, 0.5, 8, 8));
+        game.add("greenball", new SphereObject(Color.GREEN, new double[] { 0, 0, 10 }, 2));
+        game.add("pinkball", new SphereObject(Color.PINK, new double[] { 0, 10, 3 }, 3));
+        game.add("redball", new SphereObject(Color.RED, new double[] { 8, -2, 0.5 }, 0.5));
+
+        game.add("john", new SphereObject(Color.BLACK, new double[] { 0, -5, 0 }, 7));
 
         game.add("ground", new PlaneObject(Color.BLACK, new double[] { 0, 0, 0 },
                 new double[][] { new double[] { 1, 0, 0 }, new double[] { 0, 1, 0 } }, 50, 50));
 
-        game.add("ceiling", new PlaneObject(Color.WHITE, new double[] { 0, 0, 50 },
-                new double[][] { new double[] { 1, 0, 0 }, new double[] { 0, 1, 0 } }, 50, 50));
-
-        game.add("backwall", new PlaneObject(Color.BLACK, new double[] { -25, 0, 25 },
-                new double[][] { new double[] { 0, 0, 1 }, new double[] { 0, 1, 0 } }, 50, 50));
-        game.add("leftwall", new PlaneObject(Color.BLACK, new double[] { 0, 25, 25 },
-                new double[][] { new double[] { 0, 0, 1 }, new double[] { 1, 0, 0 } }, 50, 50));
-        game.add("righwall", new PlaneObject(Color.BLACK, new double[] { 0, -25, 25 },
-                new double[][] { new double[] { 0, 0, 1 }, new double[] { 1, 0, 0 } }, 50, 50));
-        game.add("behindwall", new PlaneObject(Color.BLACK, new double[] { 25, 0, 25 },
-                new double[][] { new double[] { 0, 0, 1 }, new double[] { 0, 1, 0 } }, 50, 50));
+//        game.add("ceiling", new PlaneObject(Color.WHITE, new double[] { 0, 0, 50 },
+//                new double[][] { new double[] { 1, 0, 0 }, new double[] { 0, 1, 0 } }, 50, 50));
+//
+//        game.add("backwall", new PlaneObject(Color.BLACK, new double[] { -25, 0, 25 },
+//                new double[][] { new double[] { 0, 0, 1 }, new double[] { 0, 1, 0 } }, 50, 50));
+//        game.add("leftwall", new PlaneObject(Color.BLACK, new double[] { 0, 25, 25 },
+//                new double[][] { new double[] { 0, 0, 1 }, new double[] { 1, 0, 0 } }, 50, 50));
+//        game.add("righwall", new PlaneObject(Color.BLACK, new double[] { 0, -25, 25 },
+//                new double[][] { new double[] { 0, 0, 1 }, new double[] { 1, 0, 0 } }, 50, 50));
+//        game.add("behindwall", new PlaneObject(Color.BLACK, new double[] { 25, 0, 25 },
+//                new double[][] { new double[] { 0, 0, 1 }, new double[] { 0, 1, 0 } }, 50, 50));
 
         writeToGif = "/Users/benkern/3Danimation.gif";
 

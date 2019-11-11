@@ -2,7 +2,6 @@ package neuralnets.fightinggame;
 
 import java.awt.Graphics;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -38,7 +37,7 @@ public class AIFightingGame extends Game {
     private Stats stats;
 
     private Character character1, character2;
-    private MemberNode m1,m2;
+    private MemberNode m1, m2;
     private int time;
     private int generation;
 
@@ -46,7 +45,7 @@ public class AIFightingGame extends Game {
     private RectObstacle stage, border1, border2;
 
     public static final int NUM = 100;
-    private static final int MAXTIME = 60*15;
+    private static final int MAXTIME = 60 * 15;
 
     private boolean animate = true;
     private Queue<MemberNode> frontier;
@@ -58,16 +57,15 @@ public class AIFightingGame extends Game {
 
         population = new Population(NUM, Character.INPUTS, 10, 2, Character.OUTPUTS);
         gui = new GUI(width, height);
-        stats = new Stats(population, width, height-gui.lowerStage.height-gui.colorBar.height);
-
+        stats = new Stats(population, width, height - gui.lowerStage.height - gui.colorBar.height);
 
         double newHeight = height - gui.lowerStage.height - gui.colorBar.height;
-        stage = new RectObstacle(width/2., newHeight/2., width, newHeight, 0);
-        border1 = new RectObstacle(width/4., newHeight/2., width/2., newHeight, 0);
-        border2 = new RectObstacle(width*3/4., newHeight/2., width/2., newHeight, 0);
+        stage = new RectObstacle(width / 2., newHeight / 2., width, newHeight, 0);
+        border1 = new RectObstacle(width / 4., newHeight / 2., width / 2., newHeight, 0);
+        border2 = new RectObstacle(width * 3 / 4., newHeight / 2., width / 2., newHeight, 0);
 
         gui.r1.y = gui.r2.y = gui.colorBar.y - gui.r1.height;
-        gui.r1.width = gui.r2.width = (int) (stage.width/NUM);
+        gui.r1.width = gui.r2.width = (int) (stage.width / NUM);
 
         newGeneration();
         gameStart();
@@ -79,9 +77,7 @@ public class AIFightingGame extends Game {
         frontier = new LinkedList<>();
         sortedIds = new ArrayList<>();
 
-        for (int n = 0; n < NUM; n++) {
-            frontier.add(new MemberNode(n));
-        }
+        for (int n = 0; n < NUM; n++) { frontier.add(new MemberNode(n)); }
 
         stats.storePop(population);
         population.scramble();
@@ -94,7 +90,9 @@ public class AIFightingGame extends Game {
         Member highestScore = population.getHighestTotal();
         Member highestAverage = population.getHighestAverage();
 
-        gui.gen.display("Oldest: "+oldest.name+", Age: " + oldest.age, "Highest Total Score: " + highestScore.name + ", Total Score: " + highestScore.totalScore, "Highest Average Score: " + highestAverage.name+", Average Score: " + highestAverage.averageScore);
+        gui.gen.display("Oldest: " + oldest.name + ", Age: " + oldest.age,
+                "Highest Total Score: " + highestScore.name + ", Total Score: " + highestScore.totalScore,
+                "Highest Average Score: " + highestAverage.name + ", Average Score: " + highestAverage.averageScore);
         gui.colorBar.display(population);
 
         initCharacters();
@@ -110,16 +108,16 @@ public class AIFightingGame extends Game {
             character1 = new Character(population.get(m1.id), 180, stage, border1);
             character2 = new Character(population.get(m2.id), 0, stage, border2);
 
-            gui.r1.x = (int) (m1.id*stage.width/NUM);
-            gui.r2.x = (int) (m2.id*stage.width/NUM);
+            gui.r1.x = (int) (m1.id * stage.width / NUM);
+            gui.r2.x = (int) (m2.id * stage.width / NUM);
 
             character1.setOpponent(character2);
             character2.setOpponent(character1);
 
             // this needs to be fixed
             match++;
-            int totalMatches = (int) (population.size/2*Math.log(population.size/2));
-            gui.game.display("Generation: "+generation, "Match: " + match + "/" + totalMatches);
+            int totalMatches = (int) (population.size / 2 * Math.log(population.size / 2));
+            gui.game.display("Generation: " + generation, "Match: " + match + "/" + totalMatches);
         } else newGeneration();
     }
 
@@ -127,12 +125,8 @@ public class AIFightingGame extends Game {
         character1.moveCharacter();
         character2.moveCharacter();
 
-        if (character1.isHit()) {
-            character2.myMember.changeScore(1);
-        }
-        if (character2.isHit()) {
-            character1.myMember.changeScore(1);
-        }
+        if (character1.isHit()) character2.myMember.changeScore(1);
+        if (character2.isHit()) character1.myMember.changeScore(1);
     }
 
     private void endGame() {
@@ -154,12 +148,11 @@ public class AIFightingGame extends Game {
 
         while (frontier.size() == 1) {
             MemberNode best = frontier.poll();
-                
+
             sortedIds.add(best.id);
-            for (MemberNode m : best.equalTo) {
-                sortedIds.add(m.id);
-            }
-            
+
+            for (MemberNode m : best.equalTo) sortedIds.add(m.id);
+
             frontier.addAll(best.betterThan);
         }
 
@@ -176,13 +169,10 @@ public class AIFightingGame extends Game {
             equalTo = new HashSet<>();
             betterThan = new HashSet<>();
         }
-        
-        @Override
-		public String toString() {
-            return ""+id;
-        }
-    }
 
+        @Override
+        public String toString() { return "" + id; }
+    }
 
     @Override
     public void gameUpdate() {
@@ -191,9 +181,7 @@ public class AIFightingGame extends Game {
         time--;
         gui.time.display(time);
 
-        if (time<=0) {
-            endGame();
-        }
+        if (time <= 0) endGame();
     }
 
     @Override
@@ -205,9 +193,7 @@ public class AIFightingGame extends Game {
         gui.c1.display(character1.myMember.infoText());
         gui.c2.display(character2.myMember.infoText());
 
-        if (!animate) {
-            stats.draw(g);
-        }
+        if (!animate) stats.draw(g);
     }
 
     @Override
@@ -215,35 +201,35 @@ public class AIFightingGame extends Game {
         int code = e.getKeyCode();
         switch (code) {
             case KeyEvent.VK_P:
-                //pause
+                // pause
                 paused = !paused;
                 break;
             case KeyEvent.VK_BACK_SPACE:
-                //toggle speed
+                // toggle speed
                 step = 1;
                 break;
             case KeyEvent.VK_SPACE:
-                //toggle speed
+                // toggle speed
                 step = MAXSTEP;
                 break;
             case KeyEvent.VK_CONTROL:
-                //toggle speed
+                // toggle speed
                 step = 100;
                 break;
             case KeyEvent.VK_A:
-                //I should change this but this toggles stats screen
+                // I should change this but this toggles stats screen
                 animate = !animate;
                 break;
             case KeyEvent.VK_S:
-                //changes stats mode
+                // changes stats mode
                 if (!animate) stats.nextMode();
                 break;
             case KeyEvent.VK_W:
-                //changes stats mode
+                // changes stats mode
                 if (!animate) stats.prevMode();
                 break;
             default:
-                //literally just here so that the linter likes me
+                // literally just here so that the linter likes me
         }
     }
 }
