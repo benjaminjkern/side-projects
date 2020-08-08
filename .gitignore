@@ -1,4 +1,6 @@
 /**
+!.gitignore
+
 !/js-projects/lambda/**
 !/js-projects/lambda++/**
 !/js-projects/blackjackodds.js
@@ -12,7 +14,7 @@
 !/python-projects/POMDPs/POMDP_grid.py
 !/python-projects/POMDPs/POMDP_sim.py
 !/python-projects/POMDPs/grid1.txt
-!/java-projects/**
+/!java-projects/**
 
 *.com
 *.class
