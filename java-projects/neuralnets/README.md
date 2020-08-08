@@ -11,7 +11,7 @@ Included is a custom-built library for Linear Algebra within Java that acts upon
 - I added a bit of Rigid body physics that is used in the game, I'm gonna make obstacles eventually but I'm getting sick of using this thought experiment and I wanna do other things soon
 
 ### Usage
-Run "FightingGame.jar" file to run program
+Entry point: "fightinggame/AIFightingGame.java"
 - [SPACE] : Toggle sped up simulation
 - [A] : Toggle stats screen
 - [W/S] : Switch what is showing on stats screen
