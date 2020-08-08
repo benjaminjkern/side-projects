@@ -2,7 +2,7 @@
 
 This is a Lambda Calculus Programming language that is fully functioning, but it has some extra stuff added to it to make programming in Lambda Calculus (albeit marginally) viable!
 
-![Click here to learn about Lambda Calculus](https://en.wikipedia.org/wiki/Lambda_calculus)
+[Click here to learn about Lambda Calculus](https://en.wikipedia.org/wiki/Lambda_calculus)
 
 ### The base language
 
