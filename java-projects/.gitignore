@@ -1,0 +1,4 @@
+*.gif
+/Test.class
+/Brain.class
+/Brain$Neuron.class
