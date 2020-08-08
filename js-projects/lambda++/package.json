@@ -1,0 +1,11 @@
+{
+  "name": "lambdaplusplus",
+  "version": "1.0.0",
+  "description": "A Lambda Calculus Programming Language with extra bits",
+  "main": "lambdaplusplus.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Ben Kern",
+  "license": "ISC"
+}
