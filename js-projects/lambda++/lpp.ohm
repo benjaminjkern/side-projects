@@ -1,0 +1,38 @@
+Lambda {
+    Program = (Statement ";")+
+    Statement =
+        | id "=" Expression -- assignment
+        | print Expression -- print
+    
+    Expression =
+        | Expression Exp2 -- application
+        | Exp2
+    
+    Exp2 =
+        | "(" Expression ")" -- group
+        | ("l"|"L"|"λ") id "." Expression -- lambda
+        | boollit -- bool
+        | stringlit -- string
+        | numlit -- num
+        | id
+
+    print = caseInsensitive<"print"> ~alnum
+    true = caseInsensitive<"true"> ~alnum
+    false = caseInsensitive<"false"> ~alnum
+
+    keyword = print | true | false
+    id = ~keyword letter alnum*
+
+    boollit =
+        | true | false
+    stringlit =
+        | "\"" (~"\"" any)* "\""
+    numlit =
+        | digit+
+
+    space += comment
+    comment = 
+        | "#--" (~"--#" any)* "--#" -- multiline
+        | "#" (~newline any)* -- single
+    newline = "\n"
+}

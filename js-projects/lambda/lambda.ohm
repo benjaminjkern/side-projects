@@ -1,0 +1,23 @@
+Lambda {
+    Program = (Statement ";")+
+    Statement =
+        | id "=" Expression -- assignment
+        | print Expression -- print
+    
+    Expression =
+        | Expression Exp2 -- application
+        | Exp2
+    
+    Exp2 =
+        | "(" Expression ")" -- group
+        | ("L"|"l"|"λ") id "." Expression -- lambda
+        | id
+
+    print = "print" ~alnum
+    id = (~print alnum)+
+    space += comment
+    comment = 
+      | "#--" (~"--#" any)* "--#" -- multiline
+      | "#" (~newline any)* -- single
+    newline = "\n"
+}

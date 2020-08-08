@@ -1,0 +1,60 @@
+# WHOLE NUMBER ARITHMETIC
+
+0 = lf.lx.x;
+
+SUCC = lm.lf.lx.f(m f x);
+PRED = λn.λf.λx.n (λg.λh.h (g f)) (λu.x) (λu.u);
+
+ADD = lm.ln.m SUCC n;
+MULT = λm.λn.m (ADD n) 0;
+POW = λb.λe.e b;
+SUB = λm.λn.n PRED m;
+
+1 = SUCC 0;
+2 = SUCC 1;
+3 = SUCC 2;
+4 = SUCC 3;
+5 = SUCC 4;
+6 = SUCC 5;
+7 = SUCC 6;
+8 = SUCC 7;
+9 = SUCC 8;
+10 = SUCC 9;
+20 = MULT 10 2;
+100 = MULT 10 10;
+16 = λf.λx.(f (f (f (f (f (f (f (f (f (f (f (f (f (f (f (f x))))))))))))))));
+
+print SUB 100 1;
+
+
+# BOOLEANS
+
+TRUE = λx.λy.x;
+FALSE = λx.λy.y;
+
+AND = λp.λq.p q p;
+OR = λp.λq.p p q;
+NOT = λp.p FALSE TRUE;
+IFTHENELSE = λp.λa.λb.p a b;
+
+ISZERO = λn.n (λx.FALSE) TRUE;
+LEQ = λm.λn.ISZERO (SUB m n);
+XOR = lm.ln.AND(OR m n) (NOT (AND m n));
+
+print NOT (XOR true false);
+
+# PAIRS
+
+PAIR = λx.λy.λf.f x y;
+FIRST = λp.p TRUE;
+SECOND = λp.p FALSE;
+NIL = λx.TRUE;
+NULL = λp.p (λx.λy.FALSE);
+
+# SKI
+
+S = lx.ly.lz.x z (y z);
+K = lx.ly.x;
+I = lx.x;
+
+print ISZERO 0;

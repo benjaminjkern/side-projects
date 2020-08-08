@@ -1,0 +1,71 @@
+# WHOLE NUMBER ARITHMETIC
+
+SUCC = lm.lf.lx.f(m f x);
+PRED = λn.λf.λx.n (λg.λh.h (g f)) (λu.x) (λu.u);
+
+ADD = lm.ln.m SUCC n;
+MULT = λm.λn.m (ADD n) 0;
+POW = λb.λe.e b;
+SUB = λm.λn.n PRED m;
+
+# print 100;
+
+
+# BOOLEANS
+
+AND = λp.λq.p q p;
+OR = λp.λq.p p q;
+NOT = λp.p FALSE TRUE;
+IFTHENELSE = λp.λa.λb.p a b;
+
+ISZERO = λn.n (λx.FALSE) TRUE;
+LEQ = λm.λn.ISZERO (SUB m n);
+EQ = lm.ln.LEQ (SUB m n);
+
+XOR = lm.ln.AND(OR m n) (NOT (AND m n));
+BOOLEQ = lm.ln.NOT (XOR m n);
+
+# PAIRS
+
+PAIR = λx.λy.λf.f x y;
+FIRST = λp.p TRUE;
+SECOND = λp.p FALSE;
+NIL = λx.TRUE;
+NULL = λp.p (λx.λy.FALSE);
+
+INT = ln.PAIR true n;
+SIGN = ln.FIRST n;
+ABS = ln.SECOND n;
+NEG = ln.PAIR (NOT (SIGN n)) (ABS n);
+ADDINT = lm.ln.
+    (BOOLEQ (SIGN m) (SIGN n))
+        (PAIR (SIGN m) (ADD (ABS m) (ABS n)))
+        ((LEQ (ABS m) (ABS n)) (PAIR false (SUB (ABS n) (ABS m))) (INT (SUB (ABS m) (ABS n))));
+SUBINT = lm.ln.ADDINT m (NEG n);
+INTEQ = lm.ln.LEQ (ABS(SUBINT m n)) 0;
+
+i1 = INT 1;
+# print ABS(SUBINT (INT 10) (INT 15));
+
+
+#--fourbit = la.lb.lc.ld.lf.lg.f (g a b) (g c d);
+
+#(overflow, value)
+addbits = lm.ln.PAIR (AND m n) (XOR m n);
+first = ln.n TRUE TRUE;
+second = ln.n TRUE FALSE;
+third = ln.n FALSE TRUE;
+fourth = ln.n FALSE FALSE;
+
+# I dont think this is working but this is supposed to be a fourbit integer adder
+addfb = lm.ln.fourbit
+    (SECOND (addbits (SECOND (addbits (first m) (first n)) (FIRST (addbits (second m) (second n))))))
+    (SECOND (addbits (SECOND (addbits (second m) (second n)) (FIRST (addbits (third m) (third n))))))
+    (SECOND (addbits (SECOND (addbits (third m) (third n)) (FIRST (addbits (fourth m) (fourth n))))))
+    (addbits (fourth m) (fourth n));
+
+zero = fourbit false false false false;--#
+
+# print addfb zero zero;
+
+print LEQ 0 0;
