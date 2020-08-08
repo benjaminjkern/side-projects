@@ -2,6 +2,8 @@
 
 This is a Lambda Calculus Programming language that is fully functioning, but it has some extra stuff added to it to make programming in Lambda Calculus (albeit marginally) viable!
 
+[Click here to learn about Lambda Calculus](https://en.wikipedia.org/wiki/Lambda_calculus)
+
 ### The base language
 
 ```
@@ -23,7 +25,7 @@ print KIK;
 
 ## This is all standard Lambda, so what's new?
 
-This: is an entire Lambda++ program
+This is an entire Lambda++ program:
 
 ```
 print add 2 2;
@@ -51,16 +53,19 @@ print and false false;
 ```
 
 > true
-> false
-> false
+
 > false
 
-Check out the ![example code]()
+> false
+
+> false
+
+Check out the [Example Code](https://github.com/benjaminjkern/side-projects/blob/master/js-projects/lambda%2B%2B/example.lpp)!
 
 ## How to install
 
-1. Clone repo `git clone yadya`
+1. Clone this repo.
 2. Run `npm init`
 3. Run `node lambdaplusplus.js [Your Program name]`
 
-That's it!
+That's it! Simple!

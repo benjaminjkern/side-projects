@@ -9,6 +9,8 @@ class wordMaker():
         self.look_back = look_back
         self.poss_letters = set()
 
+        # Don't worry about this entire commented out section, I used this program to reformat GroupMe text, because by default copying and pasting GroupMe text looks awful.
+        
         # likes = re.compile(' \d+')
         # date = re.compile('[A-Z]{3} \d?\d, \d?\d:\d\d (A|P)M')
         # other = re.compile(
