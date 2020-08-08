@@ -12,4 +12,4 @@ I gave it several scripts of movies, or sample personal text conversations, and 
 The results that this gives are usually grammatically correct or at least sound like they could be real sentences, but they are complete gibberish, which I think is really funny.
 
 ## posterize.py
-This is a fun program that I used for the [Cuttlefish Programming Language]() logo, it basically just filters an input image such that every color is mapped to the closest color out of a set of input colors. It creates a neat effect.
+This is a fun program that I used for the [Cuttlefish Programming Language](https://github.com/benjaminjkern/cuttlefishlang) logo, it basically just filters an input image such that every color is mapped to the closest color out of a set of input colors. It creates a neat effect.
