@@ -53,11 +53,14 @@ print and false false;
 ```
 
 > true
-> false
-> false
+
 > false
 
-Check out the [Example Code](https://github.com/benjaminjkern/side-projects/blob/master/js-projects/lambda%2B%2B/example.lpp)
+> false
+
+> false
+
+Check out the [Example Code](https://github.com/benjaminjkern/side-projects/blob/master/js-projects/lambda%2B%2B/example.lpp)!
 
 ## How to install
 
