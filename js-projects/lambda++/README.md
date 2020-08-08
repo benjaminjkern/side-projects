@@ -25,7 +25,7 @@ print KIK;
 
 ## This is all standard Lambda, so what's new?
 
-This: is an entire Lambda++ program
+This is an entire Lambda++ program:
 
 ```
 print add 2 2;
