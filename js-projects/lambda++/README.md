@@ -57,7 +57,7 @@ print and false false;
 > false
 > false
 
-Check out the ![example code]()
+Check out the [Example Code](https://github.com/benjaminjkern/side-projects/blob/master/js-projects/lambda%2B%2B/example.lpp)
 
 ## How to install
 
