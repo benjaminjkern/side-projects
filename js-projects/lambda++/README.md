@@ -2,6 +2,8 @@
 
 This is a Lambda Calculus Programming language that is fully functioning, but it has some extra stuff added to it to make programming in Lambda Calculus (albeit marginally) viable!
 
+![Click here to learn about Lambda Calculus](https://en.wikipedia.org/wiki/Lambda_calculus)
+
 ### The base language
 
 ```
@@ -59,8 +61,8 @@ Check out the ![example code]()
 
 ## How to install
 
-1. Clone repo `git clone yadya`
+1. Clone this repo.
 2. Run `npm init`
 3. Run `node lambdaplusplus.js [Your Program name]`
 
-That's it!
+That's it! Simple!
