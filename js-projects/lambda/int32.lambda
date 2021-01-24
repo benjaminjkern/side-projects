@@ -1,0 +1,41 @@
+T = la.lb.a;
+F = la.lb.b;
+
+int8 = lx0.lx1.lx2.lx3.lx4.lx5.lx6.lx7.lb.b x0 x1 x2 x3 x4 x5 x6 x7;
+
+int8get0 = ln.n (lx0.lx1.lx2.lx3.lx4.lx5.lx6.lx7.x0);
+int8get1 = ln.n (lx0.lx1.lx2.lx3.lx4.lx5.lx6.lx7.x1);
+int8get2 = ln.n (lx0.lx1.lx2.lx3.lx4.lx5.lx6.lx7.x2);
+int8get3 = ln.n (lx0.lx1.lx2.lx3.lx4.lx5.lx6.lx7.x3);
+int8get4 = ln.n (lx0.lx1.lx2.lx3.lx4.lx5.lx6.lx7.x4);
+int8get5 = ln.n (lx0.lx1.lx2.lx3.lx4.lx5.lx6.lx7.x5);
+int8get6 = ln.n (lx0.lx1.lx2.lx3.lx4.lx5.lx6.lx7.x6);
+int8get7 = ln.n (lx0.lx1.lx2.lx3.lx4.lx5.lx6.lx7.x7);
+
+0 = int8 F F F F F F F F;
+
+and = lm.ln.m n F;
+not = la.a F T;
+xor = lm.ln.m (not n) n;
+or = lm.ln.m T n;
+
+carry7 = lm.ln.and (int8get7 m) (int8get7 n);
+carry6 = lm.ln.or (and (int8get6 m) (int8get6 n)) (and (or (int8get6 m) (int8get6 n)) (carry7 m n));
+carry5 = lm.ln.or (and (int8get5 m) (int8get5 n)) (and (or (int8get5 m) (int8get5 n)) (carry6 m n));
+carry4 = lm.ln.or (and (int8get4 m) (int8get4 n)) (and (or (int8get4 m) (int8get4 n)) (carry5 m n));
+carry3 = lm.ln.or (and (int8get3 m) (int8get3 n)) (and (or (int8get3 m) (int8get3 n)) (carry4 m n));
+carry2 = lm.ln.or (and (int8get2 m) (int8get2 n)) (and (or (int8get2 m) (int8get2 n)) (carry3 m n));
+carry1 = lm.ln.or (and (int8get1 m) (int8get1 n)) (and (or (int8get1 m) (int8get1 n)) (carry2 m n));
+
+int8add7 = lm.ln.xor (int8get7 m) (int8get7 n);
+int8add6 = lm.ln.xor (xor (int8get6 m) (int8get6 n)) (carry7 m n);
+int8add5 = lm.ln.xor (xor (int8get5 m) (int8get5 n)) (carry6 m n);
+int8add4 = lm.ln.xor (xor (int8get4 m) (int8get4 n)) (carry5 m n);
+int8add3 = lm.ln.xor (xor (int8get3 m) (int8get3 n)) (carry4 m n);
+int8add2 = lm.ln.xor (xor (int8get2 m) (int8get2 n)) (carry3 m n);
+int8add1 = lm.ln.xor (xor (int8get1 m) (int8get1 n)) (carry2 m n);
+int8add0 = lm.ln.xor (xor (int8get0 m) (int8get0 n)) (carry1 m n);
+
+add = lm.ln.int8 (int8add0 m n) (int8add1 m n) (int8add2 m n) (int8add3 m n) (int8add4 m n) (int8add5 m n) (int8add6 m n) (int8add7 m n);
+
+print F;

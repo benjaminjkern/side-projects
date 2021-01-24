@@ -13,7 +13,7 @@ public class Character extends CircObstacle {
     private double FOV, memory, waitTime = 0;
     private ArrayList<Bullet> bullets;
 
-    public static final int INPUTS = 8;
+    public static final int INPUTS = 10;
     public static final int OUTPUTS = 6;
 
     private static final int FOVDIST = 150;
@@ -137,7 +137,9 @@ public class Character extends CircObstacle {
             inputs[5] = Tools.dotProduct(Tools.unitVector(getDiff(oBullet)), oBullet.unitVecDir());
         }
         inputs[6] = memory;
-        inputs[7] = Tools.rand(-1, 1);
+        inputs[7] = myMember.score;
+        inputs[8] = opponent.myMember.score;
+        inputs[9] = 1;
 
         // if (x > stage.width/2) Tools.println(inputs);
 

@@ -20,7 +20,7 @@ try {
         console.log(Program.gen(language));
     } else {
         console.error(
-            "\nSyntax: node ael-compiler.js [-(language)] program\nLeave the language option out to run the program internally.\nCurrently supported languages:\n  JavaScript: -js\n"
+            "\nSyntax: node lambdaplusplus.js [-(language)] program\nLeave the language option out to run the program internally.\nCurrently supported languages:\n  JavaScript: -js\n"
         );
         process.exitCode = 1;
     }

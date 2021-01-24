@@ -41,7 +41,7 @@ public class Member {
         games = 0;
     }
 
-    public String infoText() { return "ID:" + name + "  Age:" + age + "  Average score:" + averageScore; }
+    public String infoText() { return "ID:" + name + "  Age:" + age + "  Score:" + score; }
 
     public void changeScore(double amount) {
         score += amount;

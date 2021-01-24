@@ -326,6 +326,22 @@ public class Tools {
         return output;
     }
 
+    public static double heavyside(double a) { return a == 0 ? 0 : Math.abs(a) / a; }
+
+    public static double[] heavyside(double[] a) {
+        double[] output = new double[a.length];
+
+        for (int i = 0; i < a.length; i++) { output[i] = heavyside(a[i]); }
+        return output;
+    }
+
+    public static double[][] heavyside(double[][] a) {
+        double[][] output = new double[a.length][a[0].length];
+
+        for (int i = 0; i < a.length; i++) { output[i] = heavyside(a[i]); }
+        return output;
+    }
+
     // ReLU function (overloaded, I wanna fix this by this point lol)
     public static double ReLU(double a) { return a < 0 ? 0 : a; }
 
@@ -398,6 +414,36 @@ public class Tools {
             }
         }
         return currentPos;
+    }
+
+    public static double oneOver(double a) {
+        return a == 0 ? Double.POSITIVE_INFINITY : 1 / a; // just return infinity if it ever does this
+    }
+
+    public static double[] oneOver(double[] a) {
+        double[] output = new double[a.length];
+        for (int i = 0; i < a.length; i++) { output[i] = oneOver(a[i]); }
+        return output;
+    }
+
+    public static double[][] oneOver(double[][] a) {
+        double[][] output = new double[a.length][a[0].length];
+        for (int i = 0; i < a.length; i++) { output[i] = oneOver(a[i]); }
+        return output;
+    }
+
+    public static double squareSum(double a) { return a * a; }
+
+    public static double squareSum(double[] a) {
+        double sum = 0;
+        for (int i = 0; i < a.length; i++) { sum += squareSum(a[i]); }
+        return sum;
+    }
+
+    public static double squareSum(double[][] a) {
+        double sum = 0;
+        for (int i = 0; i < a.length; i++) { sum += squareSum(a[i]); }
+        return sum;
     }
 
     // zeros (I'm stealing from Matlab at this point hahaha its okay though I like
