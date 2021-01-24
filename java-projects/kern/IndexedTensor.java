@@ -16,6 +16,13 @@ public class IndexedTensor extends Tensor {
         this.indices = Arrays.asList(indices);
     }
 
+    public IndexedTensor(int[] size, double[] data, String[] indices) {
+        super(size, data);
+        if (indices.length != size.length && !(indices.length == 0 && data.length == 1))
+            throw new IllegalArgumentException("Must index with the proper size!");
+        this.indices = Arrays.asList(indices);
+    }
+
     public IndexedTensor swapIndices(Map<String, String> indexMap) { return null; }
 
     @Override

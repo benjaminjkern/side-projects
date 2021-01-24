@@ -64,8 +64,14 @@ addfb = lm.ln.fourbit
     (SECOND (addbits (SECOND (addbits (third m) (third n)) (FIRST (addbits (fourth m) (fourth n))))))
     (addbits (fourth m) (fourth n));
 
-zero = fourbit false false false false;--#
+zero = fourbit false false false false;
 
 # print addfb zero zero;
 
-print LEQ 0 0;
+print LEQ 0 0;--#
+
+
+DEEPEQUAL = lm.ln.AND (LEQ m n) (LEQ n m);
+
+print (λn.λx.n (PAIR x) NIL) 6 true;
+

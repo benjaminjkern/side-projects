@@ -1,6 +1,3 @@
-const VALUES = [2, 3, 4, 5, 6, 7, 8, 9, 10, "J", "Q", "K", "A"];
-const SUITS = ["C", "D", "H", "S"];
-
 const sum = (array, f) => array.reduce((a, b) => a + (f ? f(a, b) : b), 0);
 
 scoreHandMap = {};
@@ -139,6 +136,18 @@ const calcStay = (yourHand, dealer, cardsLeft) => {
     return calcStayMap[key];
 };
 
+const relativeScores = (myHand, currentDealer, table = [], numDecks = 1) => {
+    const cardsLeft = require("./deck").makeDeck(numDecks, [
+        ...myHand,
+        ...currentDealer,
+        ...table,
+    ]);
+    return [
+        calcHit(myHand, currentDealer, cardsLeft),
+        calcStay(myHand, currentDealer, cardsLeft),
+    ];
+};
+
 const isEqual = (a, b) => {
     if (typeof a !== typeof b) return false;
     if (typeof a !== "object") return a === b;
@@ -146,37 +155,31 @@ const isEqual = (a, b) => {
     return Object.keys(a).every((key) => isEqual(a[key], b[key]));
 };
 
-const betterFind = (bigList, item) =>
-    bigList.findIndex((i) => isEqual(i, item));
-
-const makeDeck = (numDecks = 1, dealtCards = []) => {
-    const deck = [];
-
-    [...Array(numDecks).keys()].forEach(() => {
-        VALUES.forEach((v) => {
-            SUITS.forEach((s) => {
-                const usedCard = betterFind(dealtCards, [v, s]);
-                if (usedCard > -1) dealtCards.splice(usedCard, 1);
-                else deck.push([v, s]);
-            });
-        });
-    });
-    return deck;
-};
-
-const relativeScores = (myHand, currentDealer, table = [], numDecks = 1) => {
-    const cardsLeft = makeDeck(numDecks, [...myHand, ...currentDealer, ...table]);
-    return [
-        calcHit(myHand, currentDealer, cardsLeft),
-        calcStay(myHand, currentDealer, cardsLeft),
-    ];
-};
-
 /*
 
 Put in your hand, the current hand of the dealer, and any cards that are on the table
 
 */
-const myHand = [];
-const currentDealer = [];
-console.log(relativeScores(myHand, currentDealer, [], 1));
+const table = [
+    [7, "H"],
+    [10, "D"],
+    [8, "S"],
+    ["A", "D"],
+];
+const currentDealer = [
+    ["K", "H"]
+];
+const myHand = [
+    [7, "D"],
+    [2, "C"],
+    [7, "C"],
+];
+const scores = relativeScores(myHand, currentDealer, table, 1);
+
+console.log(`Hit: ${scores[0]}
+Stay: ${scores[1]}`);
+console.log(
+    scores[0] === scores[1] ?
+    "The options are equivalent." :
+    `You should \u001b[33m${scores[0] > scores[1] ? "Hit" : "Stay"}\u001b[0m.`
+);

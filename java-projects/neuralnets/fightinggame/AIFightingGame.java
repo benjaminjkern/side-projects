@@ -47,6 +47,8 @@ public class AIFightingGame extends Game {
     public static final int NUM = 100;
     private static final int MAXTIME = 60 * 15;
 
+    private boolean oneGen, zip = false;
+
     private boolean animate = true;
     private Queue<MemberNode> frontier;
     private ArrayList<Integer> sortedIds;
@@ -55,7 +57,7 @@ public class AIFightingGame extends Game {
     public AIFightingGame(int width, int height) {
         super(width, height);
 
-        population = new Population(NUM, Character.INPUTS, 10, 2, Character.OUTPUTS);
+        population = new Population(NUM, Character.INPUTS, 30, 10, Character.OUTPUTS);
         gui = new GUI(width, height);
         stats = new Stats(population, width, height - gui.lowerStage.height - gui.colorBar.height);
 
@@ -72,6 +74,7 @@ public class AIFightingGame extends Game {
     }
 
     private void newGeneration() {
+        oneGen = false;
         if (generation > 0) population.killAndRepopulate(sortedIds);
 
         frontier = new LinkedList<>();
@@ -83,7 +86,6 @@ public class AIFightingGame extends Game {
         population.scramble();
 
         generation++;
-        System.out.println(match);
         match = 0;
 
         Member oldest = population.getOldest();
@@ -139,10 +141,18 @@ public class AIFightingGame extends Game {
             m2.betterThan.add(m1);
             frontier.add(m2);
         } else {
-            m1.equalTo.add(m2);
-            m1.betterThan.addAll(m2.betterThan);
-            m1.equalTo.addAll(m2.equalTo);
-            frontier.add(m1);
+            if (character1.myMember.averageScore > character2.myMember.averageScore) {
+                m1.betterThan.add(m2);
+                frontier.add(m1);
+            } else if (character1.myMember.averageScore < character2.myMember.averageScore) {
+                m2.betterThan.add(m1);
+                frontier.add(m2);
+            } else {
+                m1.equalTo.add(m2);
+                m1.betterThan.addAll(m2.betterThan);
+                m1.equalTo.addAll(m2.equalTo);
+                frontier.add(m1);
+            }
         }
 
         character1.myMember.score = 0;
@@ -178,12 +188,14 @@ public class AIFightingGame extends Game {
 
     @Override
     public void gameUpdate() {
-        doCharacterStuff();
+        while (oneGen) {
+            doCharacterStuff();
 
-        time--;
-        gui.time.display(time);
+            time--;
+            gui.time.display(time);
 
-        if (time <= 0) endGame();
+            if (time <= 0) endGame();
+        }
     }
 
     @Override
@@ -206,17 +218,13 @@ public class AIFightingGame extends Game {
                 // pause
                 paused = !paused;
                 break;
-            case KeyEvent.VK_BACK_SPACE:
-                // toggle speed
-                step = 1;
-                break;
             case KeyEvent.VK_SPACE:
-                // toggle speed
-                step = MAXSTEP;
+                // zip through generations
+                zip = !zip;
                 break;
             case KeyEvent.VK_CONTROL:
-                // toggle speed
-                step = 100;
+                // do one generation
+                oneGen = true;
                 break;
             case KeyEvent.VK_A:
                 // I should change this but this toggles stats screen

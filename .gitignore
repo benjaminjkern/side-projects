@@ -5,9 +5,13 @@
 !/js-projects/lambda/**
 !/js-projects/lambda++
 !/js-projects/lambda++/**
-!/js-projects/blackjackodds.js
+!/js-projects/cards
+!/js-projects/cards/deck.js
+!/js-projects/cards/blackjackodds.js
 !/js-projects/zeroFinder.js
 !/js-projects/calcDice.js
+!/js-projects/ticTacToe.js
+!/js-projects/chopsticks.js
 !/js-projects/package.json
 !/js-projects/package-lock.json
 !/js-projects/README.md

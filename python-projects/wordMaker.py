@@ -9,8 +9,11 @@ class wordMaker():
         self.look_back = look_back
         self.poss_letters = set()
 
+        book = '\n'.join([line.split(',')[0] for i, line in enumerate(
+            open(ref_text).read().split('\n')) if i != 0])
+
         # Don't worry about this entire commented out section, I used this program to reformat GroupMe text, because by default copying and pasting GroupMe text looks awful.
-        
+
         # likes = re.compile(' \d+')
         # date = re.compile('[A-Z]{3} \d?\d, \d?\d:\d\d (A|P)M')
         # other = re.compile(
@@ -44,8 +47,6 @@ class wordMaker():
         #             '    '+line+(' ('+str(num_likes)+' like'+('' if num_likes == 1 else 's')+')' if num_likes else ''))
 
         # book = '\n'.join(book)
-
-        book = open(ref_text).read()
 
         for i, letter in enumerate(book):
 
@@ -83,5 +84,5 @@ class wordMaker():
 
 
 if __name__ == '__main__':
-    ben = wordMaker(10, 'newintown.txt')
+    ben = wordMaker(4, 'Dog_Names.csv')
     print('\n'.join(ben.make(2000)))
