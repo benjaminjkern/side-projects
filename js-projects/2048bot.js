@@ -1,25 +1,61 @@
-const BOARDSIZE = [4, 4];
-const MAXCELL = 11; // 2048
+const BOARDSIZE = [4,4];
+const MAXCELL = -1; // 2048
 const STARTMUTATION = 1;
 const GENMUTATION = 1;
 const BRAINSIZE = [BOARDSIZE[0] * BOARDSIZE[1] * MAXCELL, 100, 100, 4];
-const DEPTH = 2;
+const DEPTH = 4;
 
-const playGame = (brain) => {
+
+const playGame = (brain, average) => {
     let game = newGame();
 
+    if (average) process.stdout.cursorTo(0,0);
+
     while (true) {
-        game = move(game, chooseAction(game, brain.depth, () => 0));
+        
+        VCache = {};
+        QCache = {};
+        actionCache = {};
+
+        const action = chooseAction({ board: game.board, points: 0 }, brain.depth)[0];
+        
+        if (average) {
+            process.stdout.clearScreenDown();
+            process.stdout.write(`\n\nScore: ${(game.points+'').yellow}\n\n\n${draw(game)}\n\nAverage Score: ${(average+'').green}`);
+            process.stdout.cursorTo(0,0);
+        }
+
+        game = move(game, action);
         game.board = newRandomPiece(game.board);
+
+        const newMax = Math.max(...game.board.flat());
+        if (newMax > game.max) game.max = newMax;
+
         if (checkIfGameOver(game.board) !== undefined) break;
+    }
+    
+    if (average) {
+        process.stdout.clearScreenDown();
+        process.stdout.write(`\n\nScore: ${(game.points+'').yellow}\n\n\n${draw(game)}\n\nAverage Score: ${(average+'').green}`);
+        process.stdout.cursorTo(0,0);
     }
 
     return [Math.max(...game.board.flat()), game.points];
 }
 
+const parse = (action) => {
+    switch (action) {
+        case 0: return 'up';
+        case 1: return 'left';
+        case 2: return 'down';
+        case 3: return 'right';
+    }
+}
+
 const newGame = () => {
     const game = { board: Array(BOARDSIZE[1]).fill().map(() => Array(BOARDSIZE[0]).fill(0)), points: 0 }
     Array(2).fill().forEach(() => { game.board = newRandomPiece(game.board) });
+    game.max = Math.max(...game.board.flat());
     return game;
 }
 
@@ -40,7 +76,7 @@ const checkIfGameOver = (board) => {
     return false;
 }
 
-const move = (game, action) => {
+const move = (game, action, try2) => {
     let dir;
     switch (action) {
         case 0:
@@ -60,7 +96,7 @@ const move = (game, action) => {
             dir = [1, 0];
             break;
         default:
-            throw "dir must be of the form (Int x | x in [0..4)) (Char x | x in 'uldr')!";
+            throw "dir must be of the form (Int x | x in [0..4)) (Char x | x in 'uldr')! " + action;
     }
 
     let { board, points } = game;
@@ -69,34 +105,33 @@ const move = (game, action) => {
 
     for (let y = 0; y < BOARDSIZE[1]; y++) {
         for (let x = 0; x < BOARDSIZE[0]; x++) {
-            [board, points] = tryToMove(board, x, y, dir);
+            [board, points] = tryToMove(board, points, x, y, dir);
         }
     }
 
-    if (lastboard.every((row, i) => row.every((x, j) => x === board[i][j]))) return move((action + 1) % 4);
+    if (!try2 && lastboard.every((row, i) => row.every((x, j) => x === board[i][j]))) return move(game, (action + 1) % 4, true);
 
-    return { board, points };
+    return { board, points, max: game.max };
 }
 
 const copyBoard = (board) => [...board.map(row => [...row])];
 
 // TODO: Account for 3 in a row and 4 in a row
 const tryToMove = (board, points, x, y, dir) => {
-    draw(board);
-    if (board[y][x] === 0 || x + dir[0] < 0 || x + dir[0] >= BOARDSIZE[0] || y + dir[1] < 0 || y + dir[1] >= BOARDSIZE[1]) return [board, points];
+    if (board[y][x] === 0 || x + dir[0] < 0 || x + dir[0] >= BOARDSIZE[0] || y + dir[1] < 0 || y + dir[1] >= BOARDSIZE[1]) return [copyBoard(board), points];
     if (board[y + dir[1]][x + dir[0]] === 0) {
         let newBoard = copyBoard(board);
-        newBoard[y + dir[1]][x + dir[0]] = board[y][x];
+        newBoard[y + dir[1]][x + dir[0]] = newBoard[y][x];
         newBoard[y][x] = 0;
         return tryToMove(newBoard, points, x + dir[0], y + dir[1], dir);
     }
     let [newBoard, newPoints] = tryToMove(board, points, x + dir[0], y + dir[1], dir);
-    if (board[y + dir[1]][x + dir[0]] === 0) {
+    if (newBoard[y + dir[1]][x + dir[0]] === 0) {
         newBoard[y + dir[1]][x + dir[0]] = newBoard[y][x];
         newBoard[y][x] = 0;
-    } else if (board[y + dir[1]][x + dir[0]] === board[y][x]) {
-        newPoints += 2 ** (game.board[y][x] + 1);
-        newBoard[y + dir[1]][x + dir[0]] = board[y][x] + 1;
+    } else if (newBoard[y + dir[1]][x + dir[0]] === newBoard[y][x]) {
+        newPoints += 2 ** (newBoard[y][x] + 1);
+        newBoard[y + dir[1]][x + dir[0]] = newBoard[y][x] + 1;
         newBoard[y][x] = 0;
     }
     return [newBoard, newPoints];
@@ -129,7 +164,9 @@ const allPossibleNewRandomPieces = (board) => {
     return newBoards;
 }
 
-const draw = (board) => { for (const row of board) console.log(row.join('\t')); }
+const draw = (game) => {
+    return game.board.map(row=>row.map(cell=>cell===game.max?(2**cell+'').red:cell===0?'':2**cell).join('\t')).join('\n');
+}
 
 // optimization stuff
 
@@ -138,26 +175,42 @@ const cache = (myCache, key, value) => {
     return value;
 }
 
-const makeKey = (board) => board.map(row => row.join(',')).join(';');
-
-const VCache = {};
-const V = (game, depth, estimator) => {
-    const key = makeKey(game.board);
-    if (depth === 0) return cache(VCache, key, game.points + estimator(game.board));
-    return cache(VCache, key, Math.max(...ACTIONS.map(a => Q(game, a, depth, estimator))));
+const makeKey = (board) => {
+    const M = Math.max(...board.flat());
+    // return board.map(row => row.map(cell => cell ? M + 1 - cell : 0).join(',')).join(';');
+    // cannot use action cache if using maximized cells
+    return board.map(row => row.join(',')).join(';');
 }
 
-const QCache = {};
-const Q = (game, action, depth, estimator) => {
-    const key = makeKey(game.board) + ';' + action;
+let VCache = {};
+const V = (game, depth) => {
+    if (depth <= 0) return game.points;
+    const key = makeKey(game.board) + '.' + depth;
+    if (VCache[key]) return VCache[key];
+    // console.log(`V(${key})`);
+    const bestAction = chooseAction(game, depth);
+    return cache(VCache, key, bestAction[1]);
+}
+
+let QCache = {};
+const Q = (game, action, depth) => {
+    const key = makeKey(game.board) + '.' + action + '.' + depth;
+    if (QCache[key]) return QCache[key];
+    // console.log(`Q(${key})`);
     const game2 = move(game, action);
     const newBoards = allPossibleNewRandomPieces(game2.board);
-    return cache(QCache, key, newBoards.reduce((p, c) => p + V({ board: c, points: game2.points }, depth - 1, estimator)) / newBoards.length);
+    // console.log(newBoards);
+    return cache(QCache, key, newBoards.length === 0 ? game2.points : (newBoards.reduce((p, c) => p + V({ board: c, points: game2.points }, depth - 1),0) / newBoards.length));
 }
 
-const chooseAction = (game, depth, estimator = () => 0) => {
-    const actions = ACTIONS.map(a => Q(game, a, depth, estimator));
-    return ACTIONS[argmax(actions)];
+let actionCache = {};
+const chooseAction = (game, depth) => {
+    const key = makeKey(game.board) + '.' + depth;
+    if (actionCache[key]) return actionCache[key];
+    const actionScores = ACTIONS.map(action => Q(game, action, depth));
+    // console.log(VCache);
+    const bestAction = argmax(actionScores);
+    return cache(actionCache, key, [bestAction, actionScores[bestAction]]);
 }
 
 const ACTIONS = [0, 1, 2, 3];
@@ -173,7 +226,7 @@ const getEncoding = (board) => {
 }
 
 const newBrain = () => ({
-    neuralNet: newNeuralNet(),
+    // neuralNet: newNeuralNet(),
     depth: DEPTH,
     estimator(board) {
         return passThroughBrain(getEncoding(board), this.neuralNet);
@@ -216,10 +269,16 @@ const argmax = (list) => {
     return j;
 }
 
-const score = (brain, iterations) => Array(iterations).fill().map(() => playGame(brain)).reduce((p, c) => [p[0] + c[0], p[1] + c[1]], [0, 0]).map(a => a / iterations);
+const score = (brain, iterations) => Array(iterations).fill().reduce((p,c,i) => {
+    const a = playGame(brain, i === 0 ? -1 : p[0] / i);
+    return [p[0]+a[1],[...p[1], a]];
+},[0,[]])[1].reduce((p, c) => [p[0] + c[0], p[1] + c[1]], [0, 0]).map(a => a / iterations);
 
 require('colors');
 const fs = require('fs');
 
-const brain = newBrain();
-console.log(playGame(brain));
+const brain = newBrain(); // unneccesary
+const scores = score(brain,100);
+process.stdout.clearScreenDown();
+console.log(`Average Score: ${(scores[1]+'').yellow}`);
+console.log(`Average Max Cell: ${(2 ** scores[0]+'').red}`);
