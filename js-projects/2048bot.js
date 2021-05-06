@@ -3,7 +3,7 @@ const MAXCELL = -1; // 2048
 const STARTMUTATION = 1;
 const GENMUTATION = 1;
 const BRAINSIZE = [BOARDSIZE[0] * BOARDSIZE[1] * MAXCELL, 100, 100, 4];
-const DEPTH = 4;
+const DEPTH = 5;
 
 
 const playGame = (brain, average) => {
@@ -21,7 +21,7 @@ const playGame = (brain, average) => {
         
         if (average) {
             process.stdout.clearScreenDown();
-            process.stdout.write(`\n\nScore: ${(game.points+'').yellow}\n\n\n${draw(game)}\n\nAverage Score: ${(average+'').green}`);
+            process.stdout.write(`\n\nScore: ${(game.points+'').yellow}\n\n${draw(game)}\n\nAverage Score: ${(average[1]+'').yellow}\nAverage Max Cell: ${(2 ** average[0]+'').magenta}\nHighest Score: ${(average[3]+'').green}\nHighest Max Cell: ${(2 ** average[2]+'').red}`);
             process.stdout.cursorTo(0,0);
         }
 
@@ -36,7 +36,7 @@ const playGame = (brain, average) => {
     
     if (average) {
         process.stdout.clearScreenDown();
-        process.stdout.write(`\n\nScore: ${(game.points+'').yellow}\n\n\n${draw(game)}\n\nAverage Score: ${(average+'').green}`);
+        process.stdout.write(`\n\nScore: ${(game.points+'').yellow}\n\n${draw(game)}\n\nAverage Score: ${(average[1]+'').yellow}\nAverage Max Cell: ${(2 ** average[0]+'').magenta}\nHighest Score: ${(average[3]+'').green}\nHighest Max Cell: ${(2 ** average[2]+'').red}`);
         process.stdout.cursorTo(0,0);
     }
 
@@ -269,10 +269,22 @@ const argmax = (list) => {
     return j;
 }
 
+const argmin = (list) => {
+    let best = Number.POSITIVE_INFINITY;
+    let j = -1;
+    for (let i = 0; i < list.length; i++) {
+        if (list[i] < best) {
+            best = list[i];
+            j = i;
+        }
+    }
+    return j;
+}
+
 const score = (brain, iterations) => Array(iterations).fill().reduce((p,c,i) => {
-    const a = playGame(brain, i === 0 ? -1 : p[0] / i);
-    return [p[0]+a[1],[...p[1], a]];
-},[0,[]])[1].reduce((p, c) => [p[0] + c[0], p[1] + c[1]], [0, 0]).map(a => a / iterations);
+    const a = playGame(brain, i === 0 ? [0,0,0,0] : p.map((a,j) => j<2?a / i:a));
+    return [p[0] + a[0], p[1]+a[1], Math.max(p[2],a[0]),Math.max(p[3],a[1])];
+},[0,0,0,0]).map((a,j) => j<2?a / iterations:a);
 
 require('colors');
 const fs = require('fs');
@@ -281,4 +293,6 @@ const brain = newBrain(); // unneccesary
 const scores = score(brain,100);
 process.stdout.clearScreenDown();
 console.log(`Average Score: ${(scores[1]+'').yellow}`);
-console.log(`Average Max Cell: ${(2 ** scores[0]+'').red}`);
+console.log(`Average Max Cell: ${(2 ** scores[0]+'').magenta}`);
+console.log(`Highest Score: ${(scores[3]+'').green}`);
+console.log(`Highest Max Cell: ${(2 ** scores[2]+'').red}`);
