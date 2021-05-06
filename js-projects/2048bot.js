@@ -2,53 +2,37 @@ const BOARDSIZE = [4, 4];
 const MAXCELL = 11; // 2048
 const STARTMUTATION = 1;
 const GENMUTATION = 1;
-const NUM = 1;
 const BRAINSIZE = [BOARDSIZE[0] * BOARDSIZE[1] * MAXCELL, 100, 100, 4];
+const DEPTH = 2;
 
-let board = [];
-let gamerunning = false;
-let points = 0;
-const start = (brain) => {
-    gamerunning = true;
-    board = Array(BOARDSIZE[1]).fill().map(() => Array(BOARDSIZE[0]).fill(0));
-    Array(2).fill().forEach(() => {
-        newRandomPiece();
-    });
-    points = 0;
+const playGame = (brain) => {
+    let game = newGame();
 
-    let t = 0;
     while (true) {
-        t++;
-        const lastboard = [...board.map(row => [...row])];
-        const order = passThroughBrain(getEncoding(), brain);
-        while (true) {
-            const best = argmax(order);
-            if (Math.max(order) === -1 || best === -1) break;
-            move(best);
-            newRandomPiece();
-            if (lastboard.every((row, i) => row.every((x, j) => x === board[i][j]))) {
-                order[best] = -1;
-                continue;
-            }
-            break;
-        }
-        if (checkIfGameOver() !== undefined) break;
-        // if (checkIfGameOver()) console.log("WE HAVE A WINNER");
+        game = move(game, chooseAction(game, brain.depth, () => 0));
+        game.board = newRandomPiece(game.board);
+        if (checkIfGameOver(game.board) !== undefined) break;
     }
-    // if (points === 0) {
-    //     console.log()
-    //     draw();
-    //     console.log(argmax(passThroughBrain(getEncoding(), brain)));
-    // }
 
-    // console.log("Game over!");
+    return [Math.max(...game.board.flat()), game.points];
 }
 
-const checkIfGameOver = () => {
+const newGame = () => {
+    const game = { board: Array(BOARDSIZE[1]).fill().map(() => Array(BOARDSIZE[0]).fill(0)), points: 0 }
+    Array(2).fill().forEach(() => { game.board = newRandomPiece(game.board) });
+    return game;
+}
+
+// returns true if won, false if lost, undefined if game still running
+const checkIfGameOver = (board) => {
+    for (let y = 0; y < BOARDSIZE[1]; y++) {
+        for (let x = 0; x < BOARDSIZE[0]; x++) {
+            if (board[y][x] === MAXCELL) return true;
+        }
+    }
     for (let y = 0; y < BOARDSIZE[1]; y++) {
         for (let x = 0; x < BOARDSIZE[0]; x++) {
             if (board[y][x] === 0) return;
-            if (board[y][x] === MAXCELL) return true;
             if (y < BOARDSIZE[1] - 1 && board[y][x] === board[y + 1][x]) return;
             if (x < BOARDSIZE[0] - 1 && board[y][x] === board[y][x + 1]) return;
         }
@@ -56,100 +40,157 @@ const checkIfGameOver = () => {
     return false;
 }
 
-const move = (dir) => {
-    if (typeof dir !== 'object' && dir.length !== 2) {
-        switch (dir) {
-            case 0:
-            case 'u':
-                // console.log('u');
-                dir = [0, -1];
-                break;
-            case 1:
-            case 'l':
-                // console.log('l');
-                dir = [-1, 0];
-                break;
-            case 2:
-            case 'd':
-                // console.log('d');
-                dir = [0, 1];
-                break;
-            case 3:
-            case 'r':
-                // console.log('r');
-                dir = [1, 0];
-                break;
-            default:
-                throw "dir must be of the form [ (Int), (Int) ]!";
-        }
+const move = (game, action) => {
+    let dir;
+    switch (action) {
+        case 0:
+            // case 'u':
+            dir = [0, -1];
+            break;
+        case 1:
+            // case 'l':
+            dir = [-1, 0];
+            break;
+        case 2:
+            // case 'd':
+            dir = [0, 1];
+            break;
+        case 3:
+            // case 'r':
+            dir = [1, 0];
+            break;
+        default:
+            throw "dir must be of the form (Int x | x in [0..4)) (Char x | x in 'uldr')!";
     }
+
+    let { board, points } = game;
+
+    const lastboard = copyBoard(board);
 
     for (let y = 0; y < BOARDSIZE[1]; y++) {
         for (let x = 0; x < BOARDSIZE[0]; x++) {
-            tryToMove(x, y, dir);
+            [board, points] = tryToMove(board, x, y, dir);
         }
     }
+
+    if (lastboard.every((row, i) => row.every((x, j) => x === board[i][j]))) return move((action + 1) % 4);
+
+    return { board, points };
 }
 
-const tryToMove = (x, y, dir) => {
-    if (board[y][x] === 0 || x + dir[0] < 0 || x + dir[0] >= BOARDSIZE[0] || y + dir[1] < 0 || y + dir[1] >= BOARDSIZE[1]) return;
+const copyBoard = (board) => [...board.map(row => [...row])];
+
+// TODO: Account for 3 in a row and 4 in a row
+const tryToMove = (board, points, x, y, dir) => {
+    draw(board);
+    if (board[y][x] === 0 || x + dir[0] < 0 || x + dir[0] >= BOARDSIZE[0] || y + dir[1] < 0 || y + dir[1] >= BOARDSIZE[1]) return [board, points];
     if (board[y + dir[1]][x + dir[0]] === 0) {
-        board[y + dir[1]][x + dir[0]] = board[y][x];
-        board[y][x] = 0;
-        return tryToMove(x + dir[0], y + dir[1], dir);
+        let newBoard = copyBoard(board);
+        newBoard[y + dir[1]][x + dir[0]] = board[y][x];
+        newBoard[y][x] = 0;
+        return tryToMove(newBoard, points, x + dir[0], y + dir[1], dir);
     }
-    tryToMove(x + dir[0], y + dir[1], dir);
+    let [newBoard, newPoints] = tryToMove(board, points, x + dir[0], y + dir[1], dir);
     if (board[y + dir[1]][x + dir[0]] === 0) {
-        board[y + dir[1]][x + dir[0]] = board[y][x];
-        board[y][x] = 0;
+        newBoard[y + dir[1]][x + dir[0]] = newBoard[y][x];
+        newBoard[y][x] = 0;
+    } else if (board[y + dir[1]][x + dir[0]] === board[y][x]) {
+        newPoints += 2 ** (game.board[y][x] + 1);
+        newBoard[y + dir[1]][x + dir[0]] = board[y][x] + 1;
+        newBoard[y][x] = 0;
     }
-    if (board[y + dir[1]][x + dir[0]] === board[y][x]) {
-        points += 2 ** (board[y][x] + 1);
-        board[y + dir[1]][x + dir[0]] = board[y][x] + 1;
-        board[y][x] = 0;
-    }
+    return [newBoard, newPoints];
 }
 
-const newRandomPiece = () => {
-    if (board.every(row => row.every(cell => cell))) return;
-    let placed = false;
-    while (!placed) {
+const newRandomPiece = (board) => {
+    if (board.every(row => row.every(cell => cell))) return board;
+    let newBoard = copyBoard(board);
+    while (true) {
         const [x, y] = Array(2).fill().map((_, i) => Math.floor(Math.random() * BOARDSIZE[i]));
         if (!board[y][x]) {
-            placed = true;
-            board[y][x] = Math.round(Math.random() + 1);
+            newBoard[y][x] = Math.round(Math.random() + 1);
+            return newBoard;
         }
     }
 };
 
-const draw = () => {
-    for (const row of board) {
-        console.log(row.join('\t'));
+const allPossibleNewRandomPieces = (board) => {
+    const newBoards = [];
+    for (let y = 0; y < BOARDSIZE[1]; y++) {
+        for (let x = 0; x < BOARDSIZE[0]; x++) {
+            if (board[y][x]) continue;
+            let newBoard1 = copyBoard(board);
+            let newBoard2 = copyBoard(board);
+            newBoard1[y][x] = 1;
+            newBoard2[y][x] = 2;
+            newBoards.push(newBoard1, newBoard2); // push is slow
+        }
     }
-};
+    return newBoards;
+}
 
-const getEncoding = () => {
+const draw = (board) => { for (const row of board) console.log(row.join('\t')); }
+
+// optimization stuff
+
+const cache = (myCache, key, value) => {
+    myCache[key] = value;
+    return value;
+}
+
+const makeKey = (board) => board.map(row => row.join(',')).join(';');
+
+const VCache = {};
+const V = (game, depth, estimator) => {
+    const key = makeKey(game.board);
+    if (depth === 0) return cache(VCache, key, game.points + estimator(game.board));
+    return cache(VCache, key, Math.max(...ACTIONS.map(a => Q(game, a, depth, estimator))));
+}
+
+const QCache = {};
+const Q = (game, action, depth, estimator) => {
+    const key = makeKey(game.board) + ';' + action;
+    const game2 = move(game, action);
+    const newBoards = allPossibleNewRandomPieces(game2.board);
+    return cache(QCache, key, newBoards.reduce((p, c) => p + V({ board: c, points: game2.points }, depth - 1, estimator)) / newBoards.length);
+}
+
+const chooseAction = (game, depth, estimator = () => 0) => {
+    const actions = ACTIONS.map(a => Q(game, a, depth, estimator));
+    return ACTIONS[argmax(actions)];
+}
+
+const ACTIONS = [0, 1, 2, 3];
+
+
+// neural network stuff
+
+const getEncoding = (board) => {
     const max = Math.max(...board.flat());
     const encoding = Array(BOARDSIZE[0] * BOARDSIZE[1] * MAXCELL).fill(0);
     board.flat().forEach(((cell, i) => { encoding[max - cell + i * MAXCELL] = 1; }));
     return encoding;
 }
 
-const newBrain = (oldBrain, mutation = STARTMUTATION) => {
-    if (oldBrain === undefined)
-        return BRAINSIZE.slice(1).map((size, i) => newLinearLayer(BRAINSIZE[i], size, mutation));
-    return newBrain(undefined, GENMUTATION).map((layer, i) => [add(layer[0], oldBrain[i][0]), add(layer[1], oldBrain[i][1])]);
+const newBrain = () => ({
+    neuralNet: newNeuralNet(),
+    depth: DEPTH,
+    estimator(board) {
+        return passThroughBrain(getEncoding(board), this.neuralNet);
+    }
+})
+
+const newNeuralNet = (oldNet, mutation = STARTMUTATION, brainSize = BRAINSIZE) => {
+    if (oldNet === undefined)
+        return brainSize.slice(1).map((size, i) => newLinearLayer(brainSize[i], size, mutation));
+    return newNeuralNet(undefined, GENMUTATION).map((layer, i) => [add(layer[0], oldNet[i][0]), add(layer[1], oldNet[i][1])]);
 }
 
-const newLinearLayer = (input, output, mutation) => {
-    return [Array(output).fill().map(() => Array(input).fill().map(() => (Math.random() * 2 - 1) * mutation)), Array(output).fill().map(() => (Math.random() * 2 - 1) * mutation)];
-}
+const newLinearLayer = (input, output, mutation) => [Array(output).fill().map(() => Array(input).fill().map(() => (Math.random() * 2 - 1) * mutation)), Array(output).fill().map(() => (Math.random() * 2 - 1) * mutation)];
 
 const sigma = (x) => 1 / (1 + Math.exp(-x));
 const passThroughBrain = (input, brain) => {
-    for (const layer of brain) {
-        input = add(matMult(layer[0], input), layer[1]).map(sigma);
-    }
+    for (const layer of brain) input = add(matMult(layer[0], input), layer[1]).map(sigma);
     return input;
 }
 
@@ -175,35 +216,10 @@ const argmax = (list) => {
     return j;
 }
 
-const score = (brain) => Array(NUM).fill().map(() => {
-    start(brain);
-    return [Math.max(...board.flat()), points];
-}).reduce((p, c) => [p[0] + c[0], p[1] + c[1]], [0, 0]).map(a => a / NUM);
+const score = (brain, iterations) => Array(iterations).fill().map(() => playGame(brain)).reduce((p, c) => [p[0] + c[0], p[1] + c[1]], [0, 0]).map(a => a / iterations);
 
-// start();
-
-// draw();
-// getEncoding().map(x => console.log(x));
 require('colors');
 const fs = require('fs');
-const { inspect } = require('util');
 
-let brain = newBrain();
-let best = score(brain);
-let avg = best;
-let t = 0;
-while (true) {
-    const b = newBrain(brain);
-    const s = score(b);
-    t++;
-    avg = [(s[0] + avg[0] * Math.log(t + 1)) / (Math.log(t + 1) + 1), (s[1] + avg[1] * Math.log(t + 1)) / (Math.log(t + 1) + 1)];
-    if (s[0] > best[0] || s[1] > best[1]) {
-        // console.log("Yippee!".green);
-        best = s;
-        brain = b;
-        // console.log(best);
-        fs.writeFileSync('bestbot.txt', inspect(b, true, null, false), { flag: "w+" });
-    }
-    if (t % 100 === 0) console.log(`Avg: ${avg.map(a => (Math.round(a * 100) / 100+'').yellow).join(', ')}\tBest: ${best.map(a => (Math.round(a * 100) / 100+'').yellow).join(', ')}`);
-
-}
+const brain = newBrain();
+console.log(playGame(brain));
