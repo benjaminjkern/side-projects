@@ -32,6 +32,7 @@
 
 !/OffProjects
 !/OffProjects/**
+/OffProjects/node_modules
 
 *.com
 *.class
