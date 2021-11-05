@@ -30,6 +30,8 @@
 !/java-projects
 !/java-projects/**
 
+!/OffProjects
+
 *.com
 *.class
 *.dll
