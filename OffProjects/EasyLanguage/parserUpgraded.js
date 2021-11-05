@@ -92,6 +92,8 @@ const getMinLength = (type, seen = {}) => {
 const getMaxLength = (type, seen = {}) => {
     if (!heuristics[type]) heuristics[type] = {};
 
+
+
     if (seen[type]) {
         if (heuristics[type].maxLength === -1)
             return Number.MAX_SAFE_INTEGER;
