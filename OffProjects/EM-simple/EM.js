@@ -8,7 +8,7 @@ const cross = (a, b) => [
 
 const vecLength = (v) => Math.sqrt(dot(v, v));
 
-const GRIDSIZE = [250, 250];
+const GRIDSIZE = [200, 200];
 
 let maxValue;
 
@@ -51,6 +51,11 @@ const noise = (x, y, blocks) => {
     return vectors.reduce((p, v, i) => p + dot(v, displacements[i]) * (1 - smoothen(displacements[i][0] / blockWidth)) * (1 - smoothen(displacements[i][1] / blockHeight)), 0);
 }
 
+const VALUERANGE = [-1, 1];
+const TERMRANGE = [0, 5];
+const POWERRANGE = [1, 1];
+const DISTRANGE = [-2, 2];
+
 const init = () => {
 
     fieldSize = Math.round(GRIDSIZE.reduce((p, c) => p * c, 1));
@@ -64,27 +69,39 @@ const init = () => {
         for (let y = 0; y < GRIDSIZE[1]; y++) {
             const index = makeIdx(x, y);
 
-            field[index] = noise(x, y, 100) + noise(x, y, 50) + noise(x, y, 20) + noise(x, y, 10) + noise(x, y, 5);
+            field[index] = 0;
+            // field[index] = noise(x, y, 100) + noise(x, y, 50) + noise(x, y, 20) + noise(x, y, 10) + noise(x, y, 5);
         }
     }
-    coef = [
-        { value: Math.random() * 2 - 1, terms: [] },
-        { value: Math.random() * 2 - 1, terms: [{ dx: 0, dy: 0, power: 1 }] },
 
-        { value: Math.random() * 2 - 1, terms: [{ dx: 1, dy: 0, power: 1 }] },
-        { value: Math.random() * 2 - 1, terms: [{ dx: -1, dy: 0, power: 1 }] },
-        { value: Math.random() * 2 - 1, terms: [{ dx: 0, dy: 1, power: 1 }] },
-        { value: Math.random() * 2 - 1, terms: [{ dx: 0, dy: -1, power: 1 }] },
+    coef = Array(20).fill().map(() => ({
+        value: randrange(VALUERANGE), terms:
+            Array(Math.floor(randrangeint(TERMRANGE))).fill().map(() => (
+                { dx: randrangeint(DISTRANGE), dy: randrangeint(DISTRANGE), power: randrangeint(POWERRANGE) }
+            ))
+    }));
+    // coef = [
+    //     // { value: Math.random() * 2 - 1, terms: [] },
+    //     // { value: Math.random() * 2 - 1, terms: [{ dx: 0, dy: 0, power: 1 }] },
 
-        // { value: Math.random() * 2 - 1, terms: [{ dx: 1, dy: 1, power: 1 }] },
-        // { value: Math.random() * 2 - 1, terms: [{ dx: 1, dy: -1, power: 1 }] },
-        // { value: Math.random() * 2 - 1, terms: [{ dx: -1, dy: 1, power: 1 }] },
-        // { value: Math.random() * 2 - 1, terms: [{ dx: -1, dy: -1, power: 1 }] },
-    ];
+    //     { value: 1, terms: [{ dx: 1, dy: 0, power: 1 }] },
+    //     { value: 1, terms: [{ dx: -1, dy: 0, power: 1 }] },
+    //     { value: 1, terms: [{ dx: 0, dy: 1, power: 1 }] },
+    //     { value: 1, terms: [{ dx: 0, dy: -1, power: 1 }] },
+
+    //     { value: 1, terms: [{ dx: 1, dy: 1, power: 1 }] },
+    //     { value: 1, terms: [{ dx: 1, dy: -1, power: 1 }] },
+    //     { value: 1, terms: [{ dx: -1, dy: 1, power: 1 }] },
+    //     { value: 1, terms: [{ dx: -1, dy: -1, power: 1 }] },
+    // ];
 
     console.log(coef);
+
     // coef = [{ value: 1, terms: [{ dx: 1, dy: 1, power: 1 }] },];
 }
+
+const randrange = ([low, high]) => Math.random() * (high - low) + low;
+const randrangeint = ([low, high]) => Math.floor(Math.random() * (high - low + 1)) + low;
 
 const getField = (x, y) => {
     // if (x < 0 || x >= GRIDSIZE[0] || y < 0 || y >= GRIDSIZE[1]) return 0;
@@ -104,27 +121,55 @@ const step = () => {
 
             // set update values
             if (mousedown) {
-                if ((x - mousex) ** 2 + (y - mousey) ** 2 < radius ** 2 || (x - lastmousex) ** 2 + (y - lastmousey) ** 2 < radius ** 2) dfield[makeIdx(x, y)] = mousevalue;
+                const pm = [x - mousex, y - mousey];
+                const pl = [x - lastmousex, y - lastmousey];
+                const diff = [mousex - lastmousex, mousey - lastmousey];
+                if (dot(pl, diff) > 0 && dot(pm, diff) < 0) {
+                    const projLength = dot(pl, diff) / dot(diff, diff);
+                    const orth = [pl[0] - projLength * diff[0], pl[1] - projLength * diff[1]];
+                    if (orth[0] ** 2 + orth[1] ** 2 < radius ** 2) dfield[makeIdx(x, y)] = mousevalue;
+                } else if ((x - mousex) ** 2 + (y - mousey) ** 2 < radius ** 2 || (x - lastmousex) ** 2 + (y - lastmousey) ** 2 < radius ** 2) dfield[makeIdx(x, y)] = mousevalue;
+
             }
         }
     }
 
-    maxValue = 0;
+    // maxValue = 0;
 
     //update
     for (let x = 0; x < GRIDSIZE[0]; x++) {
         for (let y = 0; y < GRIDSIZE[1]; y++) {
             const index = makeIdx(x, y);
 
-            field[index] = dfield[index];
+            field[index] = Math.max(VALUERANGE[0], Math.min(VALUERANGE[1], dfield[index]));
 
-            maxValue = Math.max(field[index], maxValue, -maxValue);
+            // maxValue = Math.max(field[index], maxValue, -maxValue);
+        }
+    }
+
+    const midIdx = makeIdx(Math.floor(GRIDSIZE[0] / 2), Math.floor(GRIDSIZE[1] / 2));
+
+    field[midIdx] = randrange(VALUERANGE);
+
+    // change the coef slightly
+    const newCoef = coef[Math.floor(Math.random() * coef.length)];
+    if (Math.random() > 0.5)
+        newCoef.value = Math.max(VALUERANGE[0], Math.min(VALUERANGE[1], newCoef.value + randrange(VALUERANGE)));
+    else {
+        if (newCoef.terms.length > 0) {
+            const newTerm = newCoef.terms[Math.floor(Math.random() * newCoef.terms.length)];
+            if (Math.random() > 0.5)
+                newTerm.power = Math.max(POWERRANGE[0], Math.min(POWERRANGE[1], newTerm.power + randrangeint([-1, 1])));
+            else if (Math.random() > 0.5)
+                newTerm.dx = Math.max(DISTRANGE[0], Math.min(DISTRANGE[1], newTerm.dx + randrangeint([-1, 1])));
+            else
+                newTerm.dy = Math.max(DISTRANGE[0], Math.min(DISTRANGE[1], newTerm.dy + randrangeint([-1, 1])));
         }
     }
 
     draw();
 
-    requestAnimationFrame(step);
+    setTimeout(step, 1);
     // console.log(maxValue);
 };
 
@@ -138,7 +183,7 @@ const draw = () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     for (let x = 0; x < GRIDSIZE[0]; x++) {
         for (let y = 0; y < GRIDSIZE[1]; y++) {
-            const value = Math.floor(sigmoid(field[makeIdx(x, y)] / maxValue) * 256);
+            const value = Math.floor((field[makeIdx(x, y)] + 1) / 2 * 256);
 
             ctx.fillStyle = `rgb(${value}, ${value},${value})`;
             ctx.fillRect(x * boxWidth, y * boxHeight, boxWidth + 1, boxHeight + 1);
@@ -154,8 +199,8 @@ window.onload = () => {
     canvas.height = window.innerHeight;
 
 
-    GRIDSIZE[0] = Math.round(canvas.width / 4);
-    GRIDSIZE[1] = Math.round(canvas.height / 4);
+    GRIDSIZE[0] = Math.round(canvas.width / 5);
+    GRIDSIZE[1] = Math.round(canvas.height / 5);
 
     init();
     step();
@@ -170,12 +215,12 @@ let lastmousey;
 
 let mousevalue;
 
-const radius = 10;
+const radius = 3;
 
 document.onkeydown = init;
 
 document.onmousedown = () => {
-    mousevalue = (Math.random() * 2 - 1) * maxValue;
+    mousevalue = -field[makeIdx(Math.floor(mousex), Math.floor(mousey))];
     lastmousex = mousex;
     lastmousey = mousey;
     mousedown = true;
