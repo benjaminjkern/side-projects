@@ -9,20 +9,16 @@ let ALL_GAMES = [];
 let ALL_PLAYERS = {};
 
 const getAllGames = async () => {
-    readFullDatabase();
-    return await new Promise(resolve => resolve(ALL_GAMES));
+    return ALL_GAMES;
 }
 const getAllPlayers = async () => {
-    readFullDatabase();
-    return await new Promise(resolve => resolve(ALL_PLAYERS))
+    return ALL_PLAYERS;
 }
 
 const getGames = async (gameNums) => {
-    readFullDatabase();
     return gameNums.map(gameNum => ALL_GAMES[gameNum]);
 }
 const getPlayers = async (playerNames, defaultIfNotExist) => {
-    readFullDatabase();
     return playerNames.reduce((p, playerName) => {
         const name = playerName.toLowerCase();
         // create blank player if player doesnt exist
@@ -33,26 +29,33 @@ const getPlayers = async (playerNames, defaultIfNotExist) => {
 }
 
 const setGames = async (games) => {
-    readFullDatabase();
     games.forEach(game => ALL_GAMES[game.gameNum] = game);
     return true;
 }
 
 const setPlayers = async (players) => {
-    readFullDatabase();
     Object.keys(players).forEach(playerName => ALL_PLAYERS[playerName] = players[playerName]);
     return true;
 }
 
 const newGames = async (games) => {
-    readFullDatabase();
     games.forEach(game => ALL_GAMES.push({ gameNum: ALL_GAMES.length, ...game }));
     return true;
 }
+const clearGames = async () => {
+    ALL_GAMES = [];
+    return true;
+}
+
+const clearPlayers = async () => {
+    ALL_PLAYERS = {};
+    return true;
+}
+
 
 const fs = require('fs');
 
-const readFullDatabase = () => {
+const readFullDatabase = async () => {
     if (Object.keys(ALL_PLAYERS).length === 0 && fs.existsSync(PLAYERS_FILE)) {
         const players = fs.readFileSync(PLAYERS_FILE, 'utf8').split(/\r?\n/g).filter(line => line[0] !== '#');
         players.forEach((player, i) => {
@@ -69,18 +72,23 @@ const readFullDatabase = () => {
         const games = fs.readFileSync(GAMES_FILE, 'utf8').split(/\r?\n/g).filter(line => line[0] !== '#');
         games.forEach((game, gameNum) => {
             const [players, buyin] = game.split(/\s*;\s*/g);
+            if (players.length === 0) return;
             ALL_GAMES.push({ gameNum, players: players.split(/\s*,\s*/g).map(player => player.toLowerCase()), buyin: buyin - 0 });
         });
     }
 }
 
-const writeToDatabase = () => {
-    // erase file
-    fs.writeFileSync(databaseFile, '');
+const save = async () => {
+    fs.writeFileSync(GAMES_FILE, '');
+    ALL_GAMES.forEach(game => {
+        const { players, buyin } = game;
+        fs.appendFileSync(GAMES_FILE, `${players.join(',')};${buyin}\n`);
+    });
+    fs.writeFileSync(PLAYERS_FILE, '');
     Object.keys(ALL_PLAYERS).forEach(player => {
-        const { profit, score, games, wins, draws, losses, besthand1, besthand2, besthand3 } = ALL_PLAYERS[player];
-        fs.appendFileSync(databaseFile, `${player}, ${[profit, score, games, wins, draws, losses, besthand1, besthand2, besthand3].join(', ')}\n`);
+        const { name, profit, score, games, wins, draws, losses, besthand1, besthand2, besthand3 } = ALL_PLAYERS[player];
+        fs.appendFileSync(PLAYERS_FILE, `${[name, profit, score, games, wins, draws, losses, besthand1, besthand2, besthand3].join(',')}\n`);
     });
 };
 
-module.exports = { getAllGames, getAllPlayers, getGames, getPlayers, setGames, setPlayers, newGames };
+module.exports = { getAllGames, getAllPlayers, getGames, getPlayers, setGames, setPlayers, newGames, save, clearPlayers, clearGames, readFullDatabase };
