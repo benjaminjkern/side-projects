@@ -1,11 +1,30 @@
 const databaseCalls = require('./databaseCalls');
 
-const START_SCORE = 1;
-const ALPHA = 0.005;
-const BASE = 2;
-const FACTOR = 1;
+const START_SCORE = 1000;
+const ALPHA = 1;
+const BASE = 10;
+const FACTOR = 400;
 
 const P = (player1, player2) => 1 / (1 + BASE ** ((player1.score - player2.score) / FACTOR));
+
+const makeAdjustments = (loser, winners, weight) => {
+    for (const winner of winners) {
+        const expected = P(loser, winner);
+        loser.score -= ALPHA * weight * expected / winners.length;
+        winner.score += ALPHA * weight * expected / winners.length;
+    }
+}
+
+const parseGames = async () => {
+    await databaseCalls.readFullDatabase();
+    await databaseCalls.clearPlayers();
+    const games = await databaseCalls.getAllGames();
+    await databaseCalls.clearGames();
+    for (const { players, buyin } of games) {
+        await playGame(players, buyin);
+    }
+    // return true;
+}
 
 const playGame = async (orderOut, buyin) => {
     const players = await databaseCalls.getPlayers(orderOut, name => ({ name, profit: 0, score: START_SCORE, games: 0, wins: 0, draws: 0, losses: 0, bestHand: "", secondBestHand: "", thirdBestHand: "" }));
@@ -38,12 +57,4 @@ const playGame = async (orderOut, buyin) => {
     return true;
 }
 
-const makeAdjustments = (loser, winners, weight) => {
-    for (const winner of winners) {
-        const expected = P(loser, winner);
-        loser.score -= ALPHA * weight * expected / winners.length;
-        winner.score += ALPHA * weight * expected / winners.length;
-    }
-}
-
-module.exports = { playGame };
+module.exports = { playGame, parseGames };
