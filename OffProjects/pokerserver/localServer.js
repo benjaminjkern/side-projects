@@ -34,6 +34,12 @@ const promptLoop = () => {
             const players = command.slice(2);
             elo.playGame(players, buyin).then(() => console.log("Game Created!")).catch((err) => console.log(err));
             break;
+        case 'scoreplayers':
+            elo.parseGames().then(() => console.log("Players reset to follow the games within the games file!")).catch((err) => console.log(err));
+            break;
+        case 'save':
+            databaseCalls.save(command[1]).then(() => console.log("Database saved!")).catch((err) => console.log(err));
+            break;
         case 'help':
             console.log(`Command reference:
     get players               - List all players.
@@ -43,6 +49,8 @@ const promptLoop = () => {
     newgame [buyin] [players] - Create a new game with specified buyin amount and players (separated by spaces).
                                 NOTE: [players] should be in losing -> winning order, and include when people went out, even if they bought back in at the time.
                                 (i.e. if a player buys back in, their name should be in the list multiple times)
+    scoreplayers              - Read from the games file, and re-score all players from the beginning.
+    save                      - Save all current changes to the database.
     exit                      - Close the server.`);
             break;
         case 'exit':
@@ -53,4 +61,6 @@ const promptLoop = () => {
     setTimeout(promptLoop, 1);
 };
 
-promptLoop();
+
+
+databaseCalls.readFullDatabase().then(promptLoop);
