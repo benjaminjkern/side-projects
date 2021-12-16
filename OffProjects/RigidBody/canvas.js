@@ -145,8 +145,8 @@ const draw = () => {
     }
 };
 
-window.oncontextmenu = function () {
-    return false;     // cancel default menu
+window.oncontextmenu = function() {
+    return false; // cancel default menu
 }
 
 const safeNodes = () => nodes.filter(node => node);
@@ -170,9 +170,9 @@ window.onmouseup = (e) => {
     // figure out if right click
     let isRightMB;
     e = e || window.event;
-    if ("which" in e)  // Gecko (Firefox), WebKit (Safari/Chrome) & Opera
+    if ("which" in e) // Gecko (Firefox), WebKit (Safari/Chrome) & Opera
         isRightMB = e.which == 3;
-    else if ("button" in e)  // IE, Opera 
+    else if ("button" in e) // IE, Opera 
         isRightMB = e.button == 2;
 
     lastUp = new Date().getTime();
@@ -240,12 +240,14 @@ window.onmousemove = (e) => {
     preSelectedNode = undefined;
 }
 
-window.onkeydown = () => {
-    running = !running;
-    if (running) {
-        for (const node of safeNodes()) {
-            node.v = [0, 0];
-            node.distances = node.connections.map(connection => vecDist(node.pos, nodes[connection].pos));
+window.onkeydown = (e) => {
+    if (e.key === ' ') {
+        running = !running;
+        if (running) {
+            for (const node of safeNodes()) {
+                node.v = [0, 0];
+                node.distances = node.connections.map(connection => vecDist(node.pos, nodes[connection].pos));
+            }
         }
     }
 }

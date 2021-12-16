@@ -160,20 +160,9 @@ const isEqual = (a, b) => {
 Put in your hand, the current hand of the dealer, and any cards that are on the table
 
 */
-const table = [
-    [7, "H"],
-    [10, "D"],
-    [8, "S"],
-    ["A", "D"],
-];
-const currentDealer = [
-    ["K", "H"]
-];
-const myHand = [
-    [7, "D"],
-    [2, "C"],
-    [7, "C"],
-];
+const table = [];
+const currentDealer = [];
+const myHand = [];
 const scores = relativeScores(myHand, currentDealer, table, 1);
 
 console.log(`Hit: ${scores[0]}
