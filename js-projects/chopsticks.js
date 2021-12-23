@@ -54,15 +54,15 @@ const color = (finger, selected = false) => (finger + "")[finger === 0 ? 'gray' 
 
 const display = (game, you = true, selection = -1) => {
     console.log(`
-  ${you?' ':'>'}  ${game[1].map((finger) => color(finger)).join("   ")}
+  ${you ? ' ' : '>'}  ${game[1].map((finger) => color(finger)).join("   ")}
     
-  ${you?'>':' '}  ${game[0].map((finger,i) => color(finger, selection === i)).join("   ")}
+  ${you ? '>' : ' '}  ${game[0].map((finger, i) => color(finger, selection === i)).join("   ")}
 `);
 };
 
 const start = [
-    [1, 1, 1],
-    [1, 1, 1],
+    [1, 1],
+    [1, 1],
 ];
 
 display(start);
