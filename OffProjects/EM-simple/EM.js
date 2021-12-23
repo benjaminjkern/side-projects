@@ -64,7 +64,7 @@ const noise = (x, y, blocks) => {
 
 const VALUERANGE = [-1, 1];
 const COEFRANGE = [0, 20];
-const TERMRANGE = [0, 10];
+const TERMRANGE = [0, 1];
 const DISTRANGE = [-5, 5];
 
 const init = () => {

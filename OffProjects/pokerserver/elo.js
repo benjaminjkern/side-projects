@@ -1,9 +1,9 @@
 const databaseCalls = require('./databaseCalls');
 
-const START_SCORE = 1000;
-const ALPHA = 1;
-const BASE = 10;
-const FACTOR = 400;
+const START_SCORE = 1;
+const ALPHA = 0.005;
+const BASE = 2;
+const FACTOR = 1;
 
 const P = (player1, player2) => 1 / (1 + BASE ** ((player1.score - player2.score) / FACTOR));
 
