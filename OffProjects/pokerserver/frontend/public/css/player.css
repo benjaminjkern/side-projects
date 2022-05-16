@@ -1,0 +1,8 @@
+.playerRow {
+    display: flex;
+    flex-direction: row;
+}
+
+.playerRow div {
+    flex: 1;
+}
