@@ -16,10 +16,10 @@ const multConstVec = (a, v) => {
     return v.map(x => x * a);
 }
 
-const vecDistSquared = (a,b) => a.reduce((p, ax, i) => p + (ax - b[i]) ** 2, 0);
+const vecDistSquared = (a, b) => a.reduce((p, ax, i) => p + (ax - b[i]) ** 2, 0);
 
 const vecDist = (a, b) => {
-    return Math.sqrt(vecDistSquared(a,b));
+    return Math.sqrt(vecDistSquared(a, b));
 }
 
 const lengthVec = (a) => {
@@ -36,3 +36,5 @@ const unitVec = (a) => {
 const unitVecFromAngle = (theta) => {
     return [Math.cos(theta), Math.sin(theta)];
 }
+
+const vecDot = (a, b) => a.reduce((p, ax, i) => p + ax * b[i], 0);

@@ -3,7 +3,7 @@ const MAXCELL = 14; // 8192
 const STARTMUTATION = 1;
 const GENMUTATION = 1;
 const BRAINSIZE = [BOARDSIZE[0] * BOARDSIZE[1] * MAXCELL, 100, 1];
-const DEPTH = 3;
+const DEPTH = 5;
 
 
 const playGame = (brain, average) => {
@@ -80,7 +80,7 @@ const checkIfGameOver = (board) => {
     return false;
 }
 
-const move = (game, action, try2) => {
+const move = (game, action, tryNum = 0) => {
     let dir;
     switch (action) {
         case 0:
@@ -113,7 +113,7 @@ const move = (game, action, try2) => {
         }
     }
 
-    if (!try2 && lastboard.every((row, i) => row.every((x, j) => x === board[i][j]))) return move(game, (action + 1) % 4, true);
+    if (tryNum < 4 && lastboard.every((row, i) => row.every((x, j) => x === board[i][j]))) return move(game, (action + 1) % 4, true);
 
     return { board, points, max: game.max };
 }
@@ -189,7 +189,7 @@ const makeKey = (board) => {
 let VCache = {};
 const V = (game, depth, estimator) => {
     if (checkIfGameOver(game.board) === false) return 0;
-    if (depth <= 0) return game.points;
+    if (depth === 0) return game.points;
     const key = makeKey(game.board) + '.' + depth;
     if (VCache[key]) return VCache[key];
 
