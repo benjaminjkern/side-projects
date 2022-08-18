@@ -20,7 +20,11 @@ window.onload = () => {
 
         _root.xrange = _root.range[0][1] - _root.range[0][0];
         _root.yrange = _root.range[1][1] - _root.range[1][0];
-        init();
+        init(false);
+    };
+
+    window.onkeydown = () => {
+        run();
     };
 
     run();
@@ -57,7 +61,7 @@ const startLoop = () => {
     loop();
 };
 
-const init = () => {
+const init = (newColors = true) => {
     _root.possiblyStillIn = [];
 
     _root.grid = Array(_root.canvas.height)
@@ -76,7 +80,7 @@ const init = () => {
 
     _root.ctx.fillRect(0, 0, _root.canvas.width, _root.canvas.height);
 
-    _root.colorSeed = newColorSeed(5);
+    if (newColors) _root.colorSeed = newColorSeed(5);
     _root.color = newColor(0);
     _root.t = 0;
 };
