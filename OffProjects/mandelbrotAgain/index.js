@@ -6,15 +6,15 @@ window.onload = () => {
 
     document.body.onclick = (e) => {
         const mouseVirtual = screenToVirtualCoords([e.x, e.y]);
-        const scale = 2;
+        const scale = 20;
         _root.range = [
             [
                 mouseVirtual[0] - _root.xrange / 2 / scale,
-                mouseVirtual[0] + _root.xrange / 2 / 2,
+                mouseVirtual[0] + _root.xrange / 2 / scale,
             ],
             [
                 mouseVirtual[1] - _root.yrange / 2 / scale,
-                mouseVirtual[1] + _root.yrange / 2 / 2,
+                mouseVirtual[1] + _root.yrange / 2 / scale,
             ],
         ];
 
@@ -74,6 +74,7 @@ const init = (newColors = true) => {
                         [0, 0],
                         screenToVirtualCoords([i, j]),
                         [i, j],
+                        new Set(["0,0"]),
                     ])
                 )
         );
@@ -116,17 +117,24 @@ const draw = () => {
     );
 
     for (const pixel of _root.justCalculated) {
-        const [z, c, [sx, sy]] = pixel;
+        const [z, c, [sx, sy], seen] = pixel;
 
-        const k = 4 * (sx + _root.canvas.width * sy);
         if (dist(z) > 4) {
+            const k = 4 * (sx + _root.canvas.width * sy);
             for (let z = 0; z < 3; z++) {
                 imageData.data[k + z] = _root.color[z];
             }
-        } else {
-            _root.possiblyStillIn.push(pixel);
+            imageData.data[k + 3] = 255;
+            delete seen;
+            continue;
         }
-        imageData.data[k + 3] = 255;
+        const key = z[0] + z[1];
+        if (seen.has(key)) {
+            delete seen;
+            continue;
+        }
+        seen.add(key);
+        _root.possiblyStillIn.push(pixel);
     }
 
     _root.ctx.putImageData(imageData, 0, 0);
