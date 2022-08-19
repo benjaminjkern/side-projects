@@ -23,9 +23,9 @@ window.onload = () => {
         init(false);
     };
 
-    window.onkeydown = () => {
-        run();
-    };
+    // window.onkeydown = () => {
+    //     run();
+    // };
 
     run();
 };
@@ -56,12 +56,14 @@ const startLoop = () => {
         calc();
         draw();
         _root.t++;
-        _root.running = setTimeout(loop, 1);
+        if (!_root.stopped) _root.running = setTimeout(loop, 1);
     };
     loop();
 };
 
 const init = (newColors = true) => {
+    _root.hasChangeHappenedYet = false;
+    _root.stopped = false;
     _root.possiblyStillIn = [];
 
     _root.grid = Array(_root.canvas.height)
@@ -80,6 +82,11 @@ const init = (newColors = true) => {
         );
 
     _root.ctx.fillRect(0, 0, _root.canvas.width, _root.canvas.height);
+
+    _root.encoder = new GIFEncoder();
+    _root.encoder.setRepeat(0);
+    _root.encoder.setDelay(1);
+    _root.encoder.start();
 
     if (newColors) _root.colorSeed = newColorSeed(5);
     _root.color = newColor(0);
@@ -116,10 +123,13 @@ const draw = () => {
         _root.canvas.height
     );
 
+    let changed = 0;
+
     for (const pixel of _root.justCalculated) {
         const [z, c, [sx, sy], seen] = pixel;
 
         if (dist(z) > 4) {
+            changed++;
             const k = 4 * (sx + _root.canvas.width * sy);
             for (let z = 0; z < 3; z++) {
                 imageData.data[k + z] = _root.color[z];
@@ -138,6 +148,24 @@ const draw = () => {
     }
 
     _root.ctx.putImageData(imageData, 0, 0);
+
+    if (changed < 10) {
+        if (_root.hasChangeHappenedYet) {
+            console.log("NO CHANGE");
+            _root.noChangeCount++;
+            if (_root.noChangeCount > 2) {
+                console.log("DONE");
+                _root.encoder.finish();
+                _root.encoder.download("yooooo.gif");
+                _root.stopped = true;
+            }
+        }
+    } else {
+        console.log("CHANGE");
+        _root.encoder.addFrame(_root.ctx);
+        _root.hasChangeHappenedYet = true;
+        _root.noChangeCount = 0;
+    }
 
     // pick new color
     _root.color = newColor(_root.t);
