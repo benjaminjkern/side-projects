@@ -1,18 +1,31 @@
-let canvas, ctx, canvas2holder, canvas2, ctx2;
+let canvas,
+    ctx,
+    canvas2holder,
+    graphs = [];
+
+let showingGraph = 0;
 
 window.onload = () => {
     canvas = document.getElementById("canvas");
     ctx = canvas.getContext("2d");
-    canvas2holder = document.getElementById("canvas2-holder");
-    canvas2 = document.getElementById("canvas2");
-    ctx2 = canvas2.getContext("2d");
 
     canvas.width = 800;
     canvas.height = 800;
+
+    canvas2holder = document.getElementById("canvas2-holder");
     canvas2holder.style.width = window.innerWidth - 800;
     canvas2holder.style.height = 800;
-    canvas2.width = window.innerWidth - 800;
-    canvas2.height = 1;
+
+    const NUM_GRAPHS = 3;
+
+    for (let g = 0; g < NUM_GRAPHS; g++) {
+        const graphCanvas = document.getElementById("graph" + g);
+        graphs.push({ canvas: graphCanvas, ctx: graphCanvas.getContext("2d") });
+
+        graphCanvas.width = window.innerWidth - 800;
+        graphCanvas.height = 800;
+        if (g !== showingGraph) graphCanvas.style.display = "none";
+    }
 
     init();
     startLoop();
@@ -50,11 +63,14 @@ const synchronizedDraw = true;
 let templateIndex = 0;
 const newTemplate = (oldTemplate) => {
     const template = {
-        longName: oldTemplate?.longName !== undefined ? `${oldTemplate.longName},${templateIndex}` : `${templateIndex}`,
+        longName:
+            oldTemplate?.longName !== undefined
+                ? `${oldTemplate.longName},${templateIndex}`
+                : `${templateIndex}`,
         id: templateIndex,
         color: randomColor(oldTemplate?.color),
         brain: oldTemplate ? mutateBrain(oldTemplate.brain, 0.1) : newBrain(),
-        elo: 1000,
+        elo: 0,
     };
     templateIndex++;
     templates.push(template);
@@ -88,6 +104,7 @@ const newBullet = (bot, big) => {
     };
 };
 
+let lastTemplates = {};
 let templates = [];
 let bots = [];
 let bullets = {};
@@ -99,6 +116,8 @@ let ROUND_LENGTH = 1500;
 let BULLET_RADIUS = 5;
 let MAX_UPDATES_PER_FRAME = 30000;
 let BREAK_LOOP_ON_ROUND = true;
+let KILL_LOSER = false;
+let GRAPH_SORT_BY_SPECIES = false;
 
 let recordingKills = false;
 let updatesPerFrame = 1;
@@ -168,7 +187,7 @@ const update = () => {
                 // if (t < 10) console.log("Boot!", distSquared, bullets);
                 if (recordingKills) console.log("Kill");
                 loser(+bot.rightSide);
-                BREAK_LOOP_ON_ROUND
+                BREAK_LOOP_ON_ROUND;
                 return BREAK_LOOP_ON_ROUND;
             }
         }
@@ -183,7 +202,8 @@ const update = () => {
             multConstVec(Math.min(Math.max(forceFinite(speed), -5), 5), u)
         );
 
-        if (bot.pos[0] + RADIUS >= canvas.width) bot.pos[0] = canvas.width - RADIUS;
+        if (bot.pos[0] + RADIUS >= canvas.width)
+            bot.pos[0] = canvas.width - RADIUS;
         if (bot.pos[0] - RADIUS <= 0) bot.pos[0] = RADIUS;
         if (bot.pos[1] + RADIUS >= canvas.height)
             bot.pos[1] = canvas.height - RADIUS;
@@ -224,7 +244,10 @@ const draw = () => {
         ctx.stroke();
         ctx.moveTo(...bot.pos);
         ctx.lineTo(
-            ...addVec(bot.pos, multConstVec(RADIUS, unitVecFromAngle(bot.angle)))
+            ...addVec(
+                bot.pos,
+                multConstVec(RADIUS, unitVecFromAngle(bot.angle))
+            )
         );
         ctx.stroke();
     }
@@ -248,7 +271,13 @@ const draw = () => {
         ctx.stroke();
     }
     if (templates.length >= 2)
-        document.getElementById('eloScores').innerText = `Highest: ${templates[0].elo}, Lowest: ${templates[templates.length - 2].elo}`
+        document.getElementById("eloScores").innerText = `Highest: ${
+            templates[0].elo
+        }, Median: ${
+            templates[Math.floor(templates.length / 2) - 1].elo
+        }, Lowest: ${templates[templates.length - 1].elo}, Mean: ${
+            templates.reduce((p, c) => p + c.elo, 0) / templates.length
+        }\nLeft: ${bots[0].elo}, Right: ${bots[1].elo}`;
 };
 /*************
  * Methods
@@ -267,7 +296,8 @@ const randomColor = (color, mutation = 1) => {
             0,
             Math.min(
                 255,
-                rgb[r] + (Math.floor(Math.random() * (mutation * 2 + 1)) - mutation)
+                rgb[r] +
+                    (Math.floor(Math.random() * (mutation * 2 + 1)) - mutation)
             )
         );
     }
@@ -275,7 +305,7 @@ const randomColor = (color, mutation = 1) => {
 };
 
 const loser = (loserIndex) => {
-    const loserBot = bots.splice(loserIndex === -1 ? 0 : loserIndex, 1)[0];
+    const loserBot = bots.splice(loserIndex === -1 ? 1 : loserIndex, 1)[0];
     const winnerBot = bots[0];
     if (debug) console.log("AWOOGA", winnerBot.elo, loserBot.elo);
     const P = 1 / (1 + 10 ** ((loserBot.elo - winnerBot.elo) / 400));
@@ -285,24 +315,23 @@ const loser = (loserIndex) => {
     winnerTemplate.elo += diff;
     loserTemplate.elo -= diff;
     if (debug) console.log("AWOOGA", winnerTemplate.elo, loserTemplate.elo);
+    if (KILL_LOSER && loserIndex !== -1) {
+        templates = templates.filter((x) => x.id !== loserTemplate.id);
+    }
     newRound();
 };
 const newRound = () => {
     templates.sort(({ elo: eloA }, { elo: eloB }) => eloB - eloA);
     templates = templates.slice(0, MAX_TEMPLATES);
 
-    templates.sort(({ longName: longNameA }, { longName: longNameB }) => longNameA > longNameB ? 1 : -1);
-
+    // if (templates.length > 0) {
+    //     const median = templates[Math.floor(templates.length / 2) - 1].elo;
+    //     templates.forEach((template) => {
+    //         template.elo -= median;
+    //     });
+    // }
 
     if (roundNum > 0) {
-        const temp = ctx2.getImageData(0, 0, canvas2.width, canvas2.height);
-        if (roundNum <= 800) {
-            canvas2.height = roundNum;
-            ctx2.putImageData(temp, 0, 0);
-        } else {
-            ctx2.putImageData(temp, 0, -1);
-        }
-
         let suffix = templates[0].longName;
         for (const { longName } of templates) {
             for (let i = 0; i < suffix.length; i++) {
@@ -311,26 +340,35 @@ const newRound = () => {
             }
             if (!suffix.length) break;
         }
-        if (suffix.length) templates.forEach(template => template.longName = template.longName.substring(suffix.length));
+        if (suffix.length)
+            templates.forEach(
+                (template) =>
+                    (template.longName = template.longName.substring(
+                        suffix.length
+                    ))
+            );
     }
 
+    addLineToLineGraph(0, (template) => template.elo);
 
-    const WIDTH2 = canvas2.width / templates.length;
-    for (const [i, template] of templates.entries()) {
-        ctx2.fillStyle = template.color;
-        if (roundNum <= 800) {
-            ctx2.fillRect(Math.floor(i * WIDTH2), roundNum - 1, Math.ceil(WIDTH2), 1);
-        } else {
-            ctx2.fillRect(Math.floor(i * WIDTH2), 799, Math.ceil(WIDTH2), 1);
-        }
-    }
+    // if (templates.some(({ id }) => !lastTemplates[id])) {
+    addLineToGraph(2);
+    templates.sort(({ longName: longNameA }, { longName: longNameB }) =>
+        longNameA > longNameB ? 1 : -1
+    );
+    addLineToGraph(1);
+    // }
+
+    lastTemplates = templates.reduce((p, { id }) => ({ ...p, [id]: true }), {});
 
     roundNum++;
 
     let a =
-        templates[Math.floor(Math.random() * templates.length)] || newTemplate();
+        templates[Math.floor(Math.random() * templates.length)] ||
+        newTemplate();
     let b =
-        templates[Math.floor(Math.random() * templates.length)] || newTemplate();
+        templates[Math.floor(Math.random() * templates.length)] ||
+        newTemplate();
 
     if (Math.random() > 0.5 || a === b) b = newTemplate(b);
     bots = [newBot(a), newBot(b, true)];
@@ -345,11 +383,98 @@ const forceFinite = (x) => {
     return 0;
 };
 
-window.onclick = () => { };
+const addLineToGraph = (graphIndex) => {
+    const { canvas, ctx } = graphs[graphIndex];
+    const temp = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    ctx.putImageData(temp, 0, -1);
+
+    const WIDTH2 = canvas.width / templates.length;
+    for (const [i, template] of templates.entries()) {
+        ctx.fillStyle = template.color;
+        ctx.fillRect(Math.floor(i * WIDTH2), 799, Math.ceil(WIDTH2), 1);
+    }
+};
+const addLineToLineGraph = (graphIndex, valueGetter = () => 1) => {
+    let { canvas, ctx, min = 0, max = 0 } = graphs[graphIndex];
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (!graphs[graphIndex].history) graphs[graphIndex].history = [];
+
+    const values = templates.map(valueGetter);
+    const newMin = Math.min(min, ...values);
+    const newMax = Math.max(max, ...values);
+
+    graphs[graphIndex].min = newMin;
+    graphs[graphIndex].max = newMax;
+
+    graphs[graphIndex].history.push(values);
+    graphs[graphIndex].history = graphs[graphIndex].history.slice(
+        Math.max(0, graphs[graphIndex].history.length - 802)
+    );
+
+    const toScreenCoords = (x) =>
+        ((x - newMin) / (newMax - newMin)) * canvas.width;
+
+    const getRelativeIndex = (relativeIndex, list) => {
+        const estimate = (list.length - 1) * relativeIndex;
+        const up = Math.ceil(estimate);
+        const down = Math.floor(estimate);
+        const diff = estimate - down;
+        return list[up] * diff + list[down] * (1 - diff);
+    };
+
+    const restOfHistory = graphs[graphIndex].history.slice(1);
+
+    const makePath = (
+        relativeIndex,
+        { color = "black", thickness = 1 } = {}
+    ) => {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = thickness;
+        ctx.beginPath();
+        ctx.moveTo(
+            toScreenCoords(
+                getRelativeIndex(relativeIndex, graphs[graphIndex].history[0])
+            ),
+            0
+        );
+        for (const [y, h] of restOfHistory.entries()) {
+            ctx.lineTo(toScreenCoords(getRelativeIndex(relativeIndex, h)), y);
+        }
+        ctx.stroke();
+    };
+
+    makePath(0, { thickness: 2 });
+    makePath(1, { thickness: 2 });
+
+    makePath(1 / 10);
+    makePath(2 / 10);
+    makePath(3 / 10);
+    makePath(4 / 10);
+    makePath(6 / 10);
+    makePath(7 / 10);
+    makePath(8 / 10);
+    makePath(9 / 10);
+
+    makePath(1 / 2, { color: "red", thickness: 2 });
+
+    // const WIDTH2 = canvas.width / templates.length;
+    // for (const [i, template] of templates.entries()) {
+    //     ctx.fillStyle = template.color;
+    //     ctx.fillRect(Math.floor(i * WIDTH2), 799, Math.ceil(WIDTH2), 1);
+    // }
+};
+
+window.onclick = () => {};
 window.onkeydown = (e) => {
     if (e.key === "p") paused = !paused;
     if (e.key === "s")
         updatesPerFrame = MAX_UPDATES_PER_FRAME + 1 - updatesPerFrame;
-    if (e.key === 'r')
-        BREAK_LOOP_ON_ROUND = !BREAK_LOOP_ON_ROUND;
+    if (e.key === "r") BREAK_LOOP_ON_ROUND = !BREAK_LOOP_ON_ROUND;
+    if (e.key === "e") {
+        graphs[showingGraph].canvas.style.display = "none";
+        showingGraph = (showingGraph + 1) % graphs.length;
+        graphs[showingGraph].canvas.style.display = "block";
+    }
 };
