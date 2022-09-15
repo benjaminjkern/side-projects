@@ -9,7 +9,7 @@ const cross = (a, b) => [
 const vecLength = (v) => Math.sqrt(dot(v, v));
 
 const PIXEL_SIZE = 7;
-const MAX_FRAMES = 500;
+const MAX_FRAMES = 100;
 const NEW_COEF_COUNT = 50;
 
 const USE_GIF = false;
@@ -24,7 +24,7 @@ const GRIDSIZE = [200, 200, 3];
 
 let maxValue;
 
-let coef;
+let coef, coef2;
 
 let fieldSize;
 let field;
@@ -85,7 +85,7 @@ const noise = (x, y, blocks) => {
     );
 };
 
-const VALUERANGE = [-1, 1];
+const VALUERANGE = [0, 1];
 const COEFRANGE = [-1, 1];
 // const COEFCOUNTRANGE = [0, 20];
 const TERMRANGE = [0, 1];
@@ -103,18 +103,8 @@ const init = () => {
 
     noiseGrid = {};
 
-    for (let x = 0; x < GRIDSIZE[0]; x++) {
-        for (let y = 0; y < GRIDSIZE[1]; y++) {
-            for (let z = 0; z < GRIDSIZE[2]; z++) {
-                const index = makeIdx(x, y, z);
-
-                field[index] = randrange(VALUERANGE);
-            }
-            // field[index] = noise(x, y, 100) + noise(x, y, 50) + noise(x, y, 20) + noise(x, y, 10) + noise(x, y, 5);
-        }
-    }
-
-    coef = newCoef();
+    restart();
+    makeNewCoefs();
 
     ctx.fillStyle = "black";
 
@@ -122,45 +112,191 @@ const init = () => {
     t = 0;
 };
 
+let history = [];
+
+const restart = () => {
+    for (let x = 0; x < GRIDSIZE[0]; x++) {
+        for (let y = 0; y < GRIDSIZE[1]; y++) {
+            for (let z = 0; z < GRIDSIZE[2]; z++) {
+                const index = makeIdx(x, y, z);
+
+                // field[index] = randrange(VALUERANGE);
+                field[index] = 0;
+                // if (x === 0 && y === 0 && z === 0) field[index] = 1;
+            }
+            // field[index] = noise(x, y, 100) + noise(x, y, 50) + noise(x, y, 20) + noise(x, y, 10) + noise(x, y, 5);
+        }
+    }
+
+    const a = [Math.floor(GRIDSIZE[0] / 2), Math.floor(GRIDSIZE[1] / 2)];
+    // Make center dot 0
+    Array(1)
+        .fill()
+        .forEach((_, x) => {
+            Array(1)
+                .fill()
+                .forEach((_, y) => {
+                    Array(3)
+                        .fill()
+                        .forEach((_, z) => {
+                            field[makeIdx(a[0] + x, a[1] + y, z)] = 1;
+                        });
+                });
+        });
+
+    encoder.start();
+    if (frame === MAX_FRAMES) {
+        setTimeout(step, 1);
+    }
+    frame = 0;
+
+    // coef = newCoef();
+    // console.log(coef, history.length);
+    // history.push(coef);
+};
+
+const makeNewCoefs = () => {
+    coef = newCoef();
+    console.log(coef);
+    renderCoef();
+};
+
+const renderCoef = () => {
+    const controls = document.getElementById("controls");
+    controls.innerHTML = "";
+
+    // for (const [d, dimRules] of coef.entries()) {
+    //     for (const [i, rule] of dimRules.entries()) {
+    //         const newInput = document.createElement("input");
+    //         newInput.type = "range";
+    //         newInput.min = COEFRANGE[0];
+    //         newInput.max = COEFRANGE[1];
+    //         newInput.step = 0.01;
+    //         newInput.value = rule.value;
+
+    //         newInput.style.width = "50px";
+    //         newInput.oninput = (e) => {
+    //             rule.value = e.target.value;
+    //         };
+    //         // newInput.onchange = restart;
+
+    //         controls.appendChild(newInput);
+    //     }
+    //     controls.insertAdjacentHTML("beforeend", "<hr/>");
+    // }
+
+    const randomizeButton = document.createElement("button");
+    randomizeButton.onclick = restart;
+    randomizeButton.innerText = "Randomize Field";
+    controls.appendChild(randomizeButton);
+
+    const randomizeButton2 = document.createElement("button");
+    randomizeButton2.onclick = makeNewCoefs;
+    randomizeButton2.innerText = "Randomize Coefficients";
+    controls.appendChild(randomizeButton2);
+
+    const randomizeButton3 = document.createElement("button");
+    randomizeButton3.onclick = () => {
+        makeNewCoefs();
+        restart();
+    };
+    randomizeButton3.innerText = "Randomize Both";
+    controls.appendChild(randomizeButton3);
+
+    for (const activationFunction of activationFuncs) {
+        const radio = document.createElement("input");
+        radio.type = "radio";
+        if (activationFunction.func === activationFunc) radio.checked = true;
+        radio.name = "activationFunc";
+        radio.onclick = () => {
+            activationFunc = activationFunction.func;
+        };
+        controls.appendChild(radio);
+        controls.insertAdjacentHTML("beforeend", activationFunction.name);
+    }
+};
+
+const r = () => {
+    return Math.floor(Math.random() * 3) - 1;
+};
+
 const newCoef = () =>
     Array(3)
         .fill()
         .map(() => {
-            const a = randrange(COEFRANGE);
-            return [
-                {
+            const list = [];
+            list.push({
+                value: randrange(COEFRANGE),
+                terms: [],
+            });
+            for (let i = 0; i < 3 ** 3; i++) {
+                const terms = [];
+                let dz = i % 3;
+                let dy = ((i - dz) / 3) % 3;
+                let dx = (i - dz - 3 * dy) / 9;
+                list.push({
                     value: randrange(COEFRANGE),
-                    terms: [],
-                },
-                {
-                    value: randrange(COEFRANGE),
-                    terms: [{ dx: 0, dy: 0, dz: 0 }],
-                },
-                {
-                    value: a,
-                    terms: [{ dx: 1, dy: 0, dz: 0 }],
-                },
-                {
-                    value: a,
-                    terms: [{ dx: -1, dy: 0, dz: 0 }],
-                },
-                {
-                    value: a,
-                    terms: [{ dx: 0, dy: 1, dz: 0 }],
-                },
-                {
-                    value: a,
-                    terms: [{ dx: 0, dy: -1, dz: 0 }],
-                },
-                {
-                    value: randrange(COEFRANGE),
-                    terms: [{ dx: 0, dy: 0, dz: 1 }],
-                },
-                {
-                    value: randrange(COEFRANGE),
-                    terms: [{ dx: 0, dy: 0, dz: -1 }],
-                },
-            ];
+                    terms: [{ dx: dx - 1, dy: dy - 1, dz: dz - 1 }],
+                });
+            }
+            // const a = randrange(COEFRANGE);
+            // const b = randrange(COEFRANGE);
+            // const c = randrange(COEFRANGE);
+            // const d = randrange(COEFRANGE);
+            // const e = randrange(COEFRANGE);
+            return list;
+            // return [
+            //     {
+            //         value: randrange(COEFRANGE),
+            //         terms: [],
+            //     },
+            //     {
+            //         value: randrange(COEFRANGE),
+            //         terms: [{ dx: 0, dy: 0, dz: 0 }],
+            //     },
+            //     {
+            //         value: randrange(COEFRANGE),
+            //         terms: [{ dx: 1, dy: 0, dz: 0 }],
+            //     },
+            //     {
+            //         value: randrange(COEFRANGE),
+            //         terms: [{ dx: -1, dy: 0, dz: 0 }],
+            //     },
+            //     {
+            //         value: randrange(COEFRANGE),
+            //         terms: [{ dx: 0, dy: 1, dz: 0 }],
+            //     },
+            //     {
+            //         value: randrange(COEFRANGE),
+            //         terms: [{ dx: 0, dy: -1, dz: 0 }],
+            //     },
+
+            //     {
+            //         value: randrange(COEFRANGE),
+            //         terms: [{ dx: 1, dy: 1, dz: 0 }],
+            //     },
+            //     {
+            //         value: randrange(COEFRANGE),
+            //         terms: [{ dx: -1, dy: 1, dz: 0 }],
+            //     },
+            //     {
+            //         value: randrange(COEFRANGE),
+            //         terms: [{ dx: 1, dy: -1, dz: 0 }],
+            //     },
+            //     {
+            //         value: randrange(COEFRANGE),
+            //         terms: [{ dx: -1, dy: -1, dz: 0 }],
+            //     },
+
+            //     {
+            //         value: randrange(COEFRANGE),
+            //         terms: [{ dx: 0, dy: 0, dz: 1 }],
+            //     },
+            //     {
+            //         value: randrange(COEFRANGE),
+            //         terms: [{ dx: 0, dy: 0, dz: -1 }],
+            //     },
+            // ];
         });
 
 const randrange = ([low, high]) => Math.random() * (high - low) + low;
@@ -180,6 +316,33 @@ const makeIdx = (...pos) =>
     );
 
 const step = () => {
+    draw();
+    frame++;
+
+    const threshold = 0.1;
+    let v = undefined;
+    let found = false;
+    checker: for (let x = 0; x < GRIDSIZE[0]; x++) {
+        for (let y = 0; y < GRIDSIZE[1]; y++) {
+            const k = [
+                field[makeIdx(x, y, 0)],
+                field[makeIdx(x, y, 0)],
+                field[makeIdx(x, y, 0)],
+            ];
+            if (v === undefined) v = k;
+            else if (k.some((kv, i) => Math.abs(kv - v[i]) > threshold)) {
+                found = true;
+                break checker;
+            }
+        }
+    }
+    if (!found) {
+        console.log("All the same, restarting!");
+        frame = MAX_FRAMES;
+        makeNewCoefs();
+        return restart();
+    }
+
     let currentMax = 0;
 
     // Calculate derivatives
@@ -187,16 +350,19 @@ const step = () => {
         for (let y = 0; y < GRIDSIZE[1]; y++) {
             for (let z = 0; z < GRIDSIZE[2]; z++) {
                 const index = makeIdx(x, y, z);
-                dfield[index] = coef[z].reduce(
-                    (s, c) =>
-                        s +
-                        c.value *
-                            c.terms.reduce(
-                                (p, f) =>
-                                    p * getField(x + f.dx, y + f.dy, z + f.dz),
-                                1
-                            ),
-                    0
+                dfield[index] = activationFunc(
+                    coef[z].reduce(
+                        (s, c) =>
+                            s +
+                            c.value *
+                                c.terms.reduce(
+                                    (p, f) =>
+                                        p *
+                                        getField(x + f.dx, y + f.dy, z + f.dz),
+                                    1
+                                ),
+                        0
+                    )
                 );
 
                 currentMax = Math.max(currentMax, Math.abs(field[index]));
@@ -220,56 +386,72 @@ const step = () => {
         }
     }
 
-    Array(1)
-        .fill()
-        .forEach((_, x) => {
-            Array(1)
-                .fill()
-                .forEach((_, y) => {
-                    Array(3)
-                        .fill()
-                        .forEach((_, z) => {
-                            field[
-                                makeIdx(
-                                    Math.floor(GRIDSIZE[0] / 2) + x,
-                                    Math.floor(GRIDSIZE[1] / 2) + y,
-                                    z
-                                )
-                            ] = 0;
-                        });
-                });
-        });
+    // const a = [
+    //     Math.floor(Math.random() * GRIDSIZE[0]),
+    //     Math.floor(Math.random() * GRIDSIZE[1]),
+    // ];
+    // // Make center dot 0
+    // Array(1)
+    //     .fill()
+    //     .forEach((_, x) => {
+    //         Array(1)
+    //             .fill()
+    //             .forEach((_, y) => {
+    //                 Array(3)
+    //                     .fill()
+    //                     .forEach((_, z) => {
+    //                         field[makeIdx(a[0] + x, a[1] + y, z)] = 0;
+    //                     });
+    //             });
+    //     });
 
-    t++;
-    if (t % NEW_COEF_COUNT === 0) {
-        t = 0;
-        coef = newCoef();
+    // t++;
+    // if (t % NEW_COEF_COUNT === 0) {
+    //     t = 0;
+    //     coef = newCoef();
+    //     coef2 = newCoef();
+    // }
+
+    // if (USE_GIF) {
+    //     encoder.addFrame(ctx);
+    //     frame++;
+
+    //     if (frame === MAX_FRAMES) {
+    //         encoder.finish();
+    //         encoder.download("yooooo.gif");
+
+    //         encoder = new GIFEncoder();
+    //         encoder.setRepeat(0);
+    //         encoder.setDelay(1);
+    //         encoder.start();
+    //         frame = 0;
+    //     }
+    // }
+    if (frame < MAX_FRAMES) setTimeout(step, 1);
+    else {
+        encoder.finish();
+        encoder.download("yooooo.gif");
+        makeNewCoefs();
+        restart();
     }
-
-    draw();
-
-    if (USE_GIF) {
-        encoder.addFrame(ctx);
-        frame++;
-
-        if (frame === MAX_FRAMES) {
-            encoder.finish();
-            encoder.download("yooooo.gif");
-
-            encoder = new GIFEncoder();
-            encoder.setRepeat(0);
-            encoder.setDelay(1);
-            encoder.start();
-            frame = 0;
-        }
-    }
-    setTimeout(step, 1);
 };
 
 let canvas, ctx;
 
 const sigmoid = (x) => 1 / (1 + Math.exp(-x));
 const invsigmoid = (y) => -Math.log(1 / y - 1);
+
+const activationFuncs = [
+    {
+        name: "Cross Sigmoid",
+        func: (x) => 1 - 4 * sigmoid(x) * (1 - sigmoid(x)),
+    },
+    { name: "Absolute tanh", func: (x) => Math.abs(Math.tanh(x / 2)) },
+    { name: "Sigmoid", func: sigmoid },
+    { name: "None", func: (x) => x },
+];
+
+let activationFunc = activationFuncs[0].func;
 
 const restrictRange = ([min, max], x) => Math.max(min, Math.min(max, x));
 
@@ -290,7 +472,7 @@ const draw = () => {
 
                     for (let z = 0; z < 3; z++) {
                         imageData.data[j + z] = Math.floor(
-                            sigmoid(field[makeIdx(x, y, z)]) * 256
+                            field[makeIdx(x, y, z)] * 256
                         );
                     }
                 }
@@ -299,6 +481,8 @@ const draw = () => {
     }
 
     ctx.putImageData(imageData, 0, 0);
+
+    encoder.addFrame(ctx);
 };
 
 window.onload = () => {
@@ -313,13 +497,11 @@ window.onload = () => {
 
     init();
     step();
+    document.getElementById("hiddencontrols").onclick = () => {
+        document.getElementById("controls").style.display =
+            !document.getElementById("controls").style.display ||
+            document.getElementById("controls").style.display === "block"
+                ? "none"
+                : "block";
+    };
 };
-
-let mousedown = false;
-let mousex;
-let mousey;
-
-let lastmousex;
-let lastmousey;
-
-let mousevalue;
