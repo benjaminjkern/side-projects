@@ -8,7 +8,7 @@ const cross = (a, b) => [
 
 const vecLength = (v) => Math.sqrt(dot(v, v));
 
-const PIXEL_SIZE = 7;
+const PIXEL_SIZE = 5;
 const MAX_FRAMES = 100;
 const NEW_COEF_COUNT = 50;
 
@@ -27,6 +27,7 @@ let maxValue;
 let coef, coef2;
 
 let fieldSize;
+let ofield;
 let field;
 let dfield;
 
@@ -98,6 +99,7 @@ let targetMax = 10;
 const init = () => {
     fieldSize = Math.round(GRIDSIZE.reduce((p, c) => p * c, 1));
 
+    ofield = Array(fieldSize);
     field = Array(fieldSize);
     dfield = Array(fieldSize);
 
@@ -122,6 +124,7 @@ const restart = () => {
 
                 // field[index] = randrange(VALUERANGE);
                 field[index] = 0;
+                ofield[index] = field[index];
                 // if (x === 0 && y === 0 && z === 0) field[index] = 1;
             }
             // field[index] = noise(x, y, 100) + noise(x, y, 50) + noise(x, y, 20) + noise(x, y, 10) + noise(x, y, 5);
@@ -159,6 +162,18 @@ const makeNewCoefs = () => {
     coef = newCoef();
     console.log(coef);
     renderCoef();
+};
+
+const updateCoef = () => {
+    coef2 = newCoef();
+    coef.forEach((coeflist, i) => {
+        coeflist.forEach((coefx, j) => {
+            coefx.value = restrictRange(
+                [-1, 1],
+                coefx.value + 0.1 * coef2[i][j].value
+            );
+        });
+    });
 };
 
 const renderCoef = () => {
@@ -216,10 +231,6 @@ const renderCoef = () => {
     }
 };
 
-const r = () => {
-    return Math.floor(Math.random() * 3) - 1;
-};
-
 const newCoef = () =>
     Array(3)
         .fill()
@@ -230,13 +241,17 @@ const newCoef = () =>
                 terms: [],
             });
             for (let i = 0; i < 3 ** 3; i++) {
-                const terms = [];
                 let dz = i % 3;
                 let dy = ((i - dz) / 3) % 3;
                 let dx = (i - dz - 3 * dy) / 9;
                 list.push({
                     value: randrange(COEFRANGE),
-                    terms: [{ dx: dx - 1, dy: dy - 1, dz: dz - 1 }],
+                    terms: [{ dx: dx - 1, dy: dy - 1, dz: dz - 1, dt: 0 }],
+                });
+
+                list.push({
+                    value: randrange(COEFRANGE),
+                    terms: [{ dx: dx - 1, dy: dy - 1, dz: dz - 1, dt: 1 }],
                 });
             }
             // const a = randrange(COEFRANGE);
@@ -303,9 +318,9 @@ const randrange = ([low, high]) => Math.random() * (high - low) + low;
 const randrangeint = ([low, high]) =>
     Math.floor(Math.random() * (high - low + 1)) + low;
 
-const getField = (x, y, z) => {
+const getField = (x, y, z, dt = 0) => {
     // if (x < 0 || x >= GRIDSIZE[0] || y < 0 || y >= GRIDSIZE[1]) return 0;
-    return field[makeIdx(x, y, z)];
+    return (dt === 0 ? field : ofield)[makeIdx(x, y, z)];
 };
 
 // currently boundary condition wraps all fields
@@ -315,6 +330,9 @@ const makeIdx = (...pos) =>
         0
     );
 
+let currentMax = [1, 1, 1];
+let currentMin = [0, 0, 0];
+
 const step = () => {
     draw();
     frame++;
@@ -322,34 +340,28 @@ const step = () => {
     const threshold = 0.1;
     let v = undefined;
     let found = false;
-    checker: for (let x = 0; x < GRIDSIZE[0]; x++) {
-        for (let y = 0; y < GRIDSIZE[1]; y++) {
-            const k = [
-                field[makeIdx(x, y, 0)],
-                field[makeIdx(x, y, 0)],
-                field[makeIdx(x, y, 0)],
-            ];
-            if (v === undefined) v = k;
-            else if (k.some((kv, i) => Math.abs(kv - v[i]) > threshold)) {
-                found = true;
-                break checker;
-            }
-        }
-    }
-    if (!found) {
-        console.log("All the same, restarting!");
-        frame = MAX_FRAMES;
-        makeNewCoefs();
-        return restart();
-    }
 
-    let currentMax = 0;
+    currentMax = Array(3).fill(-Number.MAX_VALUE);
+    currentMin = Array(3).fill(Number.MAX_VALUE);
 
     // Calculate derivatives
     for (let x = 0; x < GRIDSIZE[0]; x++) {
         for (let y = 0; y < GRIDSIZE[1]; y++) {
+            if (!found) {
+                const k = [
+                    field[makeIdx(x, y, 0)],
+                    field[makeIdx(x, y, 1)],
+                    field[makeIdx(x, y, 2)],
+                ];
+                if (v === undefined) v = k;
+                else if (k.some((kv, i) => Math.abs(kv - v[i]) > threshold)) {
+                    found = true;
+                }
+            }
+
             for (let z = 0; z < GRIDSIZE[2]; z++) {
                 const index = makeIdx(x, y, z);
+
                 dfield[index] = activationFunc(
                     coef[z].reduce(
                         (s, c) =>
@@ -358,16 +370,31 @@ const step = () => {
                                 c.terms.reduce(
                                     (p, f) =>
                                         p *
-                                        getField(x + f.dx, y + f.dy, z + f.dz),
+                                        getField(
+                                            x + f.dx,
+                                            y + f.dy,
+                                            z + f.dz,
+                                            f.dt
+                                        ),
                                     1
                                 ),
                         0
                     )
                 );
 
-                currentMax = Math.max(currentMax, Math.abs(field[index]));
+                if (dfield[index] > currentMax[z])
+                    currentMax[z] = dfield[index];
+                if (dfield[index] < currentMin[z])
+                    currentMin[z] = dfield[index];
             }
         }
+    }
+
+    if (!found) {
+        console.log("All the same, restarting!");
+        frame = MAX_FRAMES;
+        makeNewCoefs();
+        return restart();
     }
 
     //update
@@ -376,15 +403,24 @@ const step = () => {
             for (let z = 0; z < GRIDSIZE[2]; z++) {
                 const index = makeIdx(x, y, z);
 
-                field[index] = restrictRange(VALUERANGE, dfield[index]);
+                ofield[index] = field[index];
+                // field[index] = restrictRange(VALUERANGE, dfield[index]);
+                field[index] = dfield[index];
 
-                if (Number.isNaN(field[index])) {
-                    console.log(coef);
-                    return;
+                if (
+                    !Number.isFinite(field[index]) ||
+                    Number.isNaN(field[index])
+                ) {
+                    console.log("Nan!");
+                    frame = MAX_FRAMES;
+                    makeNewCoefs();
+                    return restart();
                 }
             }
         }
     }
+
+    updateCoef();
 
     // const a = [
     //     Math.floor(Math.random() * GRIDSIZE[0]),
@@ -431,8 +467,9 @@ const step = () => {
     else {
         encoder.finish();
         encoder.download("yooooo.gif");
-        makeNewCoefs();
-        restart();
+        encoder.start();
+        frame = 0;
+        setTimeout(step, 1);
     }
 };
 
@@ -472,6 +509,9 @@ const draw = () => {
 
                     for (let z = 0; z < 3; z++) {
                         imageData.data[j + z] = Math.floor(
+                            // ((field[makeIdx(x, y, z)] - currentMin[z]) /
+                            //     (currentMax[z] - currentMin[z])) *
+                            //     256
                             field[makeIdx(x, y, z)] * 256
                         );
                     }
