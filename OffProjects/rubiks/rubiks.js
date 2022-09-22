@@ -14,18 +14,18 @@ const restart = () => {
     const loop = () => {
         calc();
         draw();
-        if (!_root.stopped) _root.running = setTimeout(loop, 2000);
+        if (!_root.stopped) _root.running = setTimeout(loop, 1);
     };
     loop();
 };
 
 const constants = () => {
-    _root.N = 2;
+    _root.N = 10;
 };
 
 const init = () => {
-    _root.canvas.width = 500;
-    _root.canvas.height = 500;
+    _root.canvas.width = Math.min(window.innerWidth, window.innerHeight);
+    _root.canvas.height = _root.canvas.width;
 
     _root.cube = [];
     for (let d = 0; d < 3; d++) {
@@ -44,8 +44,12 @@ const init = () => {
     _root.camera = {
         pos: [5, 5, 5],
         dir: makeUnitVec([-1, -1, -1]),
-        pov: 5,
+        pov: 2,
     };
+
+    _root.ctx.lineWidth = 2;
+    _root.ctx.lineJoin = "round";
+    _root.ctx.lineCap = "round";
 
     _root.camera.x = makeUnitVec(cross(_root.camera.dir, [0, 0, 1]));
     _root.camera.y = cross(_root.camera.x, _root.camera.dir);
@@ -54,33 +58,67 @@ const init = () => {
 };
 
 const calc = () => {
-    for (let k = 0; k < 1; k++) {
+    if (!_root.anim) {
         const ru = [0, 0, 0];
         ru[Math.floor(Math.random() * 3)] =
             Math.floor(Math.random() * 2) * 2 - 1;
-        turn(
+        const n = Math.floor(Math.random() * Math.floor(_root.N / 2)) + 1;
+
+        _root.anim = {
             ru,
-            Math.ceil(Math.random() * 3),
-            // Math.floor(Math.random() * 2) * 2 - 1,
-            // Math.random() * 4, lol
-            Math.floor(Math.random() * Math.floor(_root.N / 2)) + 1
-        );
+            steps: 100,
+            d: Math.floor(Math.random() * 2) * 2 - 1,
+            n,
+            t: 0,
+        };
     }
+    // for (let k = 0; k < 100; k++) {
+    turn(
+        _root.anim.ru,
+        // Math.ceil(Math.random() * 3),
+        _root.anim.d / _root.anim.steps,
+        // Math.floor(Math.random() * 2) * 2 - 1,
+        // Math.random() * 4,
+        _root.anim.n
+    );
+    _root.anim.t++;
+    if (_root.anim.t === _root.anim.steps) _root.anim = undefined;
+    // }
 };
 
 const draw = () => {
     _root.ctx.clearRect(0, 0, _root.canvas.width, _root.canvas.height);
+    _root.cube.forEach(
+        (square) =>
+            (square.cameraCoords = threeDToCameraCoords(
+                subVec(_root.camera.pos, square.pos)
+            ))
+    );
+    console.log(
+        _root.cube.sort((a, b) => b.cameraCoords[2] - a.cameraCoords[2])
+    );
+
     for (const square of _root.cube) {
-        if (dot(square.u, _root.camera.dir) < 0) continue;
-        _root.ctx.fillStyle = getColor(square.color);
+        _root.ctx.fillStyle =
+            dot(square.u, _root.camera.dir) > 0
+                ? getColor(square.color)
+                : "black";
         _root.ctx.beginPath();
-        for (const [i, cornerPos] of getSquareCorners(square).entries()) {
+        for (const [i, cornerPos] of square.squareCorners.entries()) {
             const pos = cameraToScreenCoords(
                 threeDToCameraCoords(subVec(_root.camera.pos, cornerPos))
             );
             if (i === 0) _root.ctx.moveTo(...pos);
             else _root.ctx.lineTo(...pos);
         }
+        _root.ctx.lineTo(
+            ...cameraToScreenCoords(
+                threeDToCameraCoords(
+                    subVec(_root.camera.pos, square.squareCorners[0])
+                )
+            )
+        );
+        _root.ctx.stroke();
         _root.ctx.fill();
     }
 };
@@ -106,28 +144,13 @@ const getColor = (colorId) => {
     }
 };
 
-const getSquareCorners = (square) => {
-    const u = [0, 0, 0];
-    const v = [0, 0, 0];
-    for (let i = 0; i < square.u.length; i++) {
-        if (Math.abs(square.u[i]) < 0.5) continue;
-        u[(i + 1) % 3] = 1 / _root.N;
-        v[(i + 2) % 3] = 1 / _root.N;
-        break;
-    }
-    return [
-        addVec(square.pos, multVec(1, u), multVec(1, v)),
-        addVec(square.pos, multVec(1, u), multVec(-1, v)),
-        addVec(square.pos, multVec(-1, u), multVec(-1, v)),
-        addVec(square.pos, multVec(-1, u), multVec(1, v)),
-    ];
-};
+const getSquareCorners = (square) => {};
 
 const threeDToCameraCoords = (pos) => {
     return [
         dot(_root.camera.x, pos) / dot(_root.camera.x, _root.camera.x),
         dot(_root.camera.y, pos) / dot(_root.camera.y, _root.camera.y),
-        // dot(_root.camera.dir, pos),
+        dot(_root.camera.dir, pos),
     ];
 };
 
@@ -143,9 +166,20 @@ const newVec = (pos, d, offset) => {
     const newPos = [...pos];
     newPos.splice(d, 0, newOffset);
 
+    const u = [0, 0, 0];
+    const v = [0, 0, 0];
+    u[(d + 1) % 3] = 1 / _root.N;
+    v[(d + 2) % 3] = 1 / _root.N;
+
     _root.cube.push({
         color: 2 * d + offset,
         pos: newPos,
+        squareCorners: [
+            addVec(newPos, multVec(1, u), multVec(1, v)),
+            addVec(newPos, multVec(1, u), multVec(-1, v)),
+            addVec(newPos, multVec(-1, u), multVec(-1, v)),
+            addVec(newPos, multVec(-1, u), multVec(1, v)),
+        ],
         u: Array(3)
             .fill(0)
             .map((a, i) => (i === d ? newOffset : a)),
@@ -163,10 +197,13 @@ const turn = (u, theta, n = 1) => {
         theta--;
     }
     const rotationMatrix = makeRotationMatrix(u, (theta * Math.PI) / 2);
-    for (const point of _root.cube) {
-        if (dot(point.pos, u) > 1 - (2 * n) / _root.N) {
-            point.pos = matMult(rotationMatrix, point.pos);
-            point.u = matMult(rotationMatrix, point.u);
+    for (const square of _root.cube) {
+        if (dot(square.pos, u) > 1 - (2 * n) / _root.N) {
+            square.pos = matMult(rotationMatrix, square.pos);
+            square.squareCorners = square.squareCorners.map((corner) =>
+                matMult(rotationMatrix, corner)
+            );
+            square.u = matMult(rotationMatrix, square.u);
         }
     }
 };
