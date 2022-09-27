@@ -1,5 +1,9 @@
 const _root = {};
 
+const SCRAMBLE_MOVES = 20;
+const TURN_STEPS = 20;
+const EXPLORATION_RATIO = 0.1;
+
 window.onload = () => {
     _root.canvas = document.getElementById("canvas");
     _root.ctx = _root.canvas.getContext("2d");
@@ -20,7 +24,7 @@ const restart = () => {
 };
 
 const constants = () => {
-    _root.N = 10;
+    _root.N = 3;
 };
 
 const init = () => {
@@ -55,32 +59,36 @@ const init = () => {
     _root.camera.y = cross(_root.camera.x, _root.camera.dir);
     _root.camera.x = multVec(_root.camera.pov, _root.camera.x);
     _root.camera.y = multVec(_root.camera.pov, _root.camera.y);
+
+    _root.scrambling = true;
+    _root.scrambleMoves = 0;
+
+    _root.savedMoves = [];
 };
 
 const calc = () => {
     if (!_root.anim) {
-        const ru = [0, 0, 0];
-        ru[Math.floor(Math.random() * 3)] =
-            Math.floor(Math.random() * 2) * 2 - 1;
-        const n = Math.floor(Math.random() * Math.floor(_root.N / 2)) + 1;
+        if (_root.scrambling) {
+            const ru = [0, 0, 0];
+            ru[Math.floor(Math.random() * 3)] =
+                Math.floor(Math.random() * 2) * 2 - 1;
+            const n = Math.floor(Math.random() * Math.floor(_root.N / 2)) + 1;
 
-        _root.anim = {
-            ru,
-            steps: 100,
-            d: Math.floor(Math.random() * 2) * 2 - 1,
-            n,
-            t: 0,
-        };
+            _root.anim = {
+                ru,
+                steps: TURN_STEPS,
+                d: Math.floor(Math.random() * 2) * 2 - 1,
+                n,
+                t: 0,
+            };
+            _root.scrambleMoves++;
+            if (_root.scrambleMoves >= SCRAMBLE_MOVES) _root.scrambling = false;
+        } else {
+            _root.anim = chooseMove();
+        }
     }
     // for (let k = 0; k < 100; k++) {
-    turn(
-        _root.anim.ru,
-        // Math.ceil(Math.random() * 3),
-        _root.anim.d / _root.anim.steps,
-        // Math.floor(Math.random() * 2) * 2 - 1,
-        // Math.random() * 4,
-        _root.anim.n
-    );
+    turn(_root.anim.ru, _root.anim.d / _root.anim.steps, _root.anim.n);
     _root.anim.t++;
     if (_root.anim.t === _root.anim.steps) _root.anim = undefined;
     // }
@@ -94,9 +102,7 @@ const draw = () => {
                 subVec(_root.camera.pos, square.pos)
             ))
     );
-    console.log(
-        _root.cube.sort((a, b) => b.cameraCoords[2] - a.cameraCoords[2])
-    );
+    _root.cube.sort((a, b) => b.cameraCoords[2] - a.cameraCoords[2]);
 
     for (const square of _root.cube) {
         _root.ctx.fillStyle =
@@ -144,8 +150,6 @@ const getColor = (colorId) => {
     }
 };
 
-const getSquareCorners = (square) => {};
-
 const threeDToCameraCoords = (pos) => {
     return [
         dot(_root.camera.x, pos) / dot(_root.camera.x, _root.camera.x),
@@ -187,6 +191,101 @@ const newVec = (pos, d, offset) => {
 };
 
 /**
+ * AI STUFF
+ */
+
+const colorToUnitVec = (c) => {
+    const d = Math.floor(c / 2);
+    const p = (-1) ** (c % 2);
+    const u = [0, 0, 0];
+    u[d] = p;
+    return u;
+};
+
+const evaluateCube = () => {
+    const v = _root.cube.reduce(
+        (p, square) =>
+            p + Math.max(0, dot(square.u, colorToUnitVec(square.color))),
+        0
+    );
+    return v;
+};
+
+const getAllMoves = () => {
+    const moves = [];
+    for (let c = 0; c < 6; c++) {
+        for (const d of [-1, 0, 1, 2]) {
+            for (let n = 1; n <= Math.floor(_root.N / 2); n++) {
+                const ru = colorToUnitVec(c);
+                moves.push([ru, d, n]);
+            }
+        }
+    }
+    return moves;
+};
+
+const getAllCombinationsOfMoves = (depth = 3) => {
+    const allMoves = getAllMoves();
+    if (depth === 1) return allMoves.map((move) => [move]);
+    return allMoves.reduce(
+        (p, move) => [
+            ...p,
+            ...getAllCombinationsOfMoves(depth - 1).map((moveCombo) => [
+                move,
+                ...moveCombo,
+            ]),
+        ],
+        []
+    );
+};
+
+const chooseMove = () => {
+    if (_root.savedMoves.length) return _root.savedMoves.pop();
+
+    let bestMoves = [];
+
+    const allCombos = getAllCombinationsOfMoves();
+
+    if (Math.random() < EXPLORATION_RATIO) {
+        const move = allCombos[Math.floor(Math.random() * allCombos.length)][0];
+        return {
+            ru: move[0],
+            steps: TURN_STEPS,
+            d: move[1],
+            n: move[2],
+            t: 0,
+        };
+    }
+
+    for (const moveCombination of allCombos) {
+        for (const [ru, d, n] of moveCombination) {
+            turn(ru, d, n);
+        }
+        const newMove = evaluateCube();
+        moveCombination.reverse();
+        for (const [ru, d, n] of moveCombination) {
+            turn(ru, -d, n);
+        }
+        const newFullMove = [
+            newMove,
+            moveCombination.map((combo) => ({
+                ru: combo[0],
+                steps: TURN_STEPS,
+                d: combo[1],
+                n: combo[2],
+                t: 0,
+            })),
+        ];
+        if (bestMoves.length === 0 || newMove > bestMoves[0][0])
+            bestMoves = [newFullMove];
+        if (newMove === bestMoves[0][0]) bestMoves.push(newFullMove);
+    }
+    _root.savedMoves =
+        bestMoves[Math.floor(Math.random() * bestMoves.length)][1];
+    return _root.savedMoves.pop();
+};
+
+/**
  * UHH
  */
 
@@ -198,7 +297,7 @@ const turn = (u, theta, n = 1) => {
     }
     const rotationMatrix = makeRotationMatrix(u, (theta * Math.PI) / 2);
     for (const square of _root.cube) {
-        if (dot(square.pos, u) > 1 - (2 * n) / _root.N) {
+        if (n >= _root.N || dot(square.pos, u) > 1 - (2 * n) / _root.N) {
             square.pos = matMult(rotationMatrix, square.pos);
             square.squareCorners = square.squareCorners.map((corner) =>
                 matMult(rotationMatrix, corner)
