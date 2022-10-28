@@ -1,8 +1,9 @@
 const _root = {};
 
+_root.N = 2;
 const SCRAMBLE_MOVES = 20;
 const TURN_STEPS = 20;
-const EXPLORATION_RATIO = 0.1;
+const EXPLORATION_RATIO = 0;
 
 window.onload = () => {
     _root.canvas = document.getElementById("canvas");
@@ -23,9 +24,7 @@ const restart = () => {
     loop();
 };
 
-const constants = () => {
-    _root.N = 3;
-};
+const constants = () => {};
 
 const init = () => {
     _root.canvas.width = Math.min(window.innerWidth, window.innerHeight);
@@ -84,6 +83,7 @@ const calc = () => {
             _root.scrambleMoves++;
             if (_root.scrambleMoves >= SCRAMBLE_MOVES) _root.scrambling = false;
         } else {
+            if (evaluateCube() >= 6 * _root.N * _root.N) throw "Solved!";
             _root.anim = chooseMove();
         }
     }
@@ -214,8 +214,8 @@ const evaluateCube = () => {
 const getAllMoves = () => {
     const moves = [];
     for (let c = 0; c < 6; c++) {
-        for (const d of [-1, 0, 1, 2]) {
-            for (let n = 1; n <= Math.floor(_root.N / 2); n++) {
+        for (const d of [-1, 1, 2]) {
+            for (let n = 1; n <= Math.max(1, Math.floor(_root.N / 2)); n++) {
                 const ru = colorToUnitVec(c);
                 moves.push([ru, d, n]);
             }
@@ -224,64 +224,53 @@ const getAllMoves = () => {
     return moves;
 };
 
-const getAllCombinationsOfMoves = (depth = 3) => {
-    const allMoves = getAllMoves();
-    if (depth === 1) return allMoves.map((move) => [move]);
-    return allMoves.reduce(
-        (p, move) => [
-            ...p,
-            ...getAllCombinationsOfMoves(depth - 1).map((moveCombo) => [
-                move,
-                ...moveCombo,
-            ]),
-        ],
-        []
-    );
+const evaluateMoveCombo = (combo) => {
+    let m = -1;
+    for (const [ru, d, n] of combo) {
+        m++;
+        turn(ru, d, n);
+        if (evaluateCube() >= 6 * _root.N ** 2) break; // Stop if you go through the solved case
+    }
+    const valuation = evaluateCube();
+    for (let i = m; i >= 0; i--) {
+        const [ru, d, n] = combo[i];
+        turn(ru, -d, n);
+    }
+    return valuation;
+};
+
+const zip = (a, b) => {
+    return a.reduce((p, x) => [...p, ...b.map((y) => [x, y])], []);
 };
 
 const chooseMove = () => {
     if (_root.savedMoves.length) return _root.savedMoves.pop();
 
-    let bestMoves = [];
+    const allMoves = getAllMoves();
 
-    const allCombos = getAllCombinationsOfMoves();
+    let bestMove = [0, allMoves[0]];
 
-    if (Math.random() < EXPLORATION_RATIO) {
-        const move = allCombos[Math.floor(Math.random() * allCombos.length)][0];
-        return {
-            ru: move[0],
+    for (const move of allMoves) {
+        let avg =
+            zip(allMoves, allMoves).reduce(
+                (p, nextMoves) => p + evaluateMoveCombo([move, ...nextMoves]),
+                0
+            ) /
+            allMoves.length /
+            allMoves.length;
+        if (avg > bestMove[0]) bestMove = [avg, move];
+    }
+    _root.savedMoves = [
+        {
+            ru: bestMove[1][0],
             steps: TURN_STEPS,
-            d: move[1],
-            n: move[2],
+            d: bestMove[1][1],
+            n: bestMove[1][2],
             t: 0,
-        };
-    }
+        },
+    ];
 
-    for (const moveCombination of allCombos) {
-        for (const [ru, d, n] of moveCombination) {
-            turn(ru, d, n);
-        }
-        const newMove = evaluateCube();
-        moveCombination.reverse();
-        for (const [ru, d, n] of moveCombination) {
-            turn(ru, -d, n);
-        }
-        const newFullMove = [
-            newMove,
-            moveCombination.map((combo) => ({
-                ru: combo[0],
-                steps: TURN_STEPS,
-                d: combo[1],
-                n: combo[2],
-                t: 0,
-            })),
-        ];
-        if (bestMoves.length === 0 || newMove > bestMoves[0][0])
-            bestMoves = [newFullMove];
-        if (newMove === bestMoves[0][0]) bestMoves.push(newFullMove);
-    }
-    _root.savedMoves =
-        bestMoves[Math.floor(Math.random() * bestMoves.length)][1];
+    console.log(bestMove[0]);
     return _root.savedMoves.pop();
 };
 

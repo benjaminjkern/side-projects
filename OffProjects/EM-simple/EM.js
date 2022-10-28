@@ -130,22 +130,7 @@ const restart = () => {
             // field[index] = noise(x, y, 100) + noise(x, y, 50) + noise(x, y, 20) + noise(x, y, 10) + noise(x, y, 5);
         }
     }
-
-    const a = [Math.floor(GRIDSIZE[0] / 2), Math.floor(GRIDSIZE[1] / 2)];
-    // Make center dot 0
-    Array(1)
-        .fill()
-        .forEach((_, x) => {
-            Array(1)
-                .fill()
-                .forEach((_, y) => {
-                    Array(3)
-                        .fill()
-                        .forEach((_, z) => {
-                            field[makeIdx(a[0] + x, a[1] + y, z)] = 1;
-                        });
-                });
-        });
+    placeRandomDot();
 
     encoder.start();
     if (frame === MAX_FRAMES) {
@@ -254,65 +239,29 @@ const newCoef = () =>
                     terms: [{ dx: dx - 1, dy: dy - 1, dz: dz - 1, dt: 1 }],
                 });
             }
-            // const a = randrange(COEFRANGE);
-            // const b = randrange(COEFRANGE);
-            // const c = randrange(COEFRANGE);
-            // const d = randrange(COEFRANGE);
-            // const e = randrange(COEFRANGE);
             return list;
-            // return [
-            //     {
-            //         value: randrange(COEFRANGE),
-            //         terms: [],
-            //     },
-            //     {
-            //         value: randrange(COEFRANGE),
-            //         terms: [{ dx: 0, dy: 0, dz: 0 }],
-            //     },
-            //     {
-            //         value: randrange(COEFRANGE),
-            //         terms: [{ dx: 1, dy: 0, dz: 0 }],
-            //     },
-            //     {
-            //         value: randrange(COEFRANGE),
-            //         terms: [{ dx: -1, dy: 0, dz: 0 }],
-            //     },
-            //     {
-            //         value: randrange(COEFRANGE),
-            //         terms: [{ dx: 0, dy: 1, dz: 0 }],
-            //     },
-            //     {
-            //         value: randrange(COEFRANGE),
-            //         terms: [{ dx: 0, dy: -1, dz: 0 }],
-            //     },
-
-            //     {
-            //         value: randrange(COEFRANGE),
-            //         terms: [{ dx: 1, dy: 1, dz: 0 }],
-            //     },
-            //     {
-            //         value: randrange(COEFRANGE),
-            //         terms: [{ dx: -1, dy: 1, dz: 0 }],
-            //     },
-            //     {
-            //         value: randrange(COEFRANGE),
-            //         terms: [{ dx: 1, dy: -1, dz: 0 }],
-            //     },
-            //     {
-            //         value: randrange(COEFRANGE),
-            //         terms: [{ dx: -1, dy: -1, dz: 0 }],
-            //     },
-
-            //     {
-            //         value: randrange(COEFRANGE),
-            //         terms: [{ dx: 0, dy: 0, dz: 1 }],
-            //     },
-            //     {
-            //         value: randrange(COEFRANGE),
-            //         terms: [{ dx: 0, dy: 0, dz: -1 }],
-            //     },
-            // ];
         });
+
+const placeRandomDot = () => {
+    const a = [
+        Math.floor(Math.random() * GRIDSIZE[0]),
+        Math.floor(Math.random() * GRIDSIZE[1]),
+    ];
+    Array(1)
+        .fill()
+        .forEach((_, x) => {
+            Array(1)
+                .fill()
+                .forEach((_, y) => {
+                    Array(3)
+                        .fill()
+                        .forEach((_, z) => {
+                            field[makeIdx(a[0] + x, a[1] + y, z)] =
+                                randrange(VALUERANGE);
+                        });
+                });
+        });
+};
 
 const randrange = ([low, high]) => Math.random() * (high - low) + low;
 const randrangeint = ([low, high]) =>
@@ -392,9 +341,13 @@ const step = () => {
 
     if (!found) {
         console.log("All the same, restarting!");
-        frame = MAX_FRAMES;
-        makeNewCoefs();
-        return restart();
+        frame = 0;
+
+        placeRandomDot();
+        // makeNewCoefs();
+        setTimeout(step, 1);
+        return;
+        // return restart();
     }
 
     //update
@@ -465,9 +418,9 @@ const step = () => {
     // }
     if (frame < MAX_FRAMES) setTimeout(step, 1);
     else {
-        encoder.finish();
-        encoder.download("yooooo.gif");
-        encoder.start();
+        // encoder.finish();
+        // encoder.download("yooooo.gif");
+        // encoder.start();
         frame = 0;
         setTimeout(step, 1);
     }
@@ -522,7 +475,7 @@ const draw = () => {
 
     ctx.putImageData(imageData, 0, 0);
 
-    encoder.addFrame(ctx);
+    // encoder.addFrame(ctx);
 };
 
 window.onload = () => {
