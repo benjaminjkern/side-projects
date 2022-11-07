@@ -4,7 +4,7 @@ window.onload = () => {
     _root.canvas = document.getElementById("canvas");
     _root.ctx = _root.canvas.getContext("2d");
 
-    _root.canvas.width = window.innerWidth;
+    _root.canvas.width = window.innerHeight;
     _root.canvas.height = window.innerHeight;
 
     restart();
@@ -25,12 +25,10 @@ const restart = () => {
 const constants = () => {};
 
 const init = () => {
-    _root.shapes = [
-        newPoint([1, 1, 0]),
-        newPoint([1, -1, 0]),
-        newPoint([-1, 1, 0]),
-        newPoint([-1, -1, 0]),
-    ];
+    _root.shapes = [];
+    const cube = newParallelopiped([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
+    cube.color = "red";
+    _root.shapes.push(cube);
 
     _root.camera = {
         pos: [5, 5, 5],
@@ -169,4 +167,123 @@ const drawPoint = (point) => () => {
 
     _root.ctx.arc(...pos, 5, 0, 2 * Math.PI);
     _root.ctx.fill();
+};
+
+const newLine = (startPos, endPos) => {
+    const line = { startPoint: newPoint(startPos), endPoint: newPoint(endPos) };
+    line.draw = drawLine(line);
+    return line;
+};
+
+const drawLine = (line) => () => {
+    _root.ctx.fillStyle = line.color || "black";
+    _root.ctx.beginPath();
+
+    const startPos = threeDToScreenCoords(line.startPoint.pos);
+    const endPos = threeDToScreenCoords(line.endPoint.pos);
+
+    _root.ctx.moveTo(...startPos);
+    _root.ctx.lineTo(...endPos);
+    _root.ctx.stroke();
+
+    // line.startPoint.draw();
+    // line.endPoint.draw();
+};
+
+// abstract
+const newFace = (...points) => {
+    if (points.length !== 3) throw "NOPE";
+    const face = { points };
+    face.draw = drawFace(face);
+    return face;
+};
+
+const drawFace = (face) => () => {
+    if (
+        dot(
+            _root.camera.dir,
+            cross(
+                subVec(face.points[1], face.points[0]),
+                subVec(face.points[2], face.points[1])
+            )
+        ) >= 0
+    )
+        return;
+
+    _root.ctx.fillStyle = face.color || "black";
+    _root.ctx.beginPath();
+    _root.ctx.moveTo(...threeDToScreenCoords(face.points[0]));
+    _root.ctx.lineTo(...threeDToScreenCoords(face.points[1]));
+    _root.ctx.lineTo(...threeDToScreenCoords(face.points[2]));
+
+    _root.ctx.fill();
+};
+
+const newPolygon = (...points) => {
+    const polygon = { lines: [], faces: [] };
+    for (const [i, point] of points.entries()) {
+        polygon.lines.push(newLine(point, points[(i + 1) % points.length]));
+        if (i > 0 && i < points.length - 1)
+            polygon.faces.push(newFace(points[0], point, points[i + 1]));
+    }
+    polygon.draw = drawPolygon(polygon);
+    return polygon;
+};
+
+const drawPolygon = (polygon) => () => {
+    _root.ctx.fillStyle = polygon.color || "black";
+
+    polygon.faces.forEach((face) => {
+        face.draw();
+    });
+    // polygon.lines.forEach((line) => {
+    //     line.draw();
+    // });
+};
+
+const newShape = (...polygons) => {
+    const shape = { polygons };
+    shape.draw = drawShape(shape);
+    return shape;
+};
+
+const drawShape = (shape) => () => {
+    shape.polygons.forEach((polygon) => {
+        polygon.color = shape.color;
+        polygon.draw();
+    });
+};
+
+const newParallelogram = (centerPos, ux, uy) => {
+    const p00 = addVec(centerPos, ux, uy);
+    const p01 = addVec(centerPos, ux, multVec(-1, uy));
+    const p10 = addVec(centerPos, multVec(-1, ux), uy);
+    const p11 = addVec(centerPos, multVec(-1, ux), multVec(-1, uy));
+
+    return newPolygon(p00, p01, p11, p10);
+};
+
+const newParallelopiped = (centerPos, ux, uy, uz) => {
+    const p000 = addVec(centerPos, ux, uy, uz);
+    const p001 = addVec(centerPos, ux, uy, multVec(-1, uz));
+    const p010 = addVec(centerPos, ux, multVec(-1, uy), uz);
+    const p011 = addVec(centerPos, ux, multVec(-1, uy), multVec(-1, uz));
+    const p100 = addVec(centerPos, multVec(-1, ux), uy, uz);
+    const p101 = addVec(centerPos, multVec(-1, ux), uy, multVec(-1, uz));
+    const p110 = addVec(centerPos, multVec(-1, ux), multVec(-1, uy), uz);
+    const p111 = addVec(
+        centerPos,
+        multVec(-1, ux),
+        multVec(-1, uy),
+        multVec(-1, uz)
+    );
+
+    return newShape(
+        newPolygon(p000, p001, p011, p010),
+        newPolygon(p000, p010, p110, p100),
+        newPolygon(p000, p100, p101, p001),
+        newPolygon(p111, p101, p100, p110),
+        newPolygon(p111, p011, p001, p101),
+        newPolygon(p111, p110, p010, p011)
+    );
 };
