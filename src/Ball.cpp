@@ -1,7 +1,7 @@
 #include "Ball.hpp"
 #include <iostream>
 
-float randomNum() { return ((float)rand() / (float)RAND_MAX); }
+const float randomNum() { return ((float)rand() / (float)RAND_MAX); }
 
 Ball::Ball() {
     radius = 40;

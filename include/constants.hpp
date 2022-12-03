@@ -1,4 +1,5 @@
 #pragma once
+#include <SFML/Graphics.hpp>
 
 const float GRAVITY = 0;
 const int windowWidth = 640;

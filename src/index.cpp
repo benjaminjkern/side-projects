@@ -3,6 +3,8 @@
 #include <iostream>
 #include <vector>
 
+const float randomNum2() { return ((float)rand() / (float)RAND_MAX); }
+
 class FpsHandler {
   private:
     sf::Text text;
@@ -30,9 +32,18 @@ int main() {
 
     std::vector<Ball> balls;
 
-    for (int i = 0; i < 10000; i++) {
-        balls.push_back(Ball());
-    }
+    // for (int i = 0; i < 10000; i++) {
+    //     balls.push_back(Ball());
+    // }
+
+    sf::Uint8 *pixels = new sf::Uint8[windowWidth * windowHeight * 4];
+    sf::Texture texture;
+    texture.create(windowWidth, windowHeight);
+    sf::Sprite sprite(texture);
+    // // Make the top-left pixel transparent
+    // sf::Color color = image.getPixel(0, 0);
+    // color.a = 0;
+    // image.setPixel(0, 0, color);
 
     sf::Clock clock;
     FpsHandler fpsHandler;
@@ -46,10 +57,19 @@ int main() {
                 window.close();
 
         window.clear();
-        for (auto &ball : balls) {
-            ball.update();
-            ball.draw(&window);
+        // for (auto &ball : balls) {
+        //     ball.update();
+        //     ball.draw(&window);
+        // }
+
+        for (int i = 0; i < windowWidth * windowHeight; i++) {
+            pixels[4 * i] = randomNum2() * 255;
+            pixels[4 * i + 1] = randomNum2() * 255;
+            pixels[4 * i + 2] = randomNum2() * 255;
+            pixels[4 * i + 3] = 255;
         }
+        texture.update(pixels);
+        window.draw(sprite);
 
         auto elapsedTime = clock.getElapsedTime();
         if (LIMIT_FRAMERATE) {
