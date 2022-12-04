@@ -7,23 +7,72 @@
 
 const float randomNum2() { return ((float)rand() / (float)RAND_MAX); }
 
-const int getPixel(int i, int dx, int dy) {
-    int x = i % (windowWidth / pixelSize);
-    int y = i / (windowWidth / pixelSize);
+class Term {
+  private:
+    int dx;
+    int dy;
+    int dz;
+    int dt;
 
-    int nx = (x + dx + (windowWidth / pixelSize)) % (windowWidth / pixelSize);
-    int ny = (y + dy + (windowHeight / pixelSize)) % (windowHeight / pixelSize);
+  public:
+    Term(int dx, int dy, int dz, int dt) : dx(dx), dy(dy), dz(dz), dt(dt) {}
+    int getIndex(int index) {
+        int x = (index / 3) % gridWidth;
+        int y = (index / 3) / gridWidth;
+        int z = index % 3;
+        int t = 0; // unused for now
 
-    return nx + (windowWidth / pixelSize) * ny;
-}
+        int nx = (x + dx + gridWidth) % gridWidth;
+        int ny = (y + dy + gridHeight) % gridHeight;
+        int nz = (z + dz + 3) % 3;
+
+        return nz + 3 * (nx + gridWidth * ny);
+    }
+};
 
 class Rule {
   private:
-    std::vector<int> constants;
+    std::vector<Term> terms;
+    float coefficient;
 
   public:
-    Rule() {}
-    float doRule(int neighborCount, int currentValue) { return 0; }
+    Rule() { coefficient = randomNum2() * 2 - 1; }
+    void newTerm(int dx, int dy, int dz) {
+        terms.push_back(Term(dx, dy, dz, 0));
+    }
+    float doRule(float *values, int index) {
+        float result = coefficient;
+        for (Term term : terms) {
+            result *= values[term.getIndex(index)];
+        }
+        return result;
+    }
+};
+class RuleSet {
+  private:
+    std::vector<Rule> rules;
+
+  public:
+    RuleSet() {
+        Rule rule;
+        rules.push_back(rule);
+        for (int x = -1; x <= 1; x++) {
+            for (int y = -1; y <= 1; y++) {
+                for (int z = -1; z <= 1; z++) {
+                    rule = Rule();
+                    rule.newTerm(x, y, z);
+                    rules.push_back(rule);
+                }
+            }
+        }
+    }
+    float doRule(float *values, int index) {
+        float result = 0;
+        for (Rule rule : rules) {
+            result += rule.doRule(values, index);
+        }
+        return std::max(-1.f, std::min(result, 1.f));
+    }
 };
 
 void writeValuesToPixels(float *values, sf::Uint8 *pixels) {
@@ -32,9 +81,9 @@ void writeValuesToPixels(float *values, sf::Uint8 *pixels) {
             for (int y = 0; y < pixelSize; y++) {
                 int index = pixelSize * (i % gridWidth) + x +
                             windowWidth * (pixelSize * (i / gridWidth) + y);
-                pixels[4 * index] = values[3 * i] * 255;
-                pixels[4 * index + 1] = values[3 * i + 1] * 255;
-                pixels[4 * index + 2] = values[3 * i + 2] * 255;
+                pixels[4 * index] = (values[3 * i] + 1) / 2 * 255;
+                pixels[4 * index + 1] = (values[3 * i + 1] + 1) / 2 * 255;
+                pixels[4 * index + 2] = (values[3 * i + 2] + 1) / 2 * 255;
                 pixels[4 * index + 3] = 255;
             }
         }
@@ -66,7 +115,7 @@ int main() {
     sf::RenderWindow window(sf::VideoMode(windowWidth, windowHeight),
                             "SFML Application");
 
-    Rule rule;
+    RuleSet ruleset;
 
     sf::Uint8 *pixels = new sf::Uint8[windowWidth * windowHeight * 4];
     float *ovalues = new float[gridWidth * gridHeight * 3];
@@ -78,9 +127,10 @@ int main() {
     for (int i = 0; i < gridWidth * gridHeight * 3; i++) {
         values[i] = 0;
     }
-    values[gridWidth / 2 + gridWidth * (gridHeight / 2)] = 1;
-    values[gridWidth / 2 + gridWidth * (gridHeight / 2) + 1] = 1;
-    values[gridWidth / 2 + gridWidth * (gridHeight / 2) + 2] = 1;
+    int center = 3 * (gridWidth / 2 + gridWidth * (gridHeight / 2));
+    values[center] = 1;
+    values[center + 1] = 0;
+    values[center + 2] = 1;
 
     for (int i = 0; i < gridWidth * gridHeight * 3; i++) {
         ovalues[i] = values[i];
@@ -100,13 +150,12 @@ int main() {
                 window.close();
 
         window.clear();
-        // for (auto &ball : balls) {
-        //     ball.update();
-        //     ball.draw(&window);
-        // }
 
         for (int i = 0; i < gridWidth * gridHeight * 3; i++) {
-            values[i] = randomNum2();
+            values[i] = ruleset.doRule(ovalues, i);
+        }
+        for (int i = 0; i < gridWidth * gridHeight * 3; i++) {
+            ovalues[i] = values[i];
         }
 
         writeValuesToPixels(values, pixels);
