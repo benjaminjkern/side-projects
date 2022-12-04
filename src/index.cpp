@@ -3,6 +3,8 @@
 #include <iostream>
 #include <vector>
 
+#include <unordered_set>
+
 const float randomNum2() { return ((float)rand() / (float)RAND_MAX); }
 
 const int getPixel(int i, int dx, int dy) {
@@ -15,10 +17,28 @@ const int getPixel(int i, int dx, int dy) {
     return nx + (windowWidth / pixelSize) * ny;
 }
 
-const int doRule(int neighborCount, int currentValue) {
-    if (currentValue == 1)
-        return neighborCount == 2 || neighborCount == 3;
-    return neighborCount == 3;
+class Rule {
+  private:
+    std::vector<int> constants;
+
+  public:
+    Rule() {}
+    float doRule(int neighborCount, int currentValue) { return 0; }
+};
+
+void writeValuesToPixels(float *values, sf::Uint8 *pixels) {
+    for (int i = 0; i < gridWidth * gridHeight; i++) {
+        for (int x = 0; x < pixelSize; x++) {
+            for (int y = 0; y < pixelSize; y++) {
+                int index = pixelSize * (i % gridWidth) + x +
+                            windowWidth * (pixelSize * (i / gridWidth) + y);
+                pixels[4 * index] = values[3 * i] * 255;
+                pixels[4 * index + 1] = values[3 * i + 1] * 255;
+                pixels[4 * index + 2] = values[3 * i + 2] * 255;
+                pixels[4 * index + 3] = 255;
+            }
+        }
+    }
 }
 
 class FpsHandler {
@@ -46,43 +66,27 @@ int main() {
     sf::RenderWindow window(sf::VideoMode(windowWidth, windowHeight),
                             "SFML Application");
 
-    std::vector<Ball> balls;
-
-    // for (int i = 0; i < 10000; i++) {
-    //     balls.push_back(Ball());
-    // }
+    Rule rule;
 
     sf::Uint8 *pixels = new sf::Uint8[windowWidth * windowHeight * 4];
-    sf::Uint8 *opixels =
-        new sf::Uint8[windowWidth * windowHeight / pixelSize / pixelSize];
-    sf::Uint8 *rpixels =
-        new sf::Uint8[windowWidth * windowHeight / pixelSize / pixelSize];
+    float *ovalues = new float[gridWidth * gridHeight * 3];
+    float *values = new float[gridWidth * gridHeight * 3];
     sf::Texture texture;
     texture.create(windowWidth, windowHeight);
     sf::Sprite sprite(texture);
 
-    for (int i = 0; i < windowWidth * windowHeight / pixelSize / pixelSize;
-         i++) {
-        opixels[i] = randomNum2() * 2;
-        rpixels[i] = opixels[i];
+    for (int i = 0; i < gridWidth * gridHeight * 3; i++) {
+        values[i] = 0;
+    }
+    values[gridWidth / 2 + gridWidth * (gridHeight / 2)] = 1;
+    values[gridWidth / 2 + gridWidth * (gridHeight / 2) + 1] = 1;
+    values[gridWidth / 2 + gridWidth * (gridHeight / 2) + 2] = 1;
+
+    for (int i = 0; i < gridWidth * gridHeight * 3; i++) {
+        ovalues[i] = values[i];
     }
 
-    for (int i = 0; i < windowWidth * windowHeight / pixelSize / pixelSize;
-         i++) {
-        for (int x = 0; x < pixelSize; x++) {
-            for (int y = 0; y < pixelSize; y++) {
-                int index =
-                    pixelSize * (i % (windowWidth / pixelSize)) + x +
-                    windowWidth *
-                        (pixelSize * (i / (windowWidth / pixelSize)) + y);
-
-                pixels[4 * index] = opixels[i] * 255;
-                pixels[4 * index + 1] = opixels[i] * 255;
-                pixels[4 * index + 2] = opixels[i] * 255;
-                pixels[4 * index + 3] = 255;
-            }
-        }
-    }
+    writeValuesToPixels(values, pixels);
 
     sf::Clock clock;
     FpsHandler fpsHandler;
@@ -101,32 +105,11 @@ int main() {
         //     ball.draw(&window);
         // }
 
-        for (int i = 0; i < windowWidth * windowHeight / pixelSize / pixelSize;
-             i++) {
-            int neighborTotal =
-                opixels[getPixel(i, 0, 1)] + opixels[getPixel(i, 0, -1)] +
-                opixels[getPixel(i, 1, 1)] + opixels[getPixel(i, 1, -1)] +
-                opixels[getPixel(i, -1, 1)] + opixels[getPixel(i, -1, -1)] +
-                opixels[getPixel(i, 1, 0)] + opixels[getPixel(i, -1, 0)];
-            rpixels[i] = doRule(neighborTotal, opixels[i]);
+        for (int i = 0; i < gridWidth * gridHeight * 3; i++) {
+            values[i] = randomNum2();
         }
 
-        for (int i = 0; i < windowWidth * windowHeight / pixelSize / pixelSize;
-             i++) {
-            opixels[i] = rpixels[i];
-            for (int x = 0; x < pixelSize; x++) {
-                for (int y = 0; y < pixelSize; y++) {
-                    int index =
-                        pixelSize * (i % (windowWidth / pixelSize)) + x +
-                        windowWidth *
-                            (pixelSize * (i / (windowWidth / pixelSize)) + y);
-
-                    pixels[4 * index] = opixels[i] * 255;
-                    pixels[4 * index + 1] = opixels[i] * 255;
-                    pixels[4 * index + 2] = opixels[i] * 255;
-                }
-            }
-        }
+        writeValuesToPixels(values, pixels);
         texture.update(pixels);
         window.draw(sprite);
 
