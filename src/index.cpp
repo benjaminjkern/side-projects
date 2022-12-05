@@ -1,11 +1,14 @@
 #include "Ball.hpp"
 #include <SFML/Graphics.hpp>
+#include <cmath>
 #include <iostream>
 #include <vector>
 
-#include <unordered_set>
-
 const float randomNum2() { return ((float)rand() / (float)RAND_MAX); }
+
+float sigmoid(float x) { return 1 / (1 + std::exp(-x)); }
+
+float crossSigmoid(float x) { return 1 - 4 * sigmoid(x) * (1 - sigmoid(x)); }
 
 class Term {
   private:
@@ -42,10 +45,14 @@ class Rule {
     }
     float doRule(float *values, int index) {
         float result = coefficient;
-        for (Term term : terms) {
+        for (Term &term : terms) {
             result *= values[term.getIndex(index)];
         }
         return result;
+    }
+    void update() {
+        coefficient = std::min(
+            1.f, std::max(-1.f, coefficient + 0.1f * (randomNum2() * 2 - 1)));
     }
 };
 class RuleSet {
@@ -68,10 +75,15 @@ class RuleSet {
     }
     float doRule(float *values, int index) {
         float result = 0;
-        for (Rule rule : rules) {
+        for (Rule &rule : rules) {
             result += rule.doRule(values, index);
         }
-        return std::max(-1.f, std::min(result, 1.f));
+        return crossSigmoid(result);
+    }
+    void update() {
+        for (Rule &rule : rules) {
+            rule.update();
+        }
     }
 };
 
@@ -81,9 +93,9 @@ void writeValuesToPixels(float *values, sf::Uint8 *pixels) {
             for (int y = 0; y < pixelSize; y++) {
                 int index = pixelSize * (i % gridWidth) + x +
                             windowWidth * (pixelSize * (i / gridWidth) + y);
-                pixels[4 * index] = (values[3 * i] + 1) / 2 * 255;
-                pixels[4 * index + 1] = (values[3 * i + 1] + 1) / 2 * 255;
-                pixels[4 * index + 2] = (values[3 * i + 2] + 1) / 2 * 255;
+                pixels[4 * index] = values[3 * i] * 255;
+                pixels[4 * index + 1] = values[3 * i + 1] * 255;
+                pixels[4 * index + 2] = values[3 * i + 2] * 255;
                 pixels[4 * index + 3] = 255;
             }
         }
@@ -115,7 +127,7 @@ int main() {
     sf::RenderWindow window(sf::VideoMode(windowWidth, windowHeight),
                             "SFML Application");
 
-    RuleSet ruleset;
+    RuleSet *rulesets = new RuleSet[3];
 
     sf::Uint8 *pixels = new sf::Uint8[windowWidth * windowHeight * 4];
     float *ovalues = new float[gridWidth * gridHeight * 3];
@@ -129,7 +141,7 @@ int main() {
     }
     int center = 3 * (gridWidth / 2 + gridWidth * (gridHeight / 2));
     values[center] = 1;
-    values[center + 1] = 0;
+    values[center + 1] = 1;
     values[center + 2] = 1;
 
     for (int i = 0; i < gridWidth * gridHeight * 3; i++) {
@@ -141,6 +153,10 @@ int main() {
     sf::Clock clock;
     FpsHandler fpsHandler;
 
+    int t = 0;
+
+    float threshold = 0.1;
+
     while (window.isOpen()) {
         clock.restart();
         sf::Event event;
@@ -151,9 +167,31 @@ int main() {
 
         window.clear();
 
-        for (int i = 0; i < gridWidth * gridHeight * 3; i++) {
-            values[i] = ruleset.doRule(ovalues, i);
+        float *first = new float[3];
+
+        for (int z = 0; z < 3; z++) {
+            first[z] = values[z];
         }
+
+        bool foundDiff = false;
+
+        for (int i = 0; i < gridWidth * gridHeight; i++) {
+
+            for (int z = 0; z < 3; z++) {
+                values[3 * i + z] = rulesets[z].doRule(ovalues, 3 * i + z);
+                if (std::abs(values[3 * i + z] - first[z]) > threshold) {
+                    foundDiff = true;
+                }
+            }
+        }
+
+        if (!foundDiff) {
+            int center = 3 * (gridWidth / 2 + gridWidth * (gridHeight / 2));
+            values[center] = 1;
+            values[center + 1] = 1;
+            values[center + 2] = 1;
+        }
+
         for (int i = 0; i < gridWidth * gridHeight * 3; i++) {
             ovalues[i] = values[i];
         }
@@ -174,5 +212,9 @@ int main() {
             fpsHandler.drawFps(&window, elapsedTime);
 
         window.display();
+
+        for (int z = 0; z < 3; z++) {
+            rulesets[z].update();
+        }
     }
 }
