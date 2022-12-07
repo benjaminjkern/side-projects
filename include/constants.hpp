@@ -2,9 +2,9 @@
 #include <SFML/Graphics.hpp>
 
 const float GRAVITY = 0;
-const int windowWidth = 168 * 2;
-const int windowHeight = 105 * 2;
-const int pixelSize = 1;
+const int windowWidth = 168 * 10;
+const int windowHeight = 105 * 10;
+const int pixelSize = 5;
 const int gridWidth = windowWidth / pixelSize;
 const int gridHeight = windowHeight / pixelSize;
 

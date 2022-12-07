@@ -23,7 +23,6 @@ class Term {
         int x = (index / 3) % gridWidth;
         int y = (index / 3) / gridWidth;
         int z = index % 3;
-        int t = 0; // unused for now
 
         int nx = (x + dx + gridWidth) % gridWidth;
         int ny = (y + dy + gridHeight) % gridHeight;
@@ -31,7 +30,10 @@ class Term {
 
         return nz + 3 * (nx + gridWidth * ny);
     }
+    int getDt() { return dt; }
 };
+
+float range = 1;
 
 class Rule {
   private:
@@ -39,21 +41,25 @@ class Rule {
     float coefficient;
 
   public:
-    Rule() { coefficient = randomNum2() * 2 - 1; }
-    void newTerm(int dx, int dy, int dz) {
-        terms.push_back(Term(dx, dy, dz, 0));
+    Rule() { coefficient = (randomNum2() * 2 - 1) * range; }
+    void newTerm(int dx, int dy, int dz, int dt) {
+        terms.push_back(Term(dx, dy, dz, dt));
     }
-    float doRule(float *values, int index) {
+    float doRule(float *values, float *ovalues, int index) {
         float result = coefficient;
         for (Term &term : terms) {
-            result *= values[term.getIndex(index)];
+            result *= (term.getDt() ? values : ovalues)[term.getIndex(index)];
         }
         return result;
     }
     void update() {
         coefficient = std::min(
-            1.f, std::max(-1.f, coefficient + 0.1f * (randomNum2() * 2 - 1)));
+            range,
+            std::max(-range, coefficient + 0.2f * (randomNum2() * 2 - 1)));
     }
+    void fixCoefficient(float sum, float mean) { coefficient -= mean; }
+    float getCoefficient() { return coefficient; }
+    void setCoefficient(float coef) { coefficient = coef; }
 };
 class RuleSet {
   private:
@@ -61,33 +67,82 @@ class RuleSet {
 
   public:
     RuleSet() {
+
+        float sum = 0;
         Rule rule;
+        sum += rule.getCoefficient();
         rules.push_back(rule);
-        for (int x = -1; x <= 1; x++) {
-            for (int y = -1; y <= 1; y++) {
-                for (int z = -1; z <= 1; z++) {
-                    rule = Rule();
-                    rule.newTerm(x, y, z);
-                    rules.push_back(rule);
+        // sum += rule.getCoefficient();
+        // float b = rule.getCoefficient();
+
+        // rule = Rule();
+        // sum += rule.getCoefficient();
+        // rule.newTerm(0, 0, 0, 0);
+        // rules.push_back(rule);
+        // for (int x = -1; x <= 1; x += 2) {
+        //     rule = Rule();
+        //     sum += rule.getCoefficient();
+        //     rule.newTerm(x, 0, 0, 0);
+        //     rules.push_back(rule);
+        //     rule = Rule();
+        //     sum += rule.getCoefficient();
+        //     rule.newTerm(0, x, 0, 0);
+        //     rules.push_back(rule);
+        //     rule = Rule();
+        //     sum += rule.getCoefficient();
+        //     rule.newTerm(0, 0, x, 0);
+        //     rules.push_back(rule);
+        //     rule = Rule();
+        //     sum += rule.getCoefficient();
+        //     rule.newTerm(0, 0, 0, (x + 1) / 2);
+        //     rules.push_back(rule);
+        // }
+        for (int x = -1; x <= 1; x += 1) {
+            for (int y = -1; y <= 1; y += 1) {
+                for (int z = -1; z <= 1; z += 1) {
+                    for (int t = 0; t <= 1; t += 1) {
+                        rule = Rule();
+                        sum += rule.getCoefficient();
+                        rule.newTerm(x, y, z, t);
+                        rules.push_back(rule);
+                    }
                 }
             }
         }
+        float mean = sum / ((float)rules.size());
+
+        for (Rule &rule : rules) {
+            rule.fixCoefficient(sum, mean);
+        }
     }
-    float doRule(float *values, int index) {
+    float doRule(float *values, float *ovalues, int index) {
         float result = 0;
         for (Rule &rule : rules) {
-            result += rule.doRule(values, index);
+            result += rule.doRule(values, ovalues, index);
         }
-        return crossSigmoid(result);
+        // return result;
+        // return std::max(0.f, std::min(1.f, result));
+        // return std::max(0.f, std::min(1.f, 0.5f * (result) + 0.5f));
+        return sigmoid(result);
+        // return crossSigmoid(2 * result);
     }
     void update() {
+        float sum = 0, sumSquared = 0;
         for (Rule &rule : rules) {
             rule.update();
+            sum += rule.getCoefficient();
+        }
+
+        float mean = sum / ((float)rules.size());
+
+        for (Rule &rule : rules) {
+            rule.fixCoefficient(sum, mean);
         }
     }
 };
 
 void writeValuesToPixels(float *values, sf::Uint8 *pixels) {
+#pragma omp parallel for
     for (int i = 0; i < gridWidth * gridHeight; i++) {
         for (int x = 0; x < pixelSize; x++) {
             for (int y = 0; y < pixelSize; y++) {
@@ -132,20 +187,20 @@ int main() {
     sf::Uint8 *pixels = new sf::Uint8[windowWidth * windowHeight * 4];
     float *ovalues = new float[gridWidth * gridHeight * 3];
     float *values = new float[gridWidth * gridHeight * 3];
+    float *rvalues = new float[gridWidth * gridHeight * 3];
     sf::Texture texture;
     texture.create(windowWidth, windowHeight);
     sf::Sprite sprite(texture);
 
+#pragma omp parallel for
     for (int i = 0; i < gridWidth * gridHeight * 3; i++) {
-        values[i] = 0;
+        values[i] = randomNum2();
     }
-    int center = 3 * (gridWidth / 2 + gridWidth * (gridHeight / 2));
-    values[center] = 1;
-    values[center + 1] = 1;
-    values[center + 2] = 1;
 
+#pragma omp parallel for
     for (int i = 0; i < gridWidth * gridHeight * 3; i++) {
         ovalues[i] = values[i];
+        rvalues[i] = values[i];
     }
 
     writeValuesToPixels(values, pixels);
@@ -161,40 +216,60 @@ int main() {
         clock.restart();
         sf::Event event;
 
-        while (window.pollEvent(event))
-            if (event.type == sf::Event::Closed)
+        while (window.pollEvent(event)) {
+            if (event.type == sf::Event::Closed) {
                 window.close();
+                return 0;
+            }
+            if (event.type == sf::Event::MouseButtonPressed) {
+                rulesets = new RuleSet[3];
+            }
+        }
 
         window.clear();
 
         float *first = new float[3];
 
-        for (int z = 0; z < 3; z++) {
-            first[z] = values[z];
-        }
+        // float max = 0;
+        // float sum = 0;
 
         bool foundDiff = false;
 
-        for (int i = 0; i < gridWidth * gridHeight; i++) {
+#pragma omp parallel for
+        for (int i = 0; i < gridWidth * gridHeight * 3; i++) {
+            rvalues[i] = values[i];
+        }
 
+#pragma omp parallel for
+        for (int i = 0; i < gridWidth * gridHeight; i++) {
             for (int z = 0; z < 3; z++) {
-                values[3 * i + z] = rulesets[z].doRule(ovalues, 3 * i + z);
-                if (std::abs(values[3 * i + z] - first[z]) > threshold) {
-                    foundDiff = true;
+                values[3 * i + z] =
+                    rulesets[z].doRule(rvalues, ovalues, 3 * i + z);
+                if (i == 0) {
+                    first[z] = values[z];
+                } else {
+                    // max = std::max(max, std::abs(values[3 * i + z]));
+                    // sum += values[3 * i + z];
+                    if (std::abs(values[3 * i + z] - first[z]) > threshold) {
+                        foundDiff = true;
+                    }
                 }
             }
         }
 
-        if (!foundDiff) {
-            int center = 3 * (gridWidth / 2 + gridWidth * (gridHeight / 2));
-            values[center] = 1;
-            values[center + 1] = 1;
-            values[center + 2] = 1;
+#pragma omp parallel for
+        for (int i = 0; i < gridWidth * gridHeight * 3; i++) {
+            ovalues[i] = rvalues[i];
         }
 
-        for (int i = 0; i < gridWidth * gridHeight * 3; i++) {
-            ovalues[i] = values[i];
+        if (!foundDiff) {
+            std::cout << "ADDING PEAK" << std::endl;
+            int center = randomNum2() * (3 * gridWidth * gridHeight);
+            values[center] = randomNum2();
         }
+
+        // std::cout << max << "," << sum / (float)(3 * gridWidth * gridHeight)
+        //           << std::endl;
 
         writeValuesToPixels(values, pixels);
         texture.update(pixels);
