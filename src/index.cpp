@@ -194,7 +194,8 @@ int main() {
 
 #pragma omp parallel for
     for (int i = 0; i < gridWidth * gridHeight * 3; i++) {
-        values[i] = randomNum2();
+        // values[i] = randomNum2();
+        values[i] = 0;
     }
 
 #pragma omp parallel for
@@ -263,7 +264,7 @@ int main() {
         }
 
         if (!foundDiff) {
-            std::cout << "ADDING PEAK" << std::endl;
+            // std::cout << "ADDING PEAK" << std::endl;
             int center = randomNum2() * (3 * gridWidth * gridHeight);
             values[center] = randomNum2();
         }
