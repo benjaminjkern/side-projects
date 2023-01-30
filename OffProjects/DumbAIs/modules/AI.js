@@ -1,3 +1,5 @@
+import { randomGaussian } from "./utils";
+
 /**
  * The default argument sizes. Technically you can overwrite these to be whatever you want or even add new ones,
  * as long as the operations refer to a correct number listed here, both in their `run` method and in their `argSizes`.
@@ -141,14 +143,6 @@ const DEFAULT_OPERATIONS = {
 };
 
 /**
- * Helper math function.
- * @returns {Number} A random gaussian number.
- */
-const randomGaussian = () => {
-    return (Math.random() > 0.5 ? 1 : -1) * Math.sqrt(-Math.log(Math.random()));
-};
-
-/**
  * Generate a random instruction from the list of sizes and operations.
  * This should not be called directly, as it also takes steps to generate the `run` methods of each operation and track them.
  * @param {Object} sizes The list of sizes. See `DEFAULT_SIZES`.
@@ -173,7 +167,7 @@ const randomInstruction = (sizes, operations) => {
  * @param {Object} operations Optional parameter to overwrite or add to the default operations.
  * @returns {Brain} A brand new randomized brain, ready to run.
  */
-const newBrain = (sizes = {}, operations = {}) => {
+export const newBrain = (sizes = {}, operations = {}) => {
     const newSizes = { ...DEFAULT_SIZES, ...sizes };
     const newOperations = { ...DEFAULT_OPERATIONS, ...operations };
 
@@ -208,7 +202,7 @@ const newBrain = (sizes = {}, operations = {}) => {
  *      This is used to randomly permutate between the old instruction and a random new instruction, with a probability of this mutation rate.
  * @returns {Brain} A brand new mutated brain, ready to run.
  */
-const mutateBrain = (
+export const mutateBrain = (
     brain,
     dataMutationRate = 0.1,
     instructionMutationRate = 0.1
@@ -232,7 +226,7 @@ const mutateBrain = (
  * Specifically, this sets all input data to be 0, and all start and output data to be how they were when the brain was created.
  * @param {Brain} brain The brain to reset
  */
-const resetBrain = (brain) => {
+export const resetBrain = (brain) => {
     brain.inputData = Array(brain.sizes["IOSIZE"]).fill(0);
     brain.data = [...brain.startData];
     brain.outputData = [...brain.startOutputData];
@@ -244,7 +238,7 @@ const resetBrain = (brain) => {
  * @param {Brain} brain
  * @param {Number} steps
  */
-const runBrain = (brain, steps = 1) => {
+export const runBrain = (brain, steps = 1) => {
     for (let s = 0; s < steps; s++) {
         brain.instructions[brain.instructionPointer].run(brain);
         brain.instructionPointer =
@@ -260,7 +254,7 @@ const runBrain = (brain, steps = 1) => {
  * - The output data. (Bottom right)
  * @param {Brain} brain The brain to print
  */
-const printBrain = (brain) => {
+export const printBrain = (brain) => {
     process.stdout.cursorTo(0, 0);
     process.stdout.clearScreenDown();
     // process.stdout.moveTo(0);
@@ -323,17 +317,7 @@ const colorit = (hascolor, string) => {
  * @param {Brain} brain The brain to print
  * @returns {String} The brain's instructions
  */
-const printBrainInstructions = (brain) =>
+export const printBrainInstructions = (brain) =>
     brain.instructions
         .map(({ opName, args }, i) => [i, opName, ...args].join(" "))
         .join("\n");
-
-if (module.parent)
-    module.exports = {
-        newBrain,
-        printBrainInstructions,
-        resetBrain,
-        mutateBrain,
-        runBrain,
-        printBrain,
-    };
