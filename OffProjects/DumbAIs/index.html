@@ -1,19 +1,21 @@
 <html>
-    <head>
-        <title>Soft Body</title>
-        <script src="AI.js"></script>
-        <script src="vecMath.js"></script>
-        <script src="canvas.js"></script>
-    </head>
 
-    <body style="margin: 0">
-        <div style="display: inline-flex">
-        <canvas id="canvas" width="150" height="150" style="outline: 1px solid black"></canvas>
-        <div id="canvas2-holder" style="outline: 1px solid black; overflow-x: hidden">
-            <canvas id="graph0" width="150" height="150" style="position: absolute"></canvas>
-            <canvas id="graph1" width="150" height="150" style="position: absolute"></canvas>
-            <canvas id="graph2" width="150" height="150" style="position: absolute"></canvas>
-        </div></div>
-        <div id="eloScores"></div>
-    </body>
+  <head>
+    <title>Dumb AI</title>
+    <!-- <script src="AI.js"></script> <script src="vecMath.js"></script> -->
+    <script type="module" src="index.js"></script>
+  </head>
+
+  <body style="margin: 0">
+    <div style="display: inline-flex">
+      <canvas id="canvas" width="150" height="150" style="outline: 1px solid black"></canvas>
+      <div id="canvas2-holder" style="outline: 1px solid black; overflow-x: hidden">
+        <canvas id="graph0" width="150" height="150" style="position: absolute"></canvas>
+        <canvas id="graph1" width="150" height="150" style="position: absolute"></canvas>
+        <canvas id="graph2" width="150" height="150" style="position: absolute"></canvas>
+      </div>
+    </div>
+    <div id="eloScores"></div>
+  </body>
+
 </html>
