@@ -1,16 +1,58 @@
 <html>
+
   <head>
     <title>EM</title>
 
-    <!-- GIF ENCODER, I hoped that this wouldnt take as much extra shit as it does but whatever-->
     <script type="text/javascript" src="LZWEncoder.js"></script>
     <script type="text/javascript" src="NeuQuant.js"></script>
     <script type="text/javascript" src="GIFEncoder.js"></script>
-
     <script src="EM.js"></script>
+    <style>
+      #controls {
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        background-color: white;
+        margin: 10px;
+        padding: 5px;
+        border: 1px solid black;
+      }
+
+      #hiddencontrols {
+        display: none;
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background-color: red;
+        width: 20px;
+        height: 20px;
+        /* display: flex; */
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        -webkit-touch-callout: none;
+        /* iOS Safari */
+        -webkit-user-select: none;
+        /* Safari */
+        -khtml-user-select: none;
+        /* Konqueror HTML */
+        -moz-user-select: none;
+        /* Old versions of Firefox */
+        -ms-user-select: none;
+        /* Internet Explorer/Edge */
+        user-select: none;
+        /* Non-prefixed version, currently
+                                  supported by Chrome, Edge, Opera and Firefox */
+        cursor: pointer;
+      }
+    </style>
   </head>
 
   <body style="margin: 0">
     <canvas id="canvas"></canvas>
+    <div id="controls"></div>
+    <div id="hiddencontrols">-</div>
   </body>
+
 </html>
