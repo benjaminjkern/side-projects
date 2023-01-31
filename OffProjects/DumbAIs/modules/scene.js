@@ -11,9 +11,7 @@ const MAX_UPDATES_PER_FRAME = 30000;
 
 const ROUND_LENGTH = 1500;
 
-export let canvas;
-export let ctx;
-export let canvas2holder;
+export const playArea = { width: 800, height: 800 };
 
 export let paused = false;
 export let updatesPerFrame = 1;
@@ -34,7 +32,7 @@ const update = () => {
 
     moveBots();
 
-    moveBullets(canvas);
+    moveBullets();
 };
 
 const doLoop = () => {
@@ -48,18 +46,6 @@ const doLoop = () => {
 const drawLoop = () => {
     setTimeout(drawLoop, 1000 / fps);
     draw();
-};
-
-export const initCanvas = (document, window) => {
-    canvas = document.getElementById("canvas");
-    ctx = canvas.getContext("2d");
-
-    canvas.width = 800;
-    canvas.height = 800;
-
-    canvas2holder = document.getElementById("canvas2-holder");
-    canvas2holder.style.width = window.innerWidth - 800;
-    canvas2holder.style.height = 800;
 };
 
 export const init = () => {
