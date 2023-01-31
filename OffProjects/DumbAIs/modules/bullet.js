@@ -1,4 +1,4 @@
-import { addVec, multConstVec, unitVecFromAngle } from "./vecMath";
+import { addVec, multConstVec, unitVecFromAngle } from "./vecMath.js";
 
 const BULLET_RADIUS = 5;
 

@@ -1,34 +1,98 @@
-import { initGraphs } from "./modules/graph";
+import { drawBullets, moveBullets } from "./modules/bullet.js";
 import {
-    draw,
-    init,
-    initCanvas,
-    keyHandler,
+    drawTemplateBar,
+    loser,
+    newRound,
+    drawBots,
+    moveBots,
+} from "./modules/game.js";
+import { initGraphs, switchShowingGraph } from "./modules/graph.js";
+import { drawEloInfo } from "./modules/info.js";
+import {
+    breakLoopOnRound,
+    paused,
     playArea,
-    startLoop,
-} from "./modules/scene";
+    restartScene,
+    t,
+    toggleBreakLoopOnRound,
+    toggleFastMode,
+    togglePause,
+    updatesPerFrame,
+    updateTime,
+} from "./modules/scene.js";
 
-export let canvas;
-export let ctx;
-export let canvas2holder;
+const fps = 12;
+const synchronizedDraw = true;
+const ROUND_LENGTH = 1500;
+
+let ctx;
+
 // unused
 // let GRAPH_SORT_BY_SPECIES = false;
 
 window.onload = () => {
-    canvas = document.getElementById("canvas");
+    const canvas = document.getElementById("canvas");
     ctx = canvas.getContext("2d");
 
     canvas.width = playArea.width;
     canvas.height = playArea.height;
 
-    canvas2holder = document.getElementById("canvas2-holder");
+    const canvas2holder = document.getElementById("canvas2-holder");
     canvas2holder.style.width = 200;
-    canvas2holder.style.height = 800;
+    canvas2holder.style.height = playArea.height;
 
-    initGraphs(document, window);
+    initGraphs(document);
 
     init();
     startLoop();
+};
+
+const update = () => {
+    updateTime();
+    if (t >= ROUND_LENGTH) {
+        loser(-1);
+        return breakLoopOnRound;
+    }
+
+    moveBots();
+
+    moveBullets();
+};
+
+const doLoop = () => {
+    setTimeout(doLoop, 1);
+    for (let i = 0; i < updatesPerFrame * !paused; i++) {
+        if (update()) break;
+    }
+    if (synchronizedDraw) draw();
+};
+
+const drawLoop = () => {
+    setTimeout(drawLoop, 1000 / fps);
+    draw();
+};
+
+const init = () => {
+    // while (templates.length < MAX_TEMPLATES) newTemplate();
+    newRound();
+    restartScene();
+};
+
+const startLoop = () => {
+    doLoop();
+    if (!synchronizedDraw) drawLoop();
+};
+
+const draw = () => {
+    ctx.clearRect(0, 0, playArea.width, playArea.height);
+
+    drawBots(ctx);
+
+    drawTemplateBar(ctx);
+
+    drawBullets(ctx);
+
+    drawEloInfo();
 };
 
 window.onresize = () => {
@@ -36,4 +100,9 @@ window.onresize = () => {
 };
 
 window.onclick = () => {};
-window.onkeydown = keyHandler;
+window.onkeydown = (e) => {
+    if (e.key === "p") togglePause();
+    if (e.key === "s") toggleFastMode();
+    if (e.key === "r") toggleBreakLoopOnRound();
+    if (e.key === "e") switchShowingGraph();
+};

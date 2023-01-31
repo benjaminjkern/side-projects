@@ -1,4 +1,4 @@
-import { randomGaussian } from "./utils";
+import { randomGaussian } from "./utils.js";
 
 /**
  * The default argument sizes. Technically you can overwrite these to be whatever you want or even add new ones,

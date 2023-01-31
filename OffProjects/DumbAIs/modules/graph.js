@@ -1,10 +1,11 @@
-import { templates } from "./bot";
+import { templates } from "./game.js";
+import { playArea } from "./scene.js";
 
 export const graphs = [];
 
 export let showingGraph = 0;
 
-export const initGraphs = (document, window) => {
+export const initGraphs = (document) => {
     const NUM_GRAPHS = 3;
 
     for (let g = 0; g < NUM_GRAPHS; g++) {
@@ -14,8 +15,8 @@ export const initGraphs = (document, window) => {
             ctx: graphCanvas.getContext("2d"),
         });
 
-        graphCanvas.width = window.innerWidth - 800;
-        graphCanvas.height = 800;
+        graphCanvas.width = 200;
+        graphCanvas.height = playArea.height;
         if (g !== showingGraph) graphCanvas.style.display = "none";
     }
 };
@@ -106,4 +107,10 @@ export const addLineToLineGraph = (graphIndex, valueGetter = () => 1) => {
     //     ctx.fillStyle = template.color;
     //     ctx.fillRect(Math.floor(i * WIDTH2), 799, Math.ceil(WIDTH2), 1);
     // }
+};
+
+export const switchShowingGraph = () => {
+    graphs[showingGraph].canvas.style.display = "none";
+    showingGraph = (showingGraph + 1) % graphs.length;
+    graphs[showingGraph].canvas.style.display = "block";
 };

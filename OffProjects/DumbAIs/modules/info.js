@@ -1,4 +1,4 @@
-import { bots, templates } from "./bot";
+import { bots, templates } from "./game.js";
 
 export const drawEloInfo = () => {
     if (templates.length >= 2)
