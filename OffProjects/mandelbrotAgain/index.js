@@ -18,6 +18,8 @@ window.onload = () => {
             ],
         ];
 
+        console.log(_root.range);
+
         _root.xrange = _root.range[0][1] - _root.range[0][0];
         _root.yrange = _root.range[1][1] - _root.range[1][0];
         init(false);
@@ -148,6 +150,13 @@ const draw = () => {
     }
 
     _root.ctx.putImageData(imageData, 0, 0);
+
+    if (_root.t > 200) {
+        _root.encoder.finish();
+        _root.encoder.download("yooooo.gif");
+        _root.stopped = true;
+        return;
+    }
 
     if (changed < 10) {
         if (_root.hasChangeHappenedYet) {
