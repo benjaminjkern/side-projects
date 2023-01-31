@@ -4,6 +4,22 @@ export const graphs = [];
 
 export let showingGraph = 0;
 
+export const initGraphs = (document, window) => {
+    const NUM_GRAPHS = 3;
+
+    for (let g = 0; g < NUM_GRAPHS; g++) {
+        const graphCanvas = document.getElementById("graph" + g);
+        graphs.push({
+            canvas: graphCanvas,
+            ctx: graphCanvas.getContext("2d"),
+        });
+
+        graphCanvas.width = window.innerWidth - 800;
+        graphCanvas.height = 800;
+        if (g !== showingGraph) graphCanvas.style.display = "none";
+    }
+};
+
 export const setShowingGraph = (x) => {
     showingGraph = x;
 };

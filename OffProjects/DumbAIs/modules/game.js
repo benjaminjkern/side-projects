@@ -1,19 +1,61 @@
-import {
-    bots,
-    generateNewBots,
-    removeTemplate,
-    setLastTemplates,
-    sortAndCapTemplates,
-    templates,
-} from "./bot";
+import { DEBUG, randomColor } from "./utils";
 import { removeAllBullets } from "./bullet";
 import { addLineToGraph, addLineToLineGraph } from "./graph";
-import { restartScene } from "./scene";
-import { DEBUG } from "./utils";
+
+import { mutateBrain, newBrain } from "./AI";
 
 export let roundNum = 0;
 
 const KILL_LOSER = false;
+
+export let lastTemplates = {};
+export let templates = [];
+
+const MAX_TEMPLATES = 100;
+let templateIndex = 0;
+export const newTemplate = (oldTemplate) => {
+    const template = {
+        longName:
+            oldTemplate?.longName !== undefined
+                ? `${oldTemplate.longName},${templateIndex}`
+                : `${templateIndex}`,
+        id: templateIndex,
+        color: randomColor(oldTemplate?.color),
+        brain: oldTemplate ? mutateBrain(oldTemplate.brain, 0.1) : newBrain(),
+        elo: 0,
+    };
+    templateIndex++;
+    templates.push(template);
+    return template;
+};
+
+export const setLastTemplates = () => {
+    lastTemplates = templates.reduce((p, { id }) => ({ ...p, [id]: true }), {});
+};
+
+export const removeTemplate = (templateId) => {
+    templates = templates.filter((x) => x.id !== templateId);
+};
+
+export const sortAndCapTemplates = () => {
+    templates.sort(({ elo: eloA }, { elo: eloB }) => eloB - eloA);
+    templates = templates.slice(0, MAX_TEMPLATES);
+};
+
+export const drawTemplateBar = (canvas, ctx) => {
+    templates.sort(({ elo: eloA }, { elo: eloB }) => eloB - eloA);
+
+    const WIDTH = canvas.width / templates.length;
+    for (const [i, template] of templates.entries()) {
+        ctx.fillStyle = template.color;
+        ctx.fillRect(
+            Math.floor(i * WIDTH),
+            canvas.height - 20,
+            Math.ceil(WIDTH),
+            20
+        );
+    }
+};
 
 export const loser = (loserIndex) => {
     const loserBot = bots.splice(loserIndex === -1 ? 1 : loserIndex, 1)[0];
@@ -31,6 +73,7 @@ export const loser = (loserIndex) => {
     }
     newRound();
 };
+
 export const newRound = () => {
     sortAndCapTemplates();
 
