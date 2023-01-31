@@ -17,11 +17,14 @@ const MAX_TEMPLATES = 100;
 const RADIUS = 25;
 const RECORDING_KILLS = false;
 
+const GAMES_PER_ROUND = 300;
+
 export let templates = [];
 export let bots = [];
+export let roundNum = 0;
+export let gameNum = 0;
 
 let templateIndex = 0;
-let roundNum = 0;
 
 export const newTemplate = (oldTemplate) => {
     const template = {
@@ -33,6 +36,7 @@ export const newTemplate = (oldTemplate) => {
         color: randomColor(oldTemplate?.color),
         brain: oldTemplate ? mutateBrain(oldTemplate.brain, 0.1) : newBrain(),
         elo: 0,
+        age: 0,
     };
     templateIndex++;
     templates.push(template);
@@ -54,6 +58,12 @@ export const drawTemplateBar = (ctx) => {
     }
 };
 
+export const starterTemplates = () => {
+    while (templates.length < MAX_TEMPLATES) {
+        newTemplate();
+    }
+};
+
 export const loser = (loserIndex) => {
     const loserBot = bots.splice(loserIndex === -1 ? 1 : loserIndex, 1)[0];
     const winnerBot = bots[0];
@@ -69,21 +79,20 @@ export const loser = (loserIndex) => {
     if (KILL_LOSER && loserIndex !== -1) {
         templates = templates.filter((x) => x.id !== loserTemplate.id);
     }
-    newRound();
+    newGame();
 };
 
 export const newRound = () => {
-    templates.sort(({ elo: eloA }, { elo: eloB }) => eloB - eloA);
-    templates = templates.slice(0, MAX_TEMPLATES);
-
-    // if (templates.length > 0) {
-    //     const median = templates[Math.floor(templates.length / 2) - 1].elo;
-    //     templates.forEach((template) => {
-    //         template.elo -= median;
-    //     });
-    // }
-
     if (roundNum > 0) {
+        templates.sort(({ elo: eloA }, { elo: eloB }) => eloB - eloA);
+        templates = templates.slice(0, MAX_TEMPLATES / 2);
+        // const median = templates[Math.floor(templates.length / 2) - 1].elo;
+        templates.forEach((template) => {
+            // template.elo -= median;
+            template.age++;
+            newTemplate(template);
+        });
+
         let suffix = templates[0].longName;
         for (const { longName } of templates) {
             for (let i = 0; i < suffix.length; i++) {
@@ -114,19 +123,27 @@ export const newRound = () => {
     // lastTemplates = templates.reduce((p, { id }) => ({ ...p, [id]: true }), {});
 
     roundNum++;
+    newGame();
+};
 
-    let a =
-        templates[Math.floor(Math.random() * templates.length)] ||
-        newTemplate();
-    let b =
-        templates[Math.floor(Math.random() * templates.length)] ||
-        newTemplate();
+const newGame = () => {
+    if (gameNum >= GAMES_PER_ROUND) {
+        gameNum = 0;
+        newRound();
+        return;
+    }
+    gameNum++;
 
-    if (Math.random() > 0.5 || a === b) b = newTemplate(b);
+    let a = templates[Math.floor(Math.random() * templates.length)];
+    let b;
+    while (!b || a === b)
+        b = templates[Math.floor(Math.random() * templates.length)];
+
     bots = [newBot(a), newBot(b, true)];
-
     bots.forEach((bot) => resetBrain(bot.brain));
+
     removeAllBullets();
+
     restartScene();
 };
 

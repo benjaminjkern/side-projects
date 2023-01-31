@@ -5,6 +5,7 @@ import {
     newRound,
     drawBots,
     moveBots,
+    starterTemplates,
 } from "./modules/game.js";
 import { initGraphs, switchShowingGraph } from "./modules/graph.js";
 import { drawEloInfo } from "./modules/info.js";
@@ -48,7 +49,7 @@ window.onload = () => {
 };
 
 const init = () => {
-    // while (templates.length < MAX_TEMPLATES) newTemplate();
+    starterTemplates();
     newRound();
     restartScene();
 };
