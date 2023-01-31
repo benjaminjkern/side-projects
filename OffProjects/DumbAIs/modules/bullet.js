@@ -1,4 +1,5 @@
 import { addVec, multConstVec, unitVecFromAngle } from "./vecMath";
+
 const BULLET_RADIUS = 5;
 
 export let bullets = {};
@@ -15,7 +16,7 @@ export const newBullet = (bot, big) => {
     };
 };
 
-export const moveBullets = () => {
+export const moveBullets = (canvas) => {
     for (const bulletKey in bullets) {
         const bullet = bullets[bulletKey];
 
@@ -30,7 +31,7 @@ export const moveBullets = () => {
         }
     }
 };
-export const drawBullets = () => {
+export const drawBullets = (ctx) => {
     for (const bulletKey in bullets) {
         const bullet = bullets[bulletKey];
         ctx.fillStyle = "pink";

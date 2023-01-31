@@ -1,9 +1,5 @@
-import { mutateBrain, newBrain, resetBrain, runBrain } from "./AI";
-import { bullets, newBullet } from "./bullet";
-import { loser } from "./game";
-import { playArea } from "./playArea";
-import { breakLoopOnRound, t } from "./scene";
-import { forceFinite, randomColor } from "./utils";
+import { resetBrain, runBrain } from "./AI";
+import { forceFinite } from "./utils";
 import {
     addVec,
     multConstVec,
@@ -12,23 +8,20 @@ import {
     vecDistSquared,
     vecDot,
 } from "./vecMath";
+import { bullets, newBullet } from "./bullet";
+import { newTemplate, templates } from "./game";
 
-export let lastTemplates = {};
-export let templates = [];
 export let bots = [];
 
 const RADIUS = 25;
-const MAX_TEMPLATES = 100;
 
 const RECORDING_KILLS = false;
 
-let templateIndex = 0;
-
 console.log("RUNNING BOT");
 
-const startingPos = (rightSide) => [
-    (playArea.width * (1 + 2 * rightSide)) / 4,
-    playArea.height / 2,
+const startingPos = (canvas, rightSide) => [
+    (canvas.width * (1 + 2 * rightSide)) / 4,
+    canvas.height / 2,
 ];
 
 export const newBot = (template = newTemplate(), rightSide = false) => {
@@ -39,35 +32,6 @@ export const newBot = (template = newTemplate(), rightSide = false) => {
         bulletTimer: 0,
         rightSide,
     };
-};
-
-export const newTemplate = (oldTemplate) => {
-    const template = {
-        longName:
-            oldTemplate?.longName !== undefined
-                ? `${oldTemplate.longName},${templateIndex}`
-                : `${templateIndex}`,
-        id: templateIndex,
-        color: randomColor(oldTemplate?.color),
-        brain: oldTemplate ? mutateBrain(oldTemplate.brain, 0.1) : newBrain(),
-        elo: 0,
-    };
-    templateIndex++;
-    templates.push(template);
-    return template;
-};
-
-export const setLastTemplates = () => {
-    lastTemplates = templates.reduce((p, { id }) => ({ ...p, [id]: true }), {});
-};
-
-export const removeTemplate = (templateId) => {
-    templates = templates.filter((x) => x.id !== templateId);
-};
-
-export const sortAndCapTemplates = () => {
-    templates.sort(({ elo: eloA }, { elo: eloB }) => eloB - eloA);
-    templates = templates.slice(0, MAX_TEMPLATES);
 };
 
 export const generateNewBots = () => {
@@ -84,22 +48,7 @@ export const generateNewBots = () => {
     bots.forEach((bot) => resetBrain(bot.brain));
 };
 
-export const drawTemplateBar = () => {
-    templates.sort(({ elo: eloA }, { elo: eloB }) => eloB - eloA);
-
-    const WIDTH = canvas.width / templates.length;
-    for (const [i, template] of templates.entries()) {
-        ctx.fillStyle = template.color;
-        ctx.fillRect(
-            Math.floor(i * WIDTH),
-            canvas.height - 20,
-            Math.ceil(WIDTH),
-            20
-        );
-    }
-};
-
-export const moveBots = () => {
+export const moveBots = (canvas) => {
     for (const bot of bots) {
         const enemy = bots[1 - bot.rightSide];
         const diff = subVec(bot.pos, enemy.pos);
@@ -147,7 +96,7 @@ export const moveBots = () => {
                 if (RECORDING_KILLS) console.log("Kill");
 
                 loser(+bot.rightSide);
-                if (breakLoopOnRound) return;
+                if (breakLoopOnRound) return breakLoopOnRound;
             }
         }
         bot.brain.inputData = [t, ...enemyDists, ...bulletDists, 1];
@@ -179,7 +128,7 @@ export const moveBots = () => {
     }
 };
 
-export const drawBots = () => {
+export const drawBots = (ctx) => {
     for (const bot of bots) {
         ctx.fillStyle = bot.color;
         ctx.beginPath();
