@@ -1,64 +1,72 @@
 import numpy as np
 import re
 from collections import Counter
+import math
 
 
 class wordMaker:
-    start_string = end_string = ""
+    start_string = ""
+    end_string = ""
 
     def __init__(self, look_back, entries):
         self.patterns = Counter()
         self.look_back = look_back
         self.poss_letters = set()
+        # entries = entries[0].split("\n")
         self.total_letters = sum(
-            [len(self.start_string + entry + self.start_string) for entry in entries]
+            [len(self.start_string + entry + self.end_string) for entry in entries]
         )
 
         # print("Reading Entries...")
 
         for entry in entries:
-            for i, letter in enumerate(self.start_string + entry + self.start_string):
+            full_entry = self.start_string + entry + self.end_string
+            for i, letter in enumerate(full_entry):
 
                 # make sure the word maker knows that the letter is possible to generate
                 self.poss_letters.add(letter)
 
                 # store all substrings up to max look-back from each index
                 for l in range(look_back):
-                    self.patterns[entry[i : (i + l + 1)]] += 1
+                    if i + l + 1 > len(full_entry):
+                        break
+                    self.patterns[full_entry[i : (i + l + 1)]] += 1
 
         # print("Done preprocessing!")
 
-    def make(self, max_length, min_length=0, inp=start_string):
+    def make(self, max_length, min_length=0, inp=None):
 
-        total_text = inp
+        total_text = inp or self.start_string
 
-        letters = [letter for letter in self.poss_letters]
+        for _ in range(max_length + 1):
 
-        for _ in range(max_length):
+            letters = [
+                letter
+                for letter in self.poss_letters
+                # if letter != self.end_string or len(total_text) >= min_length
+            ]
 
-            p = [0 for _ in letters]
+            # Add up all probabilities of all possible letters, weighted by how far back it looked
+            # p = [0 for _ in letters]
 
-            for l in range(1, self.look_back + 1):
-                to_add = [self.patterns[total_text[-l:] + letter] for letter in letters]
-                pattern_sum = sum(to_add)
-                if pattern_sum > 0:
-                    for i, letter in enumerate(letters):
-                        p[i] += to_add[i] / pattern_sum
+            # for l in range(1, self.look_back + 1):
+            #     to_add = [self.patterns[total_text[-l:] + letter] for letter in letters]
+            #     pattern_sum = sum(to_add)
+            #     if pattern_sum > 0:
+            #         for i, letter in enumerate(letters):
+            #             p[i] += l * to_add[i] / pattern_sum
+            # p[i] += 1 - ((1 - to_add[i] / pattern_sum) ** l)
 
             # If you can't find any matches at the current look-back length, just shorten it by one and check again
-            # p = []
-            # l = self.look_back
-            # while sum(p) == 0:
-            #     # while sum([int(bool(prob)) for prob in p]) <= 1:
-            #     l -= 1
+            p = []
+            l = self.look_back
+            while sum(p) == 0:
+                # while sum([int(bool(prob)) for prob in p]) <= 1:
+                l -= 1
 
-            #     p = [
-            #         self.patterns[total_text[-l:] + letter]
-            #         for letter in self.poss_letters
-            #     ]
+                p = [self.patterns[total_text[-l:] + letter] for letter in letters]
 
             # pick a letter randomly, weighted by whats most likely, and add it to the running total
-
             new_letter = np.random.choice(letters, p=[a / sum(p) for a in p])
 
             total_text += new_letter
@@ -71,13 +79,13 @@ class wordMaker:
 
         if self.end_string:
             return total_text[len(self.start_string) : -len(self.end_string)]
-        else:
-            return total_text[len(self.start_string) :]
+
+        return total_text[len(self.start_string) :]
 
     # If you wanna make multiple and return them in a list
     def make_many(self, max_length, min_length=0, amount=1, inp=""):
         for _ in range(amount):
-            print(self.make(max_length, min_length, inp))
+            print(self.make(max_length, min_length, inp), "\n")
 
     """
         def make_one(self, max_length, min_length=0, inp=""):
@@ -134,9 +142,9 @@ class wordMaker:
 
 
 if __name__ == "__main__":
-    full_script = open("HIMYM/full_script.txt").read()
-    ben = wordMaker(30, [full_script])
-    print(ben.make(5000))
+    full_script = open("marissa.txt").read()
+    ben = wordMaker(8, [full_script])
+    ben.make_many(2000, amount=1)
 
 
 """
