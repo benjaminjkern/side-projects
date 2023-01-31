@@ -21,10 +21,6 @@ export const initGraphs = (document) => {
     }
 };
 
-export const setShowingGraph = (x) => {
-    showingGraph = x;
-};
-
 export const addLineToGraph = (graphIndex) => {
     const { canvas, ctx } = graphs[graphIndex];
     const temp = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -33,7 +29,12 @@ export const addLineToGraph = (graphIndex) => {
     const WIDTH2 = canvas.width / templates.length;
     for (const [i, template] of templates.entries()) {
         ctx.fillStyle = template.color;
-        ctx.fillRect(Math.floor(i * WIDTH2), 799, Math.ceil(WIDTH2), 1);
+        ctx.fillRect(
+            Math.floor(i * WIDTH2),
+            playArea.width - 1,
+            Math.ceil(WIDTH2),
+            1
+        );
     }
 };
 
@@ -53,7 +54,7 @@ export const addLineToLineGraph = (graphIndex, valueGetter = () => 1) => {
 
     graphs[graphIndex].history.push(values);
     graphs[graphIndex].history = graphs[graphIndex].history.slice(
-        Math.max(0, graphs[graphIndex].history.length - 802)
+        Math.max(0, graphs[graphIndex].history.length - playArea.height - 2)
     );
 
     const toScreenCoords = (x) =>

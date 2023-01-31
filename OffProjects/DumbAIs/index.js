@@ -22,7 +22,7 @@ import {
 } from "./modules/scene.js";
 
 const fps = 12;
-const synchronizedDraw = true;
+const SYNCHRONIZED_DRAW = true;
 const ROUND_LENGTH = 1500;
 
 let ctx;
@@ -47,6 +47,32 @@ window.onload = () => {
     startLoop();
 };
 
+const init = () => {
+    // while (templates.length < MAX_TEMPLATES) newTemplate();
+    newRound();
+    restartScene();
+};
+
+const startLoop = () => {
+    doLoop();
+    if (!SYNCHRONIZED_DRAW) drawLoop();
+};
+
+const doLoop = () => {
+    if (paused) return;
+    setTimeout(doLoop, 1);
+    for (let i = 0; i < updatesPerFrame * !paused; i++) {
+        if (update()) break;
+    }
+    if (SYNCHRONIZED_DRAW) draw();
+};
+
+const drawLoop = () => {
+    if (paused) return;
+    setTimeout(drawLoop, 1000 / fps);
+    draw();
+};
+
 const update = () => {
     updateTime();
     if (t >= ROUND_LENGTH) {
@@ -57,30 +83,6 @@ const update = () => {
     moveBots();
 
     moveBullets();
-};
-
-const doLoop = () => {
-    setTimeout(doLoop, 1);
-    for (let i = 0; i < updatesPerFrame * !paused; i++) {
-        if (update()) break;
-    }
-    if (synchronizedDraw) draw();
-};
-
-const drawLoop = () => {
-    setTimeout(drawLoop, 1000 / fps);
-    draw();
-};
-
-const init = () => {
-    // while (templates.length < MAX_TEMPLATES) newTemplate();
-    newRound();
-    restartScene();
-};
-
-const startLoop = () => {
-    doLoop();
-    if (!synchronizedDraw) drawLoop();
 };
 
 const draw = () => {
@@ -101,7 +103,9 @@ window.onresize = () => {
 
 window.onclick = () => {};
 window.onkeydown = (e) => {
-    if (e.key === "p") togglePause();
+    if (e.key === "p") {
+        if (!togglePause()) startLoop();
+    }
     if (e.key === "s") toggleFastMode();
     if (e.key === "r") toggleBreakLoopOnRound();
     if (e.key === "e") switchShowingGraph();

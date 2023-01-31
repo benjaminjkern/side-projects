@@ -1,6 +1,6 @@
 const MAX_UPDATES_PER_FRAME = 30000;
 
-export const playArea = { width: 400, height: 400 };
+export const playArea = { width: 600, height: 600 };
 
 export let paused = false;
 export let updatesPerFrame = 1;
@@ -17,6 +17,7 @@ export const updateTime = () => {
 
 export const togglePause = () => {
     paused = !paused;
+    return paused;
 };
 
 export const toggleBreakLoopOnRound = () => {

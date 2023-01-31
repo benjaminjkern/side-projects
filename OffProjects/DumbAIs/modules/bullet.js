@@ -1,3 +1,4 @@
+import { playArea } from "./scene.js";
 import { addVec, multConstVec, unitVecFromAngle } from "./vecMath.js";
 
 const BULLET_RADIUS = 5;
@@ -16,15 +17,15 @@ export const newBullet = (bot, big) => {
     };
 };
 
-export const moveBullets = (canvas) => {
+export const moveBullets = () => {
     for (const bulletKey in bullets) {
         const bullet = bullets[bulletKey];
 
         bullet.pos = addVec(bullet.pos, bullet.v);
         if (
-            bullet.pos[0] - bullet.radius >= canvas.width ||
+            bullet.pos[0] - bullet.radius >= playArea.width ||
             bullet.pos[0] + bullet.radius <= 0 ||
-            bullet.pos[1] - bullet.radius >= canvas.height ||
+            bullet.pos[1] - bullet.radius >= playArea.height ||
             bullet.pos[1] + bullet.radius <= 0
         ) {
             delete bullets[bulletKey];

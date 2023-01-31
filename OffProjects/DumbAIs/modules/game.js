@@ -130,9 +130,9 @@ export const newRound = () => {
     restartScene();
 };
 
-const startingPos = (canvas, rightSide) => [
-    (canvas.width * (1 + 2 * rightSide)) / 4,
-    canvas.height / 2,
+const startingPos = (rightSide) => [
+    (playArea.width * (1 + 2 * rightSide)) / 4,
+    playArea.height / 2,
 ];
 
 const newBot = (template = newTemplate(), rightSide = false) => {
