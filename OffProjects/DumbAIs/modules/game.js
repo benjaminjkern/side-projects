@@ -1,4 +1,4 @@
-import { DEBUG, randomColor, forceFinite } from "./utils.js";
+import { randomColor, forceFinite } from "./utils.js";
 import {
     addVec,
     multConstVec,
@@ -11,13 +11,14 @@ import { removeAllBullets, bullets, newBullet } from "./bullet.js";
 import { addLineToGraph, addLineToLineGraph } from "./graph.js";
 import { mutateBrain, newBrain, resetBrain, runBrain } from "./AI.js";
 import { breakLoopOnRound, playArea, restartScene, t } from "./scene.js";
+import html2canvas from "./html2canvas.js";
+import saveAs from "./FileSaver.js";
 
-const KILL_LOSER = false;
 const MAX_TEMPLATES = 100;
 const RADIUS = 25;
 const RECORDING_KILLS = false;
 
-const GAMES_PER_ROUND = 300;
+const GAMES_PER_ROUND = 1000;
 
 export let templates = [];
 export let bots = [];
@@ -35,6 +36,7 @@ export const newTemplate = (oldTemplate) => {
         id: templateIndex,
         color: randomColor(oldTemplate?.color),
         brain: oldTemplate ? mutateBrain(oldTemplate.brain, 0.1) : newBrain(),
+        overallElo: 0,
         elo: 0,
         age: 0,
     };
@@ -64,35 +66,28 @@ export const starterTemplates = () => {
     }
 };
 
+const eloUpdate = (winnerTemplate, loserTemplate, tie, eloKey) => {
+    const P =
+        1 /
+        (1 + 10 ** ((loserTemplate[eloKey] - winnerTemplate[eloKey]) / 400));
+    const diff = 40 * ((tie ? 0.5 : 1) - P);
+    winnerTemplate[eloKey] += diff;
+    loserTemplate[eloKey] -= diff;
+};
+
 export const loser = (loserIndex) => {
     const loserBot = bots.splice(loserIndex === -1 ? 1 : loserIndex, 1)[0];
     const winnerBot = bots[0];
-    if (DEBUG) console.log("AWOOGA", winnerBot.elo, loserBot.elo);
-    const P = 1 / (1 + 10 ** ((loserBot.elo - winnerBot.elo) / 400));
-    const diff = 40 * ((loserIndex === -1 ? 0.5 : 1) - P);
 
     const winnerTemplate = templates.find((x) => x.id === winnerBot.id);
     const loserTemplate = templates.find((x) => x.id === loserBot.id);
-    winnerTemplate.elo += diff;
-    loserTemplate.elo -= diff;
-    if (DEBUG) console.log("AWOOGA", winnerTemplate.elo, loserTemplate.elo);
-    if (KILL_LOSER && loserIndex !== -1) {
-        templates = templates.filter((x) => x.id !== loserTemplate.id);
-    }
+    eloUpdate(winnerTemplate, loserTemplate, loserIndex === -1, "elo");
+    eloUpdate(winnerTemplate, loserTemplate, loserIndex === -1, "overallElo");
     newGame();
 };
 
 export const newRound = () => {
     if (roundNum > 0) {
-        templates.sort(({ elo: eloA }, { elo: eloB }) => eloB - eloA);
-        templates = templates.slice(0, MAX_TEMPLATES / 2);
-        // const median = templates[Math.floor(templates.length / 2) - 1].elo;
-        templates.forEach((template) => {
-            // template.elo -= median;
-            template.age++;
-            newTemplate(template);
-        });
-
         let suffix = templates[0].longName;
         for (const { longName } of templates) {
             for (let i = 0; i < suffix.length; i++) {
@@ -108,20 +103,50 @@ export const newRound = () => {
                         suffix.length
                     ))
             );
+
+        templates.sort(
+            ({ overallElo: eloA }, { overallElo: eloB }) => eloB - eloA
+        );
+        addLineToLineGraph(0, (template) => template.overallElo);
+
+        // if (templates.some(({ id }) => !lastTemplates[id])) {
+        addLineToGraph(2);
+        templates.sort(({ longName: longNameA }, { longName: longNameB }) =>
+            longNameA > longNameB ? 1 : -1
+        );
+        addLineToGraph(1);
+        // }
+        templates.sort(({ elo: eloA }, { elo: eloB }) => eloB - eloA);
+        templates = templates.slice(0, MAX_TEMPLATES / 2);
+        // const median = templates[Math.floor(templates.length / 2) - 1].elo;
+        templates.forEach((template) => {
+            // template.elo -= median;
+            template.elo = 0;
+            template.age++;
+            newTemplate(template);
+        });
+
+        // lastTemplates = templates.reduce((p, { id }) => ({ ...p, [id]: true }), {});
+
+        if (roundNum % 500 === 0) {
+            const screenshotTarget = document.body;
+
+            html2canvas(screenshotTarget).then((canvas) => {
+                const base64image = canvas.toDataURL("image/png");
+                var data = atob(
+                        base64image.substring("data:image/png;base64,".length)
+                    ),
+                    asArray = new Uint8Array(data.length);
+
+                for (var i = 0, len = data.length; i < len; ++i) {
+                    asArray[i] = data.charCodeAt(i);
+                }
+
+                const blob = new Blob([asArray.buffer], { type: "image/png" });
+                saveAs(blob, `${roundNum}.png`);
+            });
+        }
     }
-
-    addLineToLineGraph(0, (template) => template.elo);
-
-    // if (templates.some(({ id }) => !lastTemplates[id])) {
-    addLineToGraph(2);
-    templates.sort(({ longName: longNameA }, { longName: longNameB }) =>
-        longNameA > longNameB ? 1 : -1
-    );
-    addLineToGraph(1);
-    // }
-
-    // lastTemplates = templates.reduce((p, { id }) => ({ ...p, [id]: true }), {});
-
     roundNum++;
     newGame();
 };
