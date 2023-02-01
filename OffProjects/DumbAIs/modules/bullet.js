@@ -1,4 +1,4 @@
-import { playArea } from "./scene.js";
+import { manualPlayMode, playArea } from "./scene.js";
 import { addVec, multConstVec, unitVecFromAngle } from "./vecMath.js";
 
 const BULLET_RADIUS = 5;
@@ -14,12 +14,15 @@ export const newBullet = (bot, big) => {
         key,
         pos: bot.pos,
         v: multConstVec(SPEED / (big ? 2 : 1), unitVecFromAngle(bot.angle)),
+        inManualGame: manualPlayMode,
     };
 };
 
 export const moveBullets = () => {
     for (const bulletKey in bullets) {
         const bullet = bullets[bulletKey];
+
+        if (bullet.inManualGame !== manualPlayMode) continue;
 
         bullet.pos = addVec(bullet.pos, bullet.v);
         if (
@@ -32,9 +35,13 @@ export const moveBullets = () => {
         }
     }
 };
+
 export const drawBullets = (ctx) => {
     for (const bulletKey in bullets) {
         const bullet = bullets[bulletKey];
+
+        if (bullet.inManualGame !== manualPlayMode) continue;
+
         ctx.fillStyle = "pink";
         ctx.beginPath();
         ctx.arc(...bullet.pos, bullet.radius, 0, 2 * Math.PI);
@@ -44,5 +51,10 @@ export const drawBullets = (ctx) => {
 };
 
 export const removeAllBullets = () => {
-    bullets = {};
+    for (const bulletKey in bullets) {
+        const bullet = bullets[bulletKey];
+
+        if (bullet.inManualGame !== manualPlayMode) continue;
+        delete bullets[bulletKey];
+    }
 };

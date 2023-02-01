@@ -6,20 +6,25 @@ import {
     drawBots,
     moveBots,
     starterTemplates,
+    newManualGame,
+    backToAutoGame,
 } from "./modules/game.js";
 import { initGraphs, switchShowingGraph } from "./modules/graph.js";
 import { drawEloInfo } from "./modules/info.js";
 import {
     breakLoopOnRound,
+    manualPlayMode,
     paused,
     playArea,
     restartScene,
+    setKeyDown,
     t,
     toggleBreakLoopOnRound,
     toggleFastMode,
     togglePause,
     updatesPerFrame,
     updateTime,
+    toggleManualPlayMode,
 } from "./modules/scene.js";
 
 const fps = 12;
@@ -75,10 +80,12 @@ const drawLoop = () => {
 };
 
 const update = () => {
-    updateTime();
-    if (t >= ROUND_LENGTH) {
-        loser(-1);
-        return breakLoopOnRound;
+    if (!manualPlayMode) {
+        updateTime();
+        if (t >= ROUND_LENGTH) {
+            loser(-1);
+            return breakLoopOnRound;
+        }
     }
 
     moveBots();
@@ -110,4 +117,16 @@ window.onkeydown = (e) => {
     if (e.key === "s") toggleFastMode();
     if (e.key === "r") toggleBreakLoopOnRound();
     if (e.key === "e") switchShowingGraph();
+    if (e.key === "m") {
+        toggleManualPlayMode();
+
+        if (manualPlayMode) newManualGame();
+        else backToAutoGame();
+    }
+
+    setKeyDown(e.key, true);
+};
+
+window.onkeyup = (e) => {
+    setKeyDown(e.key, false);
 };

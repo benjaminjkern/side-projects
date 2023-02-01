@@ -24,6 +24,6 @@ export const drawEloInfo = () => {
     )}, Average age: ${
         templates.reduce((p, c) => p + c.age, 0) / templates.length
     }\n\nRound Num: ${roundNum}, Game Num: ${gameNum}\n\nLeft: ${
-        bots[0].elo
-    }, Right: ${bots[1].elo}`;
+        bots[0].overallElo
+    }, Right: ${bots[1].overallElo}`;
 };

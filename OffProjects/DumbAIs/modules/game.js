@@ -10,24 +10,36 @@ import {
 import { removeAllBullets, bullets, newBullet } from "./bullet.js";
 import { addLineToGraph, addLineToLineGraph } from "./graph.js";
 import { mutateBrain, newBrain, resetBrain, runBrain } from "./AI.js";
-import { breakLoopOnRound, playArea, restartScene, t } from "./scene.js";
+import {
+    breakLoopOnRound,
+    getManualBotInputs,
+    manualPlayMode,
+    playArea,
+    restartScene,
+    t,
+} from "./scene.js";
 import html2canvas from "./html2canvas.js";
 import saveAs from "./FileSaver.js";
 
-const MAX_TEMPLATES = 100;
+const MAX_TEMPLATES = 10;
 const RADIUS = 25;
 const RECORDING_KILLS = false;
 
-const GAMES_PER_ROUND = 1000;
+const GAMES_PER_ROUND = 100;
 
 export let templates = [];
 export let bots = [];
 export let roundNum = 0;
 export let gameNum = 0;
 
+let backupBots = [];
 let templateIndex = 0;
 
-export const newTemplate = (oldTemplate) => {
+export const newTemplate = (
+    oldTemplate,
+    mutation = 0.1,
+    addToTemplates = true
+) => {
     const template = {
         longName:
             oldTemplate?.longName !== undefined
@@ -35,13 +47,17 @@ export const newTemplate = (oldTemplate) => {
                 : `${templateIndex}`,
         id: templateIndex,
         color: randomColor(oldTemplate?.color),
-        brain: oldTemplate ? mutateBrain(oldTemplate.brain, 0.1) : newBrain(),
+        brain: oldTemplate
+            ? mutateBrain(oldTemplate.brain, mutation)
+            : newBrain(),
         overallElo: 0,
         elo: 0,
         age: 0,
     };
-    templateIndex++;
-    templates.push(template);
+    if (addToTemplates) {
+        templateIndex++;
+        templates.push(template);
+    }
     return template;
 };
 
@@ -172,6 +188,25 @@ const newGame = () => {
     restartScene();
 };
 
+export const newManualGame = () => {
+    backupBots = bots;
+
+    templates.sort(({ overallElo: eloA }, { overallElo: eloB }) => eloB - eloA);
+    const bestTemplate = newTemplate(templates[0], 0, false);
+    bestTemplate.overallElo = templates[0].overallElo;
+    bots = [
+        newBot(bestTemplate),
+        newBot(newTemplate(undefined, undefined, false), true),
+    ];
+    bots.forEach((bot) => resetBrain(bot.brain));
+
+    removeAllBullets();
+};
+
+export const backToAutoGame = () => {
+    bots = backupBots;
+};
+
 const startingPos = (rightSide) => [
     (playArea.width * (1 + 2 * rightSide)) / 4,
     playArea.height / 2,
@@ -184,6 +219,7 @@ const newBot = (template = newTemplate(), rightSide = false) => {
         angle: !rightSide * Math.PI,
         bulletTimer: 0,
         rightSide,
+        isManual: rightSide && manualPlayMode,
     };
 };
 
@@ -232,15 +268,22 @@ export const moveBots = () => {
             const distSquared = vecDistSquared(bot.pos, bullet.pos);
             if (distSquared < (bullet.radius + RADIUS) ** 2) {
                 // if (t < 10) console.log("Boot!", distSquared, bullets);
-                if (RECORDING_KILLS) console.log("Kill");
+                if (RECORDING_KILLS || manualPlayMode)
+                    console.log(bot.isManual ? "Hit" : "Kill");
+
+                delete bullets[bullet.key];
+                if (manualPlayMode) continue;
 
                 loser(+bot.rightSide);
                 if (breakLoopOnRound) return breakLoopOnRound;
             }
         }
+
         bot.brain.inputData = [t, ...enemyDists, ...bulletDists, 1];
         runBrain(bot.brain, 32);
-        const [speed, angleSpeed, shoot, shootBig] = bot.brain.outputData;
+        const [speed, angleSpeed, shoot, shootBig] = bot.isManual
+            ? getManualBotInputs()
+            : bot.brain.outputData;
         const u = unitVecFromAngle(bot.angle);
 
         bot.angle += Math.min(Math.max(forceFinite(angleSpeed), -0.1), 0.1);
@@ -259,9 +302,9 @@ export const moveBots = () => {
         bot.bulletTimer--;
 
         if (bot.bulletTimer <= 0) {
-            if (shoot >= 0 || shootBig >= 0) {
+            if (shoot > 0) {
                 bot.bulletTimer = 100;
-                newBullet(bot, shootBig > shoot);
+                newBullet(bot, shootBig > 0);
             }
         }
     }
