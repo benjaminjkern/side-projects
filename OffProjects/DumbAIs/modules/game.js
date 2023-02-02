@@ -21,11 +21,11 @@ import {
 import html2canvas from "./html2canvas.js";
 import saveAs from "./FileSaver.js";
 
-const MAX_TEMPLATES = 10;
+const MAX_TEMPLATES = 100;
 const RADIUS = 25;
 const RECORDING_KILLS = false;
 
-const GAMES_PER_ROUND = 100;
+const GAMES_PER_ROUND = 1000; //(MAX_TEMPLATES * (MAX_TEMPLATES - 1)) / 2;
 
 export let templates = [];
 export let bots = [];
@@ -48,7 +48,7 @@ export const newTemplate = (
         id: templateIndex,
         color: randomColor(oldTemplate?.color),
         brain: oldTemplate
-            ? mutateBrain(oldTemplate.brain, mutation)
+            ? mutateBrain(oldTemplate.brain, mutation, mutation)
             : newBrain(),
         overallElo: 0,
         elo: 0,
