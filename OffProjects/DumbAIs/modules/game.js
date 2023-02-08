@@ -9,14 +9,19 @@ import {
 } from "./vecMath.js";
 import { removeAllBullets, bullets, newBullet } from "./bullet.js";
 import { addLineToGraph, addLineToLineGraph } from "./graph.js";
-import { mutateBrain, newBrain, resetBrain, runBrain } from "./AI.js";
 import {
-    breakLoopOnRound,
+    brainToString,
+    mutateBrain,
+    newBrain,
+    resetBrain,
+    runBrain,
+} from "./AI.js";
+import {
     getManualBotInputs,
     manualPlayMode,
     playArea,
     restartScene,
-    t,
+    updatesPerFrame,
 } from "./scene.js";
 import html2canvas from "./html2canvas.js";
 import saveAs from "./FileSaver.js";
@@ -62,6 +67,7 @@ export const newTemplate = (
 };
 
 export const drawTemplateBar = (ctx) => {
+    if (updatesPerFrame > 1) return;
     templates.sort(({ elo: eloA }, { elo: eloB }) => eloB - eloA);
 
     const WIDTH = playArea.width / templates.length;
@@ -124,6 +130,7 @@ export const newRound = () => {
             ({ overallElo: eloA }, { overallElo: eloB }) => eloB - eloA
         );
         addLineToLineGraph(0, (template) => template.overallElo);
+        const botString = brainToString(templates[0].brain);
 
         // if (templates.some(({ id }) => !lastTemplates[id])) {
         addLineToGraph(2);
@@ -135,31 +142,37 @@ export const newRound = () => {
         templates.sort(({ elo: eloA }, { elo: eloB }) => eloB - eloA);
         templates = templates.slice(0, MAX_TEMPLATES / 2);
         // const median = templates[Math.floor(templates.length / 2) - 1].elo;
-        templates.forEach((template) => {
+        templates.forEach((template, i) => {
             // template.elo -= median;
             template.elo = 0;
             template.age++;
-            newTemplate(template);
+            newTemplate(i < MAX_TEMPLATES / 2 - 1 ? template : undefined);
         });
-
-        // lastTemplates = templates.reduce((p, { id }) => ({ ...p, [id]: true }), {});
 
         if (roundNum % 500 === 0) {
             const screenshotTarget = document.body;
 
             html2canvas(screenshotTarget).then((canvas) => {
                 const base64image = canvas.toDataURL("image/png");
-                var data = atob(
-                        base64image.substring("data:image/png;base64,".length)
-                    ),
-                    asArray = new Uint8Array(data.length);
+                const data = atob(
+                    base64image.substring("data:image/png;base64,".length)
+                );
+                const imgArray = new Uint8Array(data.length);
 
-                for (var i = 0, len = data.length; i < len; ++i) {
-                    asArray[i] = data.charCodeAt(i);
+                for (let i = 0; i < data.length; ++i) {
+                    imgArray[i] = data.charCodeAt(i);
                 }
 
-                const blob = new Blob([asArray.buffer], { type: "image/png" });
-                saveAs(blob, `${roundNum}.png`);
+                const imgBlob = new Blob([imgArray.buffer], {
+                    type: "image/png",
+                });
+                saveAs(imgBlob, `${roundNum}.png`);
+
+                const botBlob = new Blob([botString], {
+                    type: "text/plain",
+                });
+
+                saveAs(botBlob, `${roundNum}.txt`);
             });
         }
     }
@@ -275,11 +288,11 @@ export const moveBots = () => {
                 if (manualPlayMode) continue;
 
                 loser(+bot.rightSide);
-                if (breakLoopOnRound) return breakLoopOnRound;
+                return;
             }
         }
 
-        bot.brain.inputData = [t, ...enemyDists, ...bulletDists, 1];
+        bot.brain.inputData = [...enemyDists, ...bulletDists, 1, Math.random()];
         runBrain(bot.brain, 32);
         const [speed, angleSpeed, shoot, shootBig] = bot.isManual
             ? getManualBotInputs()

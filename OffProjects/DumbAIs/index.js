@@ -12,14 +12,12 @@ import {
 import { initGraphs, switchShowingGraph } from "./modules/graph.js";
 import { drawEloInfo } from "./modules/info.js";
 import {
-    breakLoopOnRound,
     manualPlayMode,
     paused,
     playArea,
     restartScene,
     setKeyDown,
     t,
-    toggleBreakLoopOnRound,
     toggleFastMode,
     togglePause,
     updatesPerFrame,
@@ -68,7 +66,7 @@ const doLoop = () => {
     if (paused) return;
     setTimeout(doLoop, 1);
     for (let i = 0; i < updatesPerFrame * !paused; i++) {
-        if (update()) break;
+        update();
     }
     if (SYNCHRONIZED_DRAW) draw();
 };
@@ -84,7 +82,7 @@ const update = () => {
         updateTime();
         if (t >= ROUND_LENGTH) {
             loser(-1);
-            return breakLoopOnRound;
+            return;
         }
     }
 
@@ -94,6 +92,8 @@ const update = () => {
 };
 
 const draw = () => {
+    drawEloInfo();
+    if (updatesPerFrame > 1) return;
     ctx.clearRect(0, 0, playArea.width, playArea.height);
 
     drawBots(ctx);
@@ -101,8 +101,6 @@ const draw = () => {
     drawTemplateBar(ctx);
 
     drawBullets(ctx);
-
-    drawEloInfo();
 };
 
 window.onresize = () => {
@@ -115,7 +113,6 @@ window.onkeydown = (e) => {
         if (!togglePause()) startLoop();
     }
     if (e.key === "s") toggleFastMode();
-    if (e.key === "r") toggleBreakLoopOnRound();
     if (e.key === "e") switchShowingGraph();
     if (e.key === "m") {
         toggleManualPlayMode();

@@ -161,6 +161,47 @@ const randomInstruction = (sizes, operations) => {
     return { run: operation.run(args), opName, args };
 };
 
+export const newBrainFromString = (brainString, operations = {}) => {
+    const [instructions, startData, startOutputData] = brainString
+        .split("\n")
+        .map((line) => line.split(","));
+
+    const newSizes = {
+        IOSIZE: startOutputData.length,
+        DATASIZE: startData.length,
+        INSTRUCTIONS: instructions.length,
+    };
+    const newOperations = { ...DEFAULT_OPERATIONS, ...operations };
+
+    startData.forEach((x, i) => (startData[i] = +x));
+    startOutputData.forEach((x, i) => (startOutputData[i] = +x));
+
+    instructions.forEach((instruction, i) => {
+        const [opName, ...args] = instruction.split(" ");
+        if (!newOperations[opName]) throw `Unknown operation: ${opName}`;
+
+        args.forEach((arg, i) => (args[i] = +arg));
+        instructions[i] = {
+            run: newOperations[opName].run(args),
+            opName,
+            args,
+        };
+    });
+    return {
+        instructions,
+        sizes: newSizes,
+        operations: newOperations,
+
+        startData,
+        startOutputData,
+
+        inputData: Array(newSizes["IOSIZE"]).fill(0),
+        data: [...startData],
+        outputData: [...startOutputData],
+        instructionPointer: 0,
+    };
+};
+
 /**
  * Generate a new brain.
  * @param {Object} sizes Optional parameter to change the default sizes of the parameters. Can also add new sizes, if need be.
@@ -313,11 +354,14 @@ const colorit = (hascolor, string) => {
 };
 
 /**
- * Print out just the brain's instructions to a colorless string.
+ * Print out the full brain as a string for use later.
  * @param {Brain} brain The brain to print
- * @returns {String} The brain's instructions
+ * @returns {String} The brain in string form
  */
-export const printBrainInstructions = (brain) =>
-    brain.instructions
-        .map(({ opName, args }, i) => [i, opName, ...args].join(" "))
-        .join("\n");
+export const brainToString = (brain) => {
+    return `${brain.instructions
+        .map(({ opName, args }) => [opName, ...args].join(" "))
+        .join(",")}\n${brain.startData.join(",")}\n${brain.startOutputData.join(
+        ","
+    )}`;
+};
