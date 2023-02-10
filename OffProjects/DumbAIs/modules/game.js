@@ -29,8 +29,9 @@ import saveAs from "./FileSaver.js";
 const MAX_TEMPLATES = 100;
 const RADIUS = 25;
 const RECORDING_KILLS = false;
-
+const END_ROUND_ON_KILL = true;
 const GAMES_PER_ROUND = 1000; //(MAX_TEMPLATES * (MAX_TEMPLATES - 1)) / 2;
+const INSTRUCTIONS_RUN_PER_FRAME = 64;
 
 export let templates = [];
 export let bots = [];
@@ -97,9 +98,11 @@ const eloUpdate = (winnerTemplate, loserTemplate, tie, eloKey) => {
     loserTemplate[eloKey] -= diff;
 };
 
-export const loser = (loserIndex) => {
-    const loserBot = bots.splice(loserIndex === -1 ? 1 : loserIndex, 1)[0];
-    const winnerBot = bots[0];
+export const loser = () => {
+    bots.sort(({ hits: hitsA }, { hits: hitsB }) => hitsB - hitsA);
+
+    const [loserBot, winnerBot] = bots;
+    const loserIndex = loserBot.hits === winnerBot.hits ? -1 : 0;
 
     const winnerTemplate = templates.find((x) => x.id === winnerBot.id);
     const loserTemplate = templates.find((x) => x.id === loserBot.id);
@@ -150,30 +153,29 @@ export const newRound = () => {
         });
 
         if (roundNum % 500 === 0) {
-            const screenshotTarget = document.body;
-
-            html2canvas(screenshotTarget).then((canvas) => {
-                const base64image = canvas.toDataURL("image/png");
-                const data = atob(
-                    base64image.substring("data:image/png;base64,".length)
-                );
-                const imgArray = new Uint8Array(data.length);
-
-                for (let i = 0; i < data.length; ++i) {
-                    imgArray[i] = data.charCodeAt(i);
-                }
-
-                const imgBlob = new Blob([imgArray.buffer], {
-                    type: "image/png",
-                });
-                saveAs(imgBlob, `${roundNum}.png`);
-
-                const botBlob = new Blob([botString], {
-                    type: "text/plain",
-                });
-
-                saveAs(botBlob, `${roundNum}.txt`);
+            const botBlob = new Blob([botString], {
+                type: "text/plain",
             });
+
+            saveAs(botBlob, `${roundNum}.txt`);
+
+            // html2canvas(document.body).then((canvas) => {
+            //     const base64image = canvas.toDataURL("image/png");
+            //     const data = atob(
+            //         base64image.substring("data:image/png;base64,".length)
+            //     );
+            //     const imgArray = new Uint8Array(data.length);
+
+            //     for (let i = 0; i < data.length; ++i) {
+            //         imgArray[i] = data.charCodeAt(i);
+            //     }
+
+            //     const imgBlob = new Blob([imgArray.buffer], {
+            //         type: "image/png",
+            //     });
+            //     saveAs(imgBlob, `${roundNum}.png`);
+
+            // });
         }
     }
     roundNum++;
@@ -233,6 +235,7 @@ const newBot = (template = newTemplate(), rightSide = false) => {
         bulletTimer: 0,
         rightSide,
         isManual: rightSide && manualPlayMode,
+        hits: 0,
     };
 };
 
@@ -284,16 +287,20 @@ export const moveBots = () => {
                 if (RECORDING_KILLS || manualPlayMode)
                     console.log(bot.isManual ? "Hit" : "Kill");
 
-                delete bullets[bullet.key];
-                if (manualPlayMode) continue;
+                bot.hits++;
 
-                loser(+bot.rightSide);
-                return;
+                delete bullets[bullet.key];
+
+                if (END_ROUND_ON_KILL) {
+                    if (manualPlayMode) continue;
+                    loser(+bot.rightSide);
+                    return;
+                }
             }
         }
 
         bot.brain.inputData = [...enemyDists, ...bulletDists, 1, Math.random()];
-        runBrain(bot.brain, 32);
+        runBrain(bot.brain, INSTRUCTIONS_RUN_PER_FRAME);
         const [speed, angleSpeed, shoot, shootBig] = bot.isManual
             ? getManualBotInputs()
             : bot.brain.outputData;
