@@ -3,3 +3,4 @@ node_modules
 *.class
 *.pyc
 .DS_Store
+build
