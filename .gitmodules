@@ -1,0 +1,3 @@
+[submodule "wordMakerExamples"]
+	path = python-projects/wordMakerExamples
+	url = https://github.com/benjaminjkern/wordMakerExamples.git

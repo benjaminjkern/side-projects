@@ -1,0 +1,24 @@
+# serverless.yml
+
+service: fractalclock
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+
+functions:
+  app:
+    handler: index.handler
+    events:
+      - http:
+          path: /clockin/
+          method: post
+          cors: true
+      - http:
+          path: /clockout/
+          method: post
+          cors: true
+      - http:
+          path: /requestchange/
+          method: get
+          cors: true

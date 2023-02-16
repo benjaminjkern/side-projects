@@ -1,0 +1,10 @@
+Easy {
+    Program = Statement+
+    Statement = id "=" Expression | Expression
+    Expression =  Expression Atom | MathExpression | Atom
+    MathExp = MathExp "*" Atom | MathExp "/" Atom | MathExp "+" Atom | MathExp "-" Atom
+    Atom = Function | "(" Expression ")" | numlit | id
+    Function = "(" id ")" "->" "{" Program "}"
+    numlit = digit+ ("." digit*)? | "." digit+
+    id = letter+
+}
