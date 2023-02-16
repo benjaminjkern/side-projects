@@ -159,9 +159,11 @@ Ostentatious`.split('\n');
         }
 
         const speak = () => {
+            const utter = new SpeechSynthesisUtterance(currentword);
+            utter.rate = 0.85;
             window
                 .speechSynthesis
-                .speak(new SpeechSynthesisUtterance(currentword));
+                .speak(utter);
         }
 
         const newWord = () => {
