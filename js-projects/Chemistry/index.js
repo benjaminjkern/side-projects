@@ -40,10 +40,10 @@ const run = () => {
 };
 
 const init = () => {
-    Array(10).fill().map(newAtomType);
-    // newAtomType("#f00");
+    // Array(1).fill().map(newAtomType);
+    newAtomType("#f00");
     // newAtomType("#ff0");
-    // newAtomType("#0f0");
+    newAtomType("#0f0");
     // newAtomType("#0ff");
     // newAtomType("#00f");
     // newAtomType("#f0f");

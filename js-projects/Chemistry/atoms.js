@@ -7,7 +7,7 @@ const ATOM_RADIUS = 5;
 const INTERACTION_STRENGTH = 5;
 const REPEL_STRENGTH = 5;
 
-const DRAG = 0.0;
+const DRAG = 0.01;
 
 export const newAtomType = (
     color = `#${Math.random().toString(16).slice(2, 8)}`
@@ -95,7 +95,7 @@ export const interactAtom = (atom, atom2) => {
 };
 
 const activationFunction = (interactionStrength, x) => {
-    if (x < ATOM_RADIUS * 2) return REPEL_STRENGTH * (2 * ATOM_RADIUS - x);
+    if (x < ATOM_RADIUS * 2) return -REPEL_STRENGTH * (2 * ATOM_RADIUS - x);
     if (x > INTERACTION_DISTANCE) return 0;
     if (x < ATOM_RADIUS + INTERACTION_DISTANCE / 2)
         return (
