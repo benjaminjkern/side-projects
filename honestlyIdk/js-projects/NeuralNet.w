@@ -67,3 +67,22 @@ const size = (a) => {
     if (!a.length) return [];
     return [a.length, ...size(a[0])];
 }
+
+SchoolChild = prc: value ->
+    mut left
+    mut right
+    export mutOnce otherChildren
+    export askLeft = fn: SchoolChild asker ->
+        if isNull left: left = asker; return true
+        return false
+    export askRight = fn: SchoolChild asker ->
+        if isNull right: left = asker; return true
+        return false
+
+    while true:
+        otherChild = pickRandom otherChildren
+        if isNull left:
+            if otherChild.askRight(this):
+       
+        else if isNull right: result = (pickRandom otherChildren).askLeft(this)
+schoolChildrenSort = fn: list
