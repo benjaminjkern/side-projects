@@ -494,14 +494,7 @@ const findGoodTrades = (captainName, allTeamsTemp, depth = 1) => {
                 ];
                 const [newTeam1Score, newBestTeam1] = calcProjScore(tradeTeam1);
                 const [newTeam2Score, newBestTeam2] = calcProjScore(tradeTeam2);
-                if (
-                    newTeam1Score > team1Score &&
-                    newTeam2Score > team2Score &&
-                    !(
-                        newTeam1Score === team1Score &&
-                        newTeam2Score === team2Score
-                    )
-                ) {
+                if (newTeam1Score > team1Score && newTeam2Score > team2Score) {
                     const newAllTeams = [...allTeamsTemp];
                     newAllTeams[team1Index] = {
                         captain: captainName,
@@ -583,7 +576,7 @@ const getBestTradeResults = (goodTrades, team1Captain) => {
     return [bestTrades, bestResult];
 };
 
-const goodTrades = findGoodTrades("ben", allTeams, 7);
+const goodTrades = findGoodTrades("ben", allTeams, 4);
 
 // console.log(require("util").inspect(goodTrades, null, null, true));
 
