@@ -1,0 +1,3 @@
+- Use "Smarter tactics" instead of naive search
+    - i.e. If they only have one QB dont even try to ask them for their QB
+- Don't generate the whole tree and then explore it, just explore the tree as its being generated
