@@ -1,422 +1,36 @@
+const parseTeam = (teamString) => {
+    const [captain, ...team] = teamString.split(/\s*;\s*/);
+    return {
+        captain,
+        team: team.map((player) => {
+            const [position, projScore] = player.split(" ");
+            return { position, projScore: Number(projScore) };
+        }),
+    };
+};
+
 const allTeams = [
-    {
-        captain: "ben",
-        team: [
-            {
-                position: "QB",
-                projScore: 18.9,
-            },
-            {
-                position: "RB",
-                projScore: 12.9,
-            },
-            {
-                position: "RB",
-                projScore: 14.3,
-            },
-            {
-                position: "WR",
-                projScore: 22.1,
-            },
-            {
-                position: "WR",
-                projScore: 15.7,
-            },
-            {
-                position: "TE",
-                projScore: 9.2,
-            },
-            {
-                position: "WR",
-                projScore: 13.3,
-            },
-            {
-                position: "DST",
-                projScore: 8.3,
-            },
-            {
-                position: "K",
-                projScore: 8.7,
-            },
-            {
-                position: "WR",
-                projScore: 12.7,
-            },
-            {
-                position: "RB",
-                projScore: 11.4,
-            },
-            {
-                position: "WR",
-                projScore: 13.3,
-            },
-            {
-                position: "WR",
-                projScore: 11.1,
-            },
-            {
-                position: "RB",
-                projScore: 12.5,
-            },
-            {
-                position: "QB",
-                projScore: 17.9,
-            },
-            {
-                position: "RB",
-                projScore: 12.6,
-            },
-        ],
-    },
-    {
-        captain: "diego",
-        team: [
-            {
-                position: "QB",
-                projScore: 18.5,
-            },
-            {
-                position: "RB",
-                projScore: 16.8,
-            },
-            {
-                position: "RB",
-                projScore: 9.0,
-            },
-            {
-                position: "WR",
-                projScore: 24.5,
-            },
-            {
-                position: "WR",
-                projScore: 19.4,
-            },
-            {
-                position: "TE",
-                projScore: 9.7,
-            },
-            {
-                position: "RB",
-                projScore: 12.4,
-            },
-            {
-                position: "DST",
-                projScore: 4.2,
-            },
-            {
-                position: "K",
-                projScore: 8.7,
-            },
-            {
-                position: "RB",
-                projScore: 14.1,
-            },
-            {
-                position: "QB",
-                projScore: 15.8,
-            },
-            {
-                position: "WR",
-                projScore: 12.8,
-            },
-            {
-                position: "WR",
-                projScore: 10.1,
-            },
-            {
-                position: "WR",
-                projScore: 8.1,
-            },
-            {
-                position: "WR",
-                projScore: 7.8,
-            },
-            {
-                position: "TE",
-                projScore: 9.3,
-            },
-        ],
-    },
-    {
-        captain: "mac",
-        team: [
-            {
-                position: "QB",
-                projScore: 20.9,
-            },
-            {
-                position: "RB",
-                projScore: 17.5,
-            },
-            {
-                position: "RB",
-                projScore: 17.6,
-            },
-            {
-                position: "WR",
-                projScore: 17.7,
-            },
-            {
-                position: "WR",
-                projScore: 14.5,
-            },
-            {
-                position: "TE",
-                projScore: 9.1,
-            },
-            {
-                position: "RB",
-                projScore: 14.4,
-            },
-            {
-                position: "DST",
-                projScore: 3.3,
-            },
-            {
-                position: "K",
-                projScore: 8.3,
-            },
-            {
-                position: "WR",
-                projScore: 12.3,
-            },
-            {
-                position: "TE",
-                projScore: 8.4,
-            },
-            {
-                position: "QB",
-                projScore: 18.5,
-            },
-            {
-                position: "RB",
-                projScore: 8.8,
-            },
-            {
-                position: "DST",
-                projScore: 6.8,
-            },
-            {
-                position: "RB",
-                projScore: 10.1,
-            },
-            {
-                position: "WR",
-                projScore: 13.3,
-            },
-        ],
-    },
-    {
-        captain: "andrew",
-        team: [
-            {
-                position: "QB",
-                projScore: 18.1,
-            },
-            {
-                position: "RB",
-                projScore: 18.6,
-            },
-            {
-                position: "RB",
-                projScore: 14.3,
-            },
-            {
-                position: "WR",
-                projScore: 14.4,
-            },
-            {
-                position: "WR",
-                projScore: 13.2,
-            },
-            {
-                position: "TE",
-                projScore: 11.2,
-            },
-            {
-                position: "RB",
-                projScore: 20.0,
-            },
-            {
-                position: "DST",
-                projScore: 7.0,
-            },
-            {
-                position: "K",
-                projScore: 7.8,
-            },
-            {
-                position: "WR",
-                projScore: 13.2,
-            },
-            {
-                position: "RB",
-                projScore: 14.1,
-            },
-            {
-                position: "WR",
-                projScore: 9.4,
-            },
-            {
-                position: "WR",
-                projScore: 14.2,
-            },
-            {
-                position: "WR",
-                projScore: 11.2,
-            },
-            {
-                position: "WR",
-                projScore: 11.1,
-            },
-            {
-                position: "WR",
-                projScore: 12.2,
-            },
-            {
-                position: "RB",
-                projScore: 0.0,
-            },
-        ],
-    },
-    {
-        captain: "josh",
-        team: [
-            {
-                position: "QB",
-                projScore: 21.7,
-            },
-            {
-                position: "RB",
-                projScore: 12.5,
-            },
-            {
-                position: "RB",
-                projScore: 14.9,
-            },
-            {
-                position: "WR",
-                projScore: 19.7,
-            },
-            {
-                position: "WR",
-                projScore: 13.9,
-            },
-            {
-                position: "TE",
-                projScore: 14.1,
-            },
-            {
-                position: "TE",
-                projScore: 10.7,
-            },
-            {
-                position: "DST",
-                projScore: 7.3,
-            },
-            {
-                position: "K",
-                projScore: 7.4,
-            },
-            {
-                position: "WR",
-                projScore: 0.0,
-            },
-            {
-                position: "RB",
-                projScore: 12.7,
-            },
-            {
-                position: "TE",
-                projScore: 8.4,
-            },
-            {
-                position: "K",
-                projScore: 7.6,
-            },
-            {
-                position: "DST",
-                projScore: 4.8,
-            },
-            {
-                position: "QB",
-                projScore: 15.0,
-            },
-            {
-                position: "RB",
-                projScore: 5.7,
-            },
-        ],
-    },
-    {
-        captain: "soph",
-        team: [
-            {
-                position: "QB",
-                projScore: 22.0,
-            },
-            {
-                position: "RB",
-                projScore: 14.7,
-            },
-            {
-                position: "RB",
-                projScore: 14.3,
-            },
-            {
-                position: "WR",
-                projScore: 13.9,
-            },
-            {
-                position: "WR",
-                projScore: 15.8,
-            },
-            {
-                position: "TE",
-                projScore: 17.0,
-            },
-            {
-                position: "RB",
-                projScore: 14.1,
-            },
-            {
-                position: "DST",
-                projScore: 7.8,
-            },
-            {
-                position: "K",
-                projScore: 8.1,
-            },
-            {
-                position: "RB",
-                projScore: 2.1,
-            },
-            {
-                position: "WR",
-                projScore: 13.4,
-            },
-            {
-                position: "WR",
-                projScore: 10.4,
-            },
-            {
-                position: "RB",
-                projScore: 8.0,
-            },
-            {
-                position: "QB",
-                projScore: 19.1,
-            },
-            {
-                position: "DST",
-                projScore: 2.8,
-            },
-            {
-                position: "TE",
-                projScore: 7.8,
-            },
-        ],
-    },
+    parseTeam(
+        "ben; QB 17.8; RB 13.3; RB 12.6; WR 16.4; WR 13.9; TE 10.8; WR 14.6; DST 8.2; K 8.7; WR 0; RB 0; K 8.4; QB 0; RB 0; RB 10.8; WR 13.3"
+    ),
+    parseTeam(
+        "andrew; QB 21.3; RB 19; RB 16.5; WR 14.8; WR 15.8; TE 10; RB 17.9; DST 7.8; K 8.2; RB 18.5; WR 13.8; RB 12; WR 0; WR 12.8; RB 10.4; QB 15.9"
+    ),
+    parseTeam(
+        "mac; QB 23; RB 17; RB 16.7; WR 18.7; WR 15.5; TE 7.2; WR 17.1; DST 8; K 8.3; WR 14.0; QB 0; RB 0; DST 4.7; RB 10; WR 10.5"
+    ),
+    parseTeam(
+        "brandon; QB 20.2; RB 12.2; RB 13.6; WR 20.2; WR 15.3; TE 10.6; WR 14.9; DST  8.2; K 8.8; RB 0; QB 0; TE 8.8; DST 4.2; WR 11.6; RB 6.7; K 7.7"
+    ),
+    parseTeam(
+        "soph; QB 20.1; RB 14.2; RB 15.9; WR 14.8; WR 14.4; TE 0; RB 0; DST 8.6; K 7; QB 18.6; RB 8; WR 0; WR 9.2; DST 4.2; TE 7.9; RB 12"
+    ),
+    parseTeam(
+        "stephen; QB 16.2; RB 2.1; RB 18.8; WR 21.8; WR 15.7; TE 9.1; WR 13.8; DST 0; K 7.3; RB 12.1; QB 14.7; TE 0; RB 0; WR 6.9; WR 8.1; WR 9.4"
+    ),
+    parseTeam(
+        "josh; QB 21.6; RB 14.5; RB 19.5; WR 21.6; WR 13.4; TE 14.6; TE 7.2; DST 5.2; K 8.5; RB 0; TE 10.4; K 8.1; DST 6.6; QB 14; RB 4.9; WR 0; WR 0"
+    ),
 ];
 
 const maxInPerTeam = {
@@ -460,7 +74,15 @@ const calcProjScore = (team) => {
 
 let hitLimit = false;
 
-const findGoodTrades = (captainName, allTeamsTemp, depth = 1) => {
+const findBestTrades = (captainName, allTeamsTemp, depth = 1) => {
+    const getBestResultsForEveryoneElse = (bestResultSubtrade) =>
+        Object.keys(bestResultSubtrade).reduce(
+            (p, c) => p + (c === captainName ? 0 : bestResultSubtrade[c]),
+            0
+        );
+    let bestTrades = [];
+    let bestResult = { [captainName]: 0 };
+
     if (depth === 0) {
         hitLimit = true;
         return [];
@@ -494,7 +116,10 @@ const findGoodTrades = (captainName, allTeamsTemp, depth = 1) => {
                 ];
                 const [newTeam1Score, newBestTeam1] = calcProjScore(tradeTeam1);
                 const [newTeam2Score, newBestTeam2] = calcProjScore(tradeTeam2);
-                if (newTeam1Score > team1Score && newTeam2Score > team2Score) {
+                if (
+                    newTeam1Score - team1Score >= 0.05 &&
+                    newTeam2Score - team2Score >= 0.05
+                ) {
                     const newAllTeams = [...allTeamsTemp];
                     newAllTeams[team1Index] = {
                         captain: captainName,
@@ -516,17 +141,41 @@ const findGoodTrades = (captainName, allTeamsTemp, depth = 1) => {
                         [captain]: newTeam2Score - team2Score,
                     };
 
-                    goodTrades.push({
-                        opTeam: captain,
-                        trade: [i1, i2],
-                        result,
-                        subtrades,
-                    });
+                    // Check if trade is the best trade
+
+                    const opTeam = captain;
+                    const trade = [i1, i2];
+
+                    const [bestTradesSubtrade, bestResultSubtrade] =
+                        getBestTradeResults(subtrades, captainName);
+                    bestTradesSubtrade.splice(0, 0, { opTeam, trade });
+                    addToResults(bestResultSubtrade, result);
+
+                    const resultsForEveryoneElseSubtrade =
+                        getBestResultsForEveryoneElse(bestResultSubtrade);
+                    const resultsForEveryoneElse =
+                        getBestResultsForEveryoneElse(bestResult);
+
+                    if (
+                        bestResultSubtrade[captainName] >
+                            bestResult[captainName] ||
+                        (bestResultSubtrade[captainName] ===
+                            bestResult[captainName] &&
+                            (resultsForEveryoneElseSubtrade <
+                                resultsForEveryoneElse ||
+                                (resultsForEveryoneElseSubtrade ===
+                                    resultsForEveryoneElse &&
+                                    bestTradesSubtrade.length <
+                                        bestTrades.length)))
+                    ) {
+                        bestTrades = bestTradesSubtrade;
+                        bestResult = bestResultSubtrade;
+                    }
                 }
             }
         }
     }
-    return goodTrades;
+    return [bestTrades, bestResult];
 };
 
 const roundN = (x, N = 1) => {
@@ -540,50 +189,17 @@ const addToResults = (results, newResults) => {
     }
 };
 
-const getBestTradeResults = (goodTrades, team1Captain) => {
-    const getBestResultsForEveryoneElse = (bestResultSubtrade) =>
-        Object.keys(bestResultSubtrade).reduce(
-            (p, c) => p + (c === team1Captain ? 0 : bestResultSubtrade[c]),
-            0
-        );
-    let bestTrades = [];
-    let bestResult = { [team1Captain]: 0 };
-    for (const { opTeam, trade, subtrades, result } of goodTrades) {
-        const [bestTradesSubtrade, bestResultSubtrade] = getBestTradeResults(
-            subtrades,
-            team1Captain
-        );
-        bestTradesSubtrade.splice(0, 0, { opTeam, trade });
-        addToResults(bestResultSubtrade, result);
+/**
+ *
+ */
 
-        const resultsForEveryoneElseSubtrade =
-            getBestResultsForEveryoneElse(bestResultSubtrade);
-        const resultsForEveryoneElse =
-            getBestResultsForEveryoneElse(bestResult);
+const me = "ben";
+const recurseNum = 5;
 
-        if (
-            bestResultSubtrade[team1Captain] > bestResult[team1Captain] ||
-            (bestResultSubtrade[team1Captain] === bestResult[team1Captain] &&
-                (resultsForEveryoneElseSubtrade < resultsForEveryoneElse ||
-                    (resultsForEveryoneElseSubtrade ===
-                        resultsForEveryoneElse &&
-                        bestTradesSubtrade.length < bestTrades.length)))
-        ) {
-            bestTrades = bestTradesSubtrade;
-            bestResult = bestResultSubtrade;
-        }
-    }
-    return [bestTrades, bestResult];
-};
-
-const goodTrades = findGoodTrades("ben", allTeams, 4);
-
-// console.log(require("util").inspect(goodTrades, null, null, true));
-
-const [bestTrades, results] = getBestTradeResults(goodTrades, "ben");
+const [bestTrades, results] = findBestTrades(me, allTeams, recurseNum);
 
 bestTrades.map(({ opTeam, trade: [team1Index, team2Index] }) => {
-    const player1 = allTeams.find(({ captain }) => captain === "ben").team[
+    const player1 = allTeams.find(({ captain }) => captain === me).team[
         team1Index
     ];
     const player2 = allTeams.find(({ captain }) => captain === opTeam).team[
