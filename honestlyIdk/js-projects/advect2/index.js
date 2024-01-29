@@ -1,40 +1,39 @@
 let canvas, ctx;
 
-const XRANGE = 20;
-const YRANGE = 15;
+const XRANGE = 5;
+let YRANGE;
 
 const DT = 0.01;
+const DX = 0.1;
+const DV = 0.1;
 
-const boxes = [];
+const grid = [];
+const newGrid = [];
 
-const createBox = (x, y, size) => {
-    boxes.push([
-        [x, y],
-        [x, y + size],
-        [x + size, y + size],
-        [x + size, y],
-    ]);
-};
-
-const createMesh = (xmin, xmax, ymin, ymax, grids) => {
-    for (let i = 0; i < grids; i++) {
-        for (let j = 0; j < grids; j++) {
-            createBox(
-                xmin + (i * (xmax - xmin)) / grids,
-                ymin + (j * (ymax - ymin)) / grids,
-                1 / grids
-            );
-        }
-    }
-};
-
-createMesh(0, 1, 0, 1, 1);
 window.onload = () => {
     canvas = document.getElementById("canvas");
     ctx = canvas.getContext("2d");
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+
+    YRANGE = (XRANGE * canvas.height) / canvas.width;
+    for (
+        let v = -Math.ceil(YRANGE), j = 0;
+        v < Math.ceil(YRANGE);
+        v += DV, j++
+    ) {
+        grid.push([]);
+        for (
+            let x = -Math.ceil(XRANGE), i = 0;
+            x < Math.ceil(XRANGE);
+            x += DX, i++
+        ) {
+            if (Math.abs(x - DX) < DX / 2 && Math.abs(v - DV) < DV / 2)
+                grid[j].push(1);
+            else grid[j].push(0);
+        }
+    }
 
     draw();
     startLoop();
@@ -46,16 +45,32 @@ const startLoop = () => {
 };
 
 const d2t = (x, v) => -x;
-const d3t = (x, v) => -v;
-const d4t = (x, v) => x;
 
 const nextFrame = () => {
-    for (const box of boxes) {
-        for (const [i, [x, v]] of box.entries()) {
-            box[i] = [
-                x + v * DT + (1 / 2) * DT ** 2 * d2t(x, v),
-                v + DT * d2t(x, v),
-            ];
+    for (
+        let v = -Math.ceil(YRANGE), j = 0;
+        v < Math.ceil(YRANGE);
+        v += DV, j++
+    ) {
+        for (
+            let x = -Math.ceil(XRANGE), i = 0;
+            x < Math.ceil(XRANGE);
+            x += DX, i++
+        ) {
+            // Need to move all corners and then the new value is the proportion of the new box that is in this box
+        }
+    }
+    for (
+        let v = -Math.ceil(YRANGE), j = 0;
+        v < Math.ceil(YRANGE);
+        v += DV, j++
+    ) {
+        for (
+            let x = -Math.ceil(XRANGE), i = 0;
+            x < Math.ceil(XRANGE);
+            x += DX, i++
+        ) {
+            grid[j][i] = newGrid[j][i];
         }
     }
     draw();
@@ -71,14 +86,24 @@ const virtualToScreenCoords = ([x, y]) => {
 const draw = () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.strokeStyle = "red";
-    ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
-    for (const box of boxes) {
-        ctx.beginPath();
-        ctx.moveTo(...virtualToScreenCoords(box.slice(-1)[0]));
-        for (const point of box) {
-            ctx.lineTo(...virtualToScreenCoords(point));
+    for (
+        let x = -Math.ceil(XRANGE), i = 0;
+        x < Math.ceil(XRANGE);
+        x += DX, i++
+    ) {
+        for (
+            let v = -Math.ceil(YRANGE), j = 0;
+            v < Math.ceil(YRANGE);
+            v += DV, j++
+        ) {
+            ctx.fillStyle = `rgba(255, 0, 0, ${grid[j][i]})`;
+            ctx.beginPath();
+            ctx.moveTo(...virtualToScreenCoords([x, v]));
+            ctx.lineTo(...virtualToScreenCoords([x + DX, v]));
+            ctx.lineTo(...virtualToScreenCoords([x + DX, v + DV]));
+            ctx.lineTo(...virtualToScreenCoords([x, v + DV]));
+            ctx.lineTo(...virtualToScreenCoords([x, v]));
+            ctx.fill();
         }
-        ctx.stroke();
-        ctx.fill();
     }
 };
