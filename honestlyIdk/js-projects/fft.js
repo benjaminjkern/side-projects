@@ -34,4 +34,12 @@ const fft = (x) => {
     return [...addList(e, t), ...subList(e, t)];
 };
 
-console.log(fft([1, 1, 1, 1, 1, 1, 1, 1]));
+const dft = (x) => {};
+
+const ROUND_TEN = 100000;
+
+console.log(
+    fft(Array(2 ** 20).fill(1)).map((x) =>
+        x.map((y) => Math.round(y * ROUND_TEN) / ROUND_TEN)
+    )
+);
