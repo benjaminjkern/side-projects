@@ -1,14 +1,12 @@
 const DEALER_STAY_AT = 17;
+const DEALER_WONT_PLAY_BLACKJACKS = true;
 
-type Table = { hand: number[]; dealer: number[] };
+type Hand = { rawScore: number; aces: number; hasSingleCard: boolean };
+type Table = { hand: Hand; dealer: Hand };
 
-const scoreHand = (hand: number[]) => {
-    let score = 0;
-    let aces = 0;
-    for (let card of hand) {
-        if (card === 1) aces++;
-        score += card;
-    }
+const scoreHand = (hand: Hand) => {
+    let score = hand.rawScore;
+    let aces = hand.aces;
     while (aces > 0 && score < 12) {
         aces--;
         score += 10;
@@ -16,14 +14,26 @@ const scoreHand = (hand: number[]) => {
     return score;
 };
 
-const makeKey = (table: Table) =>
-    `${table.hand.sort().join(",")};${table.dealer.sort().join(",")}`;
+const makeHandKey = (hand: Hand) =>
+    `${hand.rawScore},${hand.aces},${hand.hasSingleCard}`;
 
-const keyToTable = (key: string) => {
+const makeTableKey = (table: Table) =>
+    `${makeHandKey(table.hand)};${makeHandKey(table.dealer)}`;
+
+const handKeyToHand = (key: string) => {
+    const split = key.split(",");
+    return {
+        rawScore: Number(split[0]),
+        aces: Number(split[1]),
+        hasSingleCard: split[2] === "true",
+    };
+};
+
+const tableKeyToTable = (key: string) => {
     const split = key.split(";");
     return {
-        hand: split[0].split(",").map((card) => Number(card)),
-        dealer: Number(split[1]),
+        hand: handKeyToHand(split[0]),
+        dealer: handKeyToHand(split[1]),
     };
 };
 
@@ -39,7 +49,7 @@ const cache = (
 const VMaxCache = {};
 const VMax = (table: Table) => {
     // console.log("VMax", table);
-    const key = makeKey(table);
+    const key = makeTableKey(table);
     if (VMaxCache[key] !== undefined) {
         // console.log("-->", VMaxCache[key]);
         return VMaxCache[key];
@@ -55,7 +65,7 @@ const VMax = (table: Table) => {
 const QHitCache = {};
 const QHit = (table: Table) => {
     // console.log("QHit", table);
-    const key = makeKey(table);
+    const key = makeTableKey(table);
     if (QHitCache[key] !== undefined) {
         // console.log("-->", QHitCache[key]);
         return QHitCache[key];
@@ -64,16 +74,19 @@ const QHit = (table: Table) => {
     let Q = 0;
     for (let card = 1; card <= 10; card++)
         Q +=
-            (VMax({ hand: [...table.hand, card], dealer: table.dealer }) *
+            (VMax({
+                hand: addCardToHand(table.hand, card),
+                dealer: table.dealer,
+            }) *
                 (card === 10 ? 4 : 1)) /
             13;
-    return cache(makeKey(table), Q, QHitCache);
+    return cache(key, Q, QHitCache);
 };
 
 const QStayCache = {};
 const QStay = (table: Table) => {
     // console.log("QStay", table);
-    const key = makeKey(table);
+    const key = makeTableKey(table);
     if (QStayCache[key] !== undefined) {
         // console.log("-->", QStayCache[key]);
         return QStayCache[key];
@@ -91,16 +104,20 @@ const QStay = (table: Table) => {
 
     let Q = 0;
     for (let card = 1; card <= 10; card++) {
-        if (table.dealer.length === 1) {
+        if (table.dealer.hasSingleCard) {
             // We are assuming the dealer does not have blackjack
             if (
-                (table.dealer[0] === 1 && card === 10) ||
-                (table.dealer[0] === 10 && card === 1)
+                DEALER_WONT_PLAY_BLACKJACKS &&
+                ((table.dealer.rawScore === 1 && card === 10) ||
+                    (table.dealer.rawScore === 10 && card === 1))
             )
                 continue;
         }
         Q +=
-            (QStay({ hand: table.hand, dealer: [...table.dealer, card] }) *
+            (QStay({
+                hand: table.hand,
+                dealer: addCardToHand(table.dealer, card),
+            }) *
                 (card === 10 ? 4 : 1)) /
             13;
     }
@@ -113,54 +130,112 @@ const choices = (table: Table) => {
 
 const doesGameStart = (table: Table) => {
     // Assumes this is a brand new table
-    return scoreHand(table.hand) !== 21;
+    return scoreHand(table.hand) < 21;
 };
 
-const allTables: Table[] = [];
+const addCardToHand = (hand: Hand, card: number) => ({
+    rawScore: hand.rawScore + card,
+    aces: hand.aces + (card === 1 ? 1 : 0),
+    hasSingleCard: false,
+});
+
+const makeHandFromCards = (cards: number[]) => {
+    let rawScore = 0;
+    let aces = 0;
+    for (let card of cards) {
+        rawScore += card;
+        aces += card === 1 ? 1 : 0;
+    }
+    return { rawScore, aces, hasSingleCard: cards.length === 1 };
+};
+
+const startTables = {};
 for (let i = 1; i <= 10; i++) {
     for (let j = i; j <= 10; j++) {
         for (let k = 1; k <= 10; k++) {
-            allTables.push({ hand: [i, j], dealer: [k] });
+            const table = {
+                hand: makeHandFromCards([i, j]),
+                dealer: makeHandFromCards([k]),
+            };
+            startTables[makeTableKey(table)] = true;
         }
     }
 }
 
-const scoredByHandTotal: Record<string, [number, number, number, string][]> =
-    {};
+const scoredByHandTotal: Record<
+    number,
+    Record<number, string | Record<string, string>>
+> = {};
 
-const nextTables = {};
+let nextTables = {};
+const seenTables = {};
+let hasChanged = false;
 
 const gradeTable = (table: Table) => {
     if (!doesGameStart(table)) return;
 
-    const [stay, hit] = choices(table);
+    const tableKey = makeTableKey(table);
+    if (seenTables[tableKey]) return;
+    hasChanged = true;
+    seenTables[tableKey] = true;
+
+    const [hit, stay] = choices(table);
     const handScore = scoreHand(table.hand);
-    const aces = table.hand.reduce((p, c) => (c === 1 ? p + 1 : p), 0);
-    const key = `${handScore},${aces}`;
 
-    if (!scoredByHandTotal[key]) scoredByHandTotal[key] = [];
+    if (!scoredByHandTotal[handScore]) scoredByHandTotal[handScore] = {};
 
-    const result = [
-        ...table.dealer,
-        stay,
-        hit,
-        stay === hit ? "It do not matter" : stay > hit ? "Stay!" : "Hit!",
-    ] as [number, number, number, string];
+    const result =
+        stay === hit ? "It do not matter" : stay > hit ? "Stay!" : "Hit!";
 
-    if (hit >= stay) nextTables[makeKey(table)] = true;
+    if (hit >= stay) nextTables[makeTableKey(table)] = true;
 
+    const handKey =
+        table.hand.rawScore >= 12 || table.hand.aces === 0
+            ? table.hand.rawScore
+            : `w/ Ace`;
+
+    if (!scoredByHandTotal[handScore][table.dealer.rawScore])
+        scoredByHandTotal[handScore][table.dealer.rawScore] = {};
     if (
-        scoredByHandTotal[key].some((innerResult) =>
-            innerResult.every((value, i) => value === result[i])
-        )
+        scoredByHandTotal[handScore][table.dealer.rawScore][handKey] !==
+            undefined &&
+        scoredByHandTotal[handScore][table.dealer.rawScore][handKey] !== result
     )
-        return;
-
-    scoredByHandTotal[key].push(result);
+        throw "WTF";
+    scoredByHandTotal[handScore][table.dealer.rawScore][handKey] = result;
 };
 
-allTables.map(gradeTable);
+Object.keys(startTables).map(tableKeyToTable).map(gradeTable);
 
-const rebuiltAllTables = Object.keys(nextTables);
+while (hasChanged) {
+    hasChanged = false;
+    const toProcessTables = Object.keys(nextTables)
+        .map(tableKeyToTable)
+        .flatMap((table) => {
+            return Array(10)
+                .fill(0)
+                .map((_, i) => ({
+                    hand: addCardToHand(table.hand, i + 1),
+                    dealer: table.dealer,
+                }));
+        });
+    nextTables = {};
+    toProcessTables.map(gradeTable);
+}
+
+Object.keys(scoredByHandTotal).forEach((dealer) => {
+    Object.keys(scoredByHandTotal[dealer]).forEach((totalScore) => {
+        const possibleKeys = Object.keys(scoredByHandTotal[dealer][totalScore]);
+        if (
+            possibleKeys.every(
+                (key) =>
+                    scoredByHandTotal[dealer][totalScore][key] ===
+                    scoredByHandTotal[dealer][totalScore][possibleKeys[0]]
+            )
+        )
+            scoredByHandTotal[dealer][totalScore] =
+                scoredByHandTotal[dealer][totalScore][possibleKeys[0]];
+    });
+});
 
 console.log(scoredByHandTotal);
