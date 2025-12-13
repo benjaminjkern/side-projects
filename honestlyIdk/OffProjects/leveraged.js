@@ -1,26 +1,43 @@
 const leverages = [3, 2, -1, -2, -3];
 
-// TODO: Redo volatility calculation to be relative to current price instead of absolute difference
+const calculateVolatility = (priceArray) => {
+    const apy =
+        ((priceArray[priceArray.length - 1] - priceArray[0]) / priceArray[0]) **
+        (APY_YEAR / (priceArray.length - 1));
+
+    let prodShift = 1;
+    for (let t = 1; t <= priceArray.length - 1; t++) {
+        prodShift *=
+            Math.abs(
+                priceArray[t] /
+                    priceArray[t - 1] /
+                    (1 + apy) ** (1 / APY_YEAR) -
+                    1
+            ) + 1;
+    }
+    return 2 * (prodShift ** (1 / (priceArray.length - 1)) - 1);
+};
 
 const LENGTH = 365;
 
 const APY_YEAR = 260;
 
+const volatilities = [];
+
 const runSim = (volatility, apy) => {
     const shifts = Array(LENGTH)
         .fill()
         .map(() => (Math.random() * 2 - 1) * volatility);
-    const totalShift = shifts.reduce((p, c) => p + c);
-    let runningShift = 0;
+    const totalShift = shifts.reduce((p, c) => p * (1 + c), 1);
+    let runningShift = 1;
     let lastPrice = 1;
     const levPrices = leverages.map(() => 1);
     const prices = [1];
     for (let t = 1; t <= LENGTH; t++) {
-        runningShift += shifts[t - 1];
+        runningShift *= 1 + shifts[t - 1];
         const price =
-            (1 + apy) ** (t / APY_YEAR) +
-            runningShift -
-            (totalShift * t) / LENGTH;
+            ((1 + apy) ** (t / APY_YEAR) * runningShift) /
+            totalShift ** (t / LENGTH);
         prices.push(price);
         levPrices.forEach((p, i) => {
             levPrices[i] =
@@ -29,6 +46,7 @@ const runSim = (volatility, apy) => {
         });
         lastPrice = price;
     }
+    volatilities.push(calculateVolatility(prices));
     return levPrices.map(
         (finalPrice) => (finalPrice - 1) ** (APY_YEAR / LENGTH)
     ); // Return APY
@@ -47,6 +65,11 @@ const runMonteCarlo = (volatility, apy) => {
             sums[i] = x + results[i];
         });
     }
+    // console.log(
+    //     apy,
+    //     volatility,
+    //     volatilities.reduce((p, c) => p + c, 0) / volatilities.length
+    // );
     console.log(
         apy,
         volatility,
@@ -54,25 +77,12 @@ const runMonteCarlo = (volatility, apy) => {
     );
 };
 
-const calculateVolatility = (priceArray) => {
-    const apy =
-        ((priceArray[priceArray.length - 1] - priceArray[0]) / priceArray[0]) **
-        (APY_YEAR / (priceArray.length - 1));
-
-    let sumShift = 0;
-    for (let t = 1; t <= priceArray.length - 1; t++) {
-        sumShift += Math.abs(
-            priceArray[t] - priceArray[0] * (1 + apy) ** (t / APY_YEAR)
-        );
-    }
-    return (
-        (2 * sumShift) /
-        (priceArray.length - 1) /
-        Math.sqrt(priceArray.length - 1) /
-        0.3648396355 // Idk where this comes from this was calculated over millions of iterations
-    );
-};
-
+// for (const apy of [0.05, 0.1, 0.2]) {
+//     for (const volatility of [0.01, 0.02, 0.03, 0.04, 0.05]) {
+//         runMonteCarlo(volatility, apy);
+//         volatilities.splice(0);
+//     }
+// }
 const fs = require("fs");
 
 const data = fs
@@ -83,7 +93,6 @@ const data = fs
     .split("\n")
     .slice(1, -1)
     .map((line) => Number(line.split(",")[1]))
-    .reverse()
-    .slice(0, 365);
+    .reverse();
 
 console.log(calculateVolatility(data));
