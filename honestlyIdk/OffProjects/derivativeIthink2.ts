@@ -138,8 +138,11 @@ const divideExpressions = (a: Expression, b: Expression): Expression => {
 };
 const polynomialToString = (x: Polynomial) => {
     return x
+        .filter(({ coefficient }) => coefficient !== 0)
         .map((term) => {
-            return `${term.coefficient}${Object.keys(term.products)
+            return `${
+                term.coefficient === 1 ? "" : term.coefficient
+            }${Object.keys(term.products)
                 .map((variable) => `${variable}^${term.products[variable]}`)
                 .join()}`;
         })
@@ -158,6 +161,43 @@ const expressionToString = (x: Expression) => {
     return `${numeratorString} / ${polynomialToString(x.denominator)}`;
 };
 
+const stringToPolynomial = (x: string): Polynomial => {
+    const termStrings = x.split("+");
+    return termStrings
+        .map((termString) => {
+            const [coefficientString, ...productStrings] = [
+                ...termString.matchAll(/^\s*-?\d+|(?:[a-z]+\^-?\d+)+?/g),
+            ].map((match) => match[0]);
+            return {
+                coefficient: Number(coefficientString),
+                products: productStrings.reduce((p, productString) => {
+                    const [variable, exponentString] = productString.split("^");
+                    if (Number(exponentString) === 0) return p;
+                    return { ...p, [variable]: Number(exponentString) };
+                }, {}),
+            };
+        })
+        .filter(({ coefficient }) => coefficient !== 0);
+};
+
+const stringToExpression = (x: string): Expression => {
+    const [numeratorString, denominatorString] = x.split(",");
+    const numerator = stringToPolynomial(numeratorString.trim());
+    if (!denominatorString)
+        return { numerator, denominator: numberToPolynomial(1) };
+    const denominator = stringToPolynomial(denominatorString.trim());
+    const oneOverLeadingCoefficient = numberToPolynomial(
+        1 / getLeadingCoefficient(denominator)
+    );
+    return {
+        numerator: multiplyPolynomials(numerator, oneOverLeadingCoefficient),
+        denominator: multiplyPolynomials(
+            denominator,
+            oneOverLeadingCoefficient
+        ),
+    };
+};
+
 console.log(
     expressionToString(
         addExpressions(numberToExpression(1), numberToExpression(1))
@@ -165,3 +205,13 @@ console.log(
 );
 
 console.log(expressionsEqual(numberToExpression(1), numberToExpression(1)));
+
+console.log(stringToExpression("1"));
+
+console.log(stringToExpression("1 / 2"));
+
+console.log(stringToExpression("2x^1"));
+
+console.log(stringToExpression("x^2"));
+console.log(stringToExpression("x^2y^1"));
+console.log(stringToExpression("5ben^-2 + marissa^3"));
